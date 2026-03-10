@@ -1,4 +1,4 @@
-# mobile_app_manajemen_kost
+# Vernon Indonesia Pintar
 
 A new Flutter project.
 
