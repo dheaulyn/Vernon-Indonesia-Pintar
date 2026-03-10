@@ -5,7 +5,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onAboutTap;
   final VoidCallback onProgramTap;
   final VoidCallback onHomeTap;
-  // Tambahkan callback untuk kontak
   final VoidCallback onContactTap;
 
   const CustomNavbar({
@@ -27,7 +26,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo
           Image.asset(
             'assets/logo.png',
             height: 100,
@@ -37,7 +35,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
           Row(
             children: [
-              // Gunakan Widget Baru Kita: _HoverNavItem
               _HoverNavItem(title: "Beranda", onTap: onHomeTap),
               _HoverNavItem(title: "Program", onTap: onProgramTap),
               _HoverNavItem(title: "Tentang Kami", onTap: onAboutTap),
@@ -74,7 +71,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(75);
 }
 
-// --- WIDGET BARU: Agar bisa berubah warna merah saat di-hover ---
 class _HoverNavItem extends StatefulWidget {
   final String title;
   final VoidCallback onTap;
@@ -103,7 +99,6 @@ class _HoverNavItemState extends State<_HoverNavItem> {
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 16,
-              // LOGIKA WARNA: Jika hovered merah, jika tidak hitam/abu
               color: isHovered ? AppColors.primary : Colors.black87,
             ),
           ),

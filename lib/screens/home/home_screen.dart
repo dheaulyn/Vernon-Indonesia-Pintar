@@ -64,7 +64,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // --- PERUBAHAN DI SINI: Memanggil Section Syarat ---
             _buildRequirementSection(),
 
             _buildFooter(),
@@ -74,12 +73,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- TAMBAHKAN FUNGSI INI DI BAWAH ---
   Widget _buildRequirementSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 50),
-      color: Colors.white, // Background putih agar kontras dengan footer hitam
+      color: Colors.white, 
       child: Column(
         children: [
           const Text(
