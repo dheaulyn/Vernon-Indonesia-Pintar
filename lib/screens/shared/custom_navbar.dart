@@ -36,9 +36,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           Row(
             children: [
               _HoverNavItem(title: "Beranda", onTap: onHomeTap),
-              _HoverNavItem(title: "Program", onTap: onProgramTap),
+              _HoverNavItem(title: "Jenis Beasiswa", onTap: onProgramTap),
               _HoverNavItem(title: "Tentang Kami", onTap: onAboutTap),
-              _HoverNavItem(title: "Kontak", onTap: onContactTap), // Menu baru
+              _HoverNavItem(title: "Kontak", onTap: onContactTap), 
 
               const SizedBox(width: 20),
 

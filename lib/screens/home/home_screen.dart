@@ -39,22 +39,41 @@ class HomeScreen extends StatelessWidget {
           children: [
             Container(key: homeKey),
             _buildHero(),
-
             AboutSection(key: aboutKey),
-
             Padding(
               key: programKey,
-              padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 20),
+              padding: const EdgeInsets.symmetric(
+                vertical: 100,
+                horizontal: 20,
+              ),
               child: Column(
                 children: [
-                  const Text(
-                    "Program Utama Kami",
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        fontFamily:
+                            'sans-serif',
+                      ),
+                      children: [
+                        TextSpan(
+                          text: "Jenis ",
+                          style: TextStyle(
+                            color: AppColors.primary,
+                          ), 
+                        ),
+                        const TextSpan(
+                          text: "Beasiswa",
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 60),
                   Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
+                    spacing: 40,
+                    runSpacing: 40,
                     alignment: WrapAlignment.center,
                     children: DummyData.listProgram
                         .map((p) => ProgramCard(program: p))
@@ -65,83 +84,9 @@ class HomeScreen extends StatelessWidget {
             ),
 
             _buildRequirementSection(),
-
             _buildFooter(),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRequirementSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 50),
-      color: Colors.white, 
-      child: Column(
-        children: [
-          const Text(
-            "Langkah Pendaftaran Beasiswa",
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 60),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStepItem(
-                Icons.edit_note_rounded,
-                "Isi Formulir",
-                "Lengkapi data diri di Portal Siswa.",
-              ),
-              _buildStepItem(
-                Icons.cloud_upload_outlined,
-                "Unggah Berkas",
-                "Upload scan rapor & prestasi.",
-              ),
-              _buildStepItem(
-                Icons.assignment_ind_outlined,
-                "Seleksi",
-                "Verifikasi data oleh tim Vernon.",
-              ),
-              _buildStepItem(
-                Icons.verified_outlined,
-                "Pengumuman",
-                "Cek hasil di dashboard portal.",
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepItem(IconData icon, String title, String desc) {
-    return Expanded(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(25),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 40),
-          ),
-          const SizedBox(height: 25),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              desc,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600], fontSize: 15),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -221,9 +166,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 20),
                 OutlinedButton(
-                  onPressed: () => scrollToSection(
-                    stepKey,
-                  ), // <--- Meluncur ke section langkah
+                  onPressed: () => scrollToSection(stepKey),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white, width: 2),
                     padding: const EdgeInsets.symmetric(
@@ -250,17 +193,87 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildRequirementSection() {
+    return Container(
+      key: stepKey,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 50),
+      color: Colors.white,
+      child: Column(
+        children: [
+          const Text(
+            "Langkah Pendaftaran Beasiswa",
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 60),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStepItem(
+                Icons.edit_note_rounded,
+                "Isi Formulir",
+                "Lengkapi data diri di Portal Siswa.",
+              ),
+              _buildStepItem(
+                Icons.cloud_upload_outlined,
+                "Unggah Berkas",
+                "Upload scan rapor & prestasi.",
+              ),
+              _buildStepItem(
+                Icons.assignment_ind_outlined,
+                "Seleksi",
+                "Verifikasi data oleh tim Vernon.",
+              ),
+              _buildStepItem(
+                Icons.verified_outlined,
+                "Pengumuman",
+                "Cek hasil di dashboard portal.",
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem(IconData icon, String title, String desc) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(25),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 40),
+          ),
+          const SizedBox(height: 25),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            desc,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600], fontSize: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFooter() {
     return Container(
       key: contactKey,
       width: double.infinity,
       color: const Color(0xFF1A1A1A),
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 50),
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 50),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 flex: 2,
@@ -271,16 +284,16 @@ class HomeScreen extends StatelessWidget {
                       "VERNON INDONESIA PINTAR",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     Text(
-                      "Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas untuk masa depan yang lebih baik.",
+                      "Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.6),
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -298,43 +311,35 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     _footerLink("WhatsApp: +62 812-3456-7890"),
                     _footerLink("Email: info@vip.or.id"),
-                    _footerLink("Alamat: Jakarta, Indonesia"),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "IKUTI KAMI",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    _footerLink(
+                      "Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia",
                     ),
-                    const SizedBox(height: 20),
-                    _footerLink("Instagram"),
-                    _footerLink("Facebook"),
-                    _footerLink("YouTube"),
                   ],
                 ),
               ),
             ],
           ),
-          const Divider(color: Colors.white24, height: 80),
+
+          const SizedBox(height: 50),
           Text(
-            "© 2026 Yayasan Vernon Indonesia Pintar. All Rights Reserved.",
+            "© 2026 Vernon Indonesia Pintar. All Rights Reserved.",
             style: TextStyle(
-              color: Colors.white.withOpacity(0.4),
-              fontSize: 14,
+              color: Colors.white.withOpacity(0.3),
+              fontSize: 12,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _socialIcon(IconData icon) {
+    return InkWell(
+      onTap: () {},
+      child: Icon(icon, color: Colors.white.withOpacity(0.7), size: 28),
     );
   }
 

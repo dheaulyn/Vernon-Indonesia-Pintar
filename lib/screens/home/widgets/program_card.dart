@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/program_model.dart';
 import '../../../core/app_colors.dart';
+import '../../program_detail_screen.dart';
 
 class ProgramCard extends StatelessWidget {
   final ProgramModel program;
-  const ProgramCard({super.key, required this.program}); // Fix Key const
+  const ProgramCard({super.key, required this.program});
 
   @override
   Widget build(BuildContext context) {
@@ -15,17 +16,28 @@ class ProgramCard extends StatelessWidget {
         width: 350,
         child: Column(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(15),
-              ),
-              child: Image.network(
-                program.imageUrl,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
+            Hero(
+              tag: program.judul,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(15),
+                ),
+                child: Image.asset(
+                  program.imageUrl,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image),
+                    );
+                  },
+                ),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -38,30 +50,42 @@ class ProgramCard extends StatelessWidget {
                       fontSize: 18,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     program.deskripsi,
                     style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 20),
-                  LinearProgressIndicator(
-                    value: program.persentase,
-                    backgroundColor: Colors.grey[200],
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Rp ${program.terkumpul.toInt()}",
-                        style: const TextStyle(
-                          color: AppColors.primary,
+                  const SizedBox(height: 25),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ProgramDetailScreen(program: program),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: const Text(
+                        "LIHAT DETAIL",
+                        style: TextStyle(
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text("${(program.persentase * 100).toInt()}%"),
-                    ],
+                    ),
                   ),
                 ],
               ),
