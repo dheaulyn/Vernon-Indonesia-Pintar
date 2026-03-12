@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
     if (key.currentContext != null) {
       Scrollable.ensureVisible(
         key.currentContext!,
-        duration: const Duration(milliseconds: 800),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     }
@@ -42,26 +42,25 @@ class HomeScreen extends StatelessWidget {
             AboutSection(key: aboutKey),
             Padding(
               key: programKey,
-              padding: const EdgeInsets.symmetric(
-                vertical: 100,
-                horizontal: 20,
+              padding: const EdgeInsets.only(
+                top: 30,
+                bottom: 80,
+                left: 50,
+                right: 50,
               ),
               child: Column(
                 children: [
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(
-                        fontSize: 40,
+                        fontSize: 45,
                         fontWeight: FontWeight.bold,
-                        fontFamily:
-                            'sans-serif',
+                        fontFamily: 'sans-serif',
                       ),
                       children: [
                         TextSpan(
                           text: "Jenis ",
-                          style: TextStyle(
-                            color: AppColors.primary,
-                          ), 
+                          style: TextStyle(color: AppColors.primary),
                         ),
                         const TextSpan(
                           text: "Beasiswa",
@@ -70,14 +69,22 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 60),
-                  Wrap(
-                    spacing: 40,
-                    runSpacing: 40,
-                    alignment: WrapAlignment.center,
-                    children: DummyData.listProgram
-                        .map((p) => ProgramCard(program: p))
-                        .toList(),
+                  const SizedBox(height: 50),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: DummyData.listProgram.map((p) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: ProgramCard(
+                            program: p,
+                            onHomeTap: () => scrollToSection(homeKey),
+                            onProgramTap: () => scrollToSection(programKey),
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),

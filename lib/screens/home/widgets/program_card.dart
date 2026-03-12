@@ -5,7 +5,14 @@ import '../../program_detail_screen.dart';
 
 class ProgramCard extends StatelessWidget {
   final ProgramModel program;
-  const ProgramCard({super.key, required this.program});
+  final VoidCallback onHomeTap;
+  final VoidCallback onProgramTap;
+  const ProgramCard({
+    super.key,
+    required this.program,
+    required this.onHomeTap,
+    required this.onProgramTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +72,11 @@ class ProgramCard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                ProgramDetailScreen(program: program),
+                            builder: (context) => ProgramDetailScreen(
+                              program: program,
+                              onHomeTap: onHomeTap,
+                              onProgramTap: onProgramTap,
+                            ),
                           ),
                         );
                       },
