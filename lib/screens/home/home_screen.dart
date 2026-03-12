@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
     if (key.currentContext != null) {
       Scrollable.ensureVisible(
         key.currentContext!,
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOut,
       );
     }
