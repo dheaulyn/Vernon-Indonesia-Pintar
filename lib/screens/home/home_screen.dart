@@ -4,6 +4,7 @@ import 'widgets/program_card.dart';
 import 'widgets/about_section.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
+import '../auth/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -38,7 +39,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             Container(key: homeKey),
-            _buildHero(),
+            _buildHero(context),
             AboutSection(key: aboutKey),
             Padding(
               key: programKey,
@@ -98,7 +99,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHero() {
+  Widget _buildHero(BuildContext context) {
     return Container(
       height: 650,
       width: double.infinity,
@@ -152,7 +153,14 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../screens/auth/login_screen.dart';
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onAboutTap;
@@ -38,12 +39,19 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
               _HoverNavItem(title: "Beranda", onTap: onHomeTap),
               _HoverNavItem(title: "Jenis Beasiswa", onTap: onProgramTap),
               _HoverNavItem(title: "Tentang Kami", onTap: onAboutTap),
-              _HoverNavItem(title: "Kontak", onTap: onContactTap), 
+              _HoverNavItem(title: "Kontak", onTap: onContactTap),
 
               const SizedBox(width: 20),
 
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

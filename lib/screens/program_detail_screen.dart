@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/program_model.dart';
 import '../../core/app_colors.dart';
+import '../screens/auth/login_screen.dart';
 
 class ProgramDetailScreen extends StatelessWidget {
   final ProgramModel program;
@@ -187,7 +188,14 @@ class ProgramDetailScreen extends StatelessWidget {
                           height: 55,
                           width: 300,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
