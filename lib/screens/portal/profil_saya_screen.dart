@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import 'portal_layout.dart';
+import '../../data/mock_database.dart'; // 👇 Pastikan MockDatabase di-import
 
-// 👇 1. UBAH MENJADI STATEFUL WIDGET
 class ProfilSayaScreen extends StatefulWidget {
   const ProfilSayaScreen({super.key});
 
@@ -11,11 +11,91 @@ class ProfilSayaScreen extends StatefulWidget {
 }
 
 class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
-  // 👇 2. VARIABEL PENYIMPAN STATUS EDIT
   bool _isEditing = false;
+
+  // 👇 1. Buat Controller untuk Form yang bisa diedit
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _domisiliController;
+  late TextEditingController _whatsappController;
+  late TextEditingController _ptController;
+  late TextEditingController _prodiController;
+  late TextEditingController _semesterController;
+
+  @override
+  void initState() {
+    super.initState();
+    // 👇 2. Isi Controller dengan data dari MockDatabase saat halaman dibuka
+    final user = MockDatabase.currentUser ?? {};
+
+    _nameController = TextEditingController(text: user['name'] ?? 'SISWA VIP');
+    _emailController = TextEditingController(
+      text: user['email'] ?? 'siswa@email.com',
+    );
+
+    // Data dummy tambahan (Karena di register kita hanya simpan nama, email, password)
+    _domisiliController = TextEditingController(
+      text: user['domisili'] ?? 'Malang',
+    );
+    _whatsappController = TextEditingController(
+      text: user['whatsapp'] ?? '+62 812-3456-7890',
+    );
+    _ptController = TextEditingController(
+      text: user['pt'] ?? 'Bhinneka Nusantara Malang University',
+    );
+    _prodiController = TextEditingController(
+      text: user['prodi'] ?? 'Information Systems',
+    );
+    _semesterController = TextEditingController(
+      text: user['semester'] ?? 'Semester 6',
+    );
+  }
+
+  @override
+  void dispose() {
+    // Bersihkan memori controller
+    _nameController.dispose();
+    _emailController.dispose();
+    _domisiliController.dispose();
+    _whatsappController.dispose();
+    _ptController.dispose();
+    _prodiController.dispose();
+    _semesterController.dispose();
+    super.dispose();
+  }
+
+  // 👇 3. Fungsi untuk menyimpan perubahan ke MockDatabase
+  void _saveProfile() {
+    setState(() {
+      _isEditing = false; // Matikan mode edit
+
+      // Update data di MockDatabase.currentUser
+      if (MockDatabase.currentUser != null) {
+        MockDatabase.currentUser!['name'] = _nameController.text.toUpperCase();
+        MockDatabase.currentUser!['email'] = _emailController.text;
+        MockDatabase.currentUser!['domisili'] = _domisiliController.text;
+        MockDatabase.currentUser!['whatsapp'] = _whatsappController.text;
+        MockDatabase.currentUser!['pt'] = _ptController.text;
+        MockDatabase.currentUser!['prodi'] = _prodiController.text;
+        MockDatabase.currentUser!['semester'] = _semesterController.text;
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Profil berhasil diperbarui!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Ambil data untuk tampilan non-form
+    final currentName = MockDatabase.currentUser?['name'] ?? 'SISWA VIP';
+    final currentEmail =
+        MockDatabase.currentUser?['email'] ?? 'siswa@email.com';
+
     return PortalLayout(
       activeMenu: 'profil',
       content: SingleChildScrollView(
@@ -34,7 +114,7 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
             ),
             const SizedBox(height: 40),
 
-            // Kartu Header (Foto & Info Singkat)
+            // 👇 4. Kartu Header (Tampilannya langsung terhubung ke nama/email saat ini)
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
@@ -57,23 +137,24 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Rudolph Benjamin Gaspersz',
-                        style: TextStyle(
+                      Text(
+                        currentName, // Teks Dinamis
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'rudolph.bg@email.com',
-                        style: TextStyle(color: Colors.black54, fontSize: 16),
+                      Text(
+                        currentEmail, // Teks Dinamis
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implementasi ganti foto
-                        },
+                        onPressed: () {},
                         icon: const Icon(Icons.camera_alt, size: 18),
                         label: const Text('Ganti Foto'),
                         style: ElevatedButton.styleFrom(
@@ -102,7 +183,6 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 👇 3. HEADER INFORMASI PRIBADI & TOMBOL EDIT
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -113,12 +193,30 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      // Tombol Edit Profil
                       TextButton.icon(
                         onPressed: () {
                           setState(() {
-                            _isEditing =
-                                !_isEditing; // Membalik status (Buka/Tutup)
+                            _isEditing = !_isEditing;
+
+                            // Jika batal edit, kembalikan nilai controller ke asalnya
+                            if (!_isEditing) {
+                              final user = MockDatabase.currentUser ?? {};
+                              _nameController.text =
+                                  user['name'] ?? 'SISWA VIP';
+                              _emailController.text =
+                                  user['email'] ?? 'siswa@email.com';
+                              _domisiliController.text =
+                                  user['domisili'] ?? 'Malang';
+                              _whatsappController.text =
+                                  user['whatsapp'] ?? '+62 812-3456-7890';
+                              _ptController.text =
+                                  user['pt'] ??
+                                  'Bhinneka Nusantara Malang University';
+                              _prodiController.text =
+                                  user['prodi'] ?? 'Information Systems';
+                              _semesterController.text =
+                                  user['semester'] ?? 'Semester 6';
+                            }
                           });
                         },
                         icon: Icon(
@@ -146,12 +244,14 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                   ),
                   const Divider(height: 30),
 
+                  // 👇 5. Gunakan _buildProfileField dengan passing controller-nya
+                  _buildProfileField('Nama Lengkap', _nameController),
                   _buildProfileField(
-                    'Nama Lengkap',
-                    'Rudolph Benjamin Gaspersz',
-                  ),
-                  _buildProfileField('Domisili', 'Malang'),
-                  _buildProfileField('Nomor WhatsApp', '+62 812-3456-7890'),
+                    'Email',
+                    _emailController,
+                  ), // Tambahan untuk merubah email
+                  _buildProfileField('Domisili', _domisiliController),
+                  _buildProfileField('Nomor WhatsApp', _whatsappController),
 
                   const SizedBox(height: 40),
 
@@ -161,34 +261,16 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                   ),
                   const Divider(height: 30),
 
-                  _buildProfileField(
-                    'Perguruan Tinggi',
-                    'Universitas Bhinneka Nusantara',
-                  ),
-                  _buildProfileField('Program Studi', 'Sistem Informasi'),
-                  _buildProfileField('Semester Saat Ini', 'Semester 6'),
+                  _buildProfileField('Perguruan Tinggi', _ptController),
+                  _buildProfileField('Program Studi', _prodiController),
+                  _buildProfileField('Semester Saat Ini', _semesterController),
 
-                  // 👇 4. TOMBOL SIMPAN HANYA MUNCUL SAAT MODE EDIT AKTIF
                   if (_isEditing) ...[
                     const SizedBox(height: 40),
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Aksi Simpan
-                          setState(() {
-                            _isEditing =
-                                false; // Matikan mode edit setelah disimpan
-                          });
-
-                          // Tampilkan notifikasi sukses
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Profil berhasil diperbarui!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        },
+                        onPressed: _saveProfile, // Panggil fungsi simpan
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -216,8 +298,8 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
     );
   }
 
-  // 👇 5. LOGIKA FORM DINAMIS (BISA DISABLED/ENABLED)
-  Widget _buildProfileField(String label, String initialValue) {
+  // 👇 6. _buildProfileField sekarang menerima TextEditingController, bukan String biasa
+  Widget _buildProfileField(String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
@@ -235,12 +317,10 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
           ),
           Expanded(
             child: TextFormField(
-              initialValue: initialValue,
-              readOnly: !_isEditing, // Mengunci form jika _isEditing = false
+              controller: controller, // Hubungkan controller
+              readOnly: !_isEditing,
               style: TextStyle(
-                color: _isEditing
-                    ? Colors.black87
-                    : Colors.black54, // Teks sedikit pudar jika terkunci
+                color: _isEditing ? Colors.black87 : Colors.black54,
               ),
               decoration: InputDecoration(
                 isDense: true,
@@ -248,7 +328,6 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                   horizontal: 16,
                   vertical: 14,
                 ),
-                // Ubah warna latar belakang agar jelas mana yang bisa diedit
                 fillColor: _isEditing ? Colors.white : Colors.grey.shade100,
                 filled: true,
                 border: OutlineInputBorder(
@@ -256,7 +335,6 @@ class _ProfilSayaScreenState extends State<ProfilSayaScreen> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  // Hilangkan garis border jika sedang terkunci agar terlihat rapi
                   borderSide: BorderSide(
                     color: _isEditing
                         ? Colors.grey.shade400

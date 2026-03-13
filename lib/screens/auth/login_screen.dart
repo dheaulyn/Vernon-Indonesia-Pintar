@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
-import '../home/home_screen.dart'; // Untuk tombol kembali ke beranda
-import 'register_screen.dart'; // Untuk navigasi ke halaman daftar
+import '../../data/mock_database.dart'; // 👇 Import Mock Database
+import '../home/home_screen.dart';
+import 'register_screen.dart';
 import '../portal/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,7 +13,64 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // 👇 1. Tambahkan Controller untuk mengambil inputan form
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
   bool _isPasswordVisible = false;
+
+  // 👇 2. Tambahkan State untuk animasi Loading dan Pesan Error
+  bool _isLoading = false;
+  String _errorMessage = '';
+
+  // 👇 3. Fungsi Login yang terhubung dengan MockDatabase
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = ''; // Hapus pesan error sebelumnya (jika ada)
+    });
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Validasi kosong
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorMessage = 'Email dan password tidak boleh kosong!';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Panggil Mock Database untuk mencocokkan data
+    final success = await MockDatabase.login(email, password);
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      if (!mounted) return;
+      // Jika berhasil, arahkan ke Dashboard
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } else {
+      // Jika gagal, tampilkan pesan error
+      setState(() {
+        _errorMessage = 'Email atau password salah! Silakan coba lagi.';
+      });
+    }
+  }
+
+  // 👇 4. Jangan lupa dispose controller
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            width: 450, // Membatasi lebar form agar rapi di layar web/desktop
+            width: 450,
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
               color: AppColors.background,
@@ -52,10 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       tooltip: 'Kembali ke Beranda',
                     ),
-                    Image.asset(
-                      'assets/logo.png',
-                      height: 40,
-                    ), // Pastikan path logo sesuai
+                    Image.asset('assets/logo.png', height: 40),
                   ],
                 ),
                 const SizedBox(height: 30),
@@ -74,6 +129,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
 
+                // 👇 5. Tampilkan kotak pesan error jika ada
+                if (_errorMessage.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Text(
+                        _errorMessage,
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+
                 // Form Email
                 const Text(
                   'Email',
@@ -81,6 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  controller: _emailController, // Pasang Controller
                   decoration: InputDecoration(
                     hintText: 'Masukkan email Anda',
                     border: OutlineInputBorder(
@@ -101,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
+                  controller: _passwordController, // Pasang Controller
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     hintText: 'Masukkan password Anda',
@@ -117,11 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? Icons.visibility
                             : Icons.visibility_off,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      onPressed: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
                     ),
                   ),
                 ),
@@ -140,34 +217,35 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Tombol Masuk
+                // 👇 Tombol Masuk (Dengan Animasi Loading)
                 SizedBox(
                   width: double.infinity,
+                  height: 50, // Fix tinggi tombol agar stabil
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implementasi login API
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardScreen(),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.background,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'MASUK',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'MASUK',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 20),

@@ -4,6 +4,7 @@ import '../auth/login_screen.dart';
 import 'dashboard_screen.dart';
 import 'status_beasiswa_screen.dart';
 import 'profil_saya_screen.dart';
+import '../../data/mock_database.dart'; // 👇 Pastikan ini sudah ter-import
 
 class PortalLayout extends StatefulWidget {
   final Widget content;
@@ -132,12 +133,10 @@ class _PortalLayoutState extends State<PortalLayout> {
         // ----------------------------------------
         // 2. DROPDOWN PROFIL (BISA DIKLIK & ROUNDED)
         // ----------------------------------------
-        // 👇 Bungkus dengan Material & ClipRect agar efek sentuhannya terpotong membulat
         Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          clipBehavior:
-              Clip.antiAlias, // Memaksa bayangan/hover agar ikut melengkung
+          clipBehavior: Clip.antiAlias,
           child: PopupMenuButton<String>(
             tooltip: 'Menu Profil',
             offset: const Offset(0, 45),
@@ -147,21 +146,22 @@ class _PortalLayoutState extends State<PortalLayout> {
               borderRadius: BorderRadius.circular(8),
             ),
 
-            // Bagian Nama & Foto
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            // 👇 UBAH DI SINI: Hilangkan kata 'const' dan ganti nama jadi dinamis
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
                 children: [
                   Text(
-                    'RUDOLPH BENJAMIN GASPERSZ',
-                    style: TextStyle(
+                    // 👇 MENGAMBIL NAMA DARI SESSION USER SAAT INI
+                    MockDatabase.currentUser?['name'] ?? 'SISWA VIP',
+                    style: const TextStyle(
                       color: Colors.black87,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
-                  SizedBox(width: 15),
-                  CircleAvatar(
+                  const SizedBox(width: 15),
+                  const CircleAvatar(
                     radius: 16,
                     backgroundColor: Colors.grey,
                     child: Icon(Icons.person, color: Colors.white, size: 20),
@@ -170,7 +170,6 @@ class _PortalLayoutState extends State<PortalLayout> {
               ),
             ),
 
-            // Isi menu dropdown
             itemBuilder: (context) => [
               const PopupMenuItem<String>(
                 value: 'profil',
@@ -204,7 +203,6 @@ class _PortalLayoutState extends State<PortalLayout> {
               ),
             ],
 
-            // Logika Navigasi
             onSelected: (value) {
               if (value == 'profil') {
                 if (widget.activeMenu != 'profil') {
@@ -218,6 +216,9 @@ class _PortalLayoutState extends State<PortalLayout> {
                   );
                 }
               } else if (value == 'logout') {
+                // 👇 TAMBAHKAN INI: Hapus sesi user saat keluar/logout
+                MockDatabase.logout();
+
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -238,17 +239,12 @@ class _PortalLayoutState extends State<PortalLayout> {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      width: _isCollapsed
-          ? 70
-          : 260, // Ini yang bertindak sebagai jendela geser
+      width: _isCollapsed ? 70 : 260,
       color: const Color(0xFF2B3240),
-      // 👇 KUNCI 1: Memotong elemen secara visual agar tidak tumpah
       child: ClipRect(
-        // 👇 KUNCI 2: Mencegah error RenderFlex saat jendela sedang menyempit
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
-          // 👇 KUNCI 3: Lebar dalam dikunci 260px, jadi isinya tidak pernah tergencet
           child: SizedBox(
             width: 260,
             child: Column(
@@ -256,7 +252,6 @@ class _PortalLayoutState extends State<PortalLayout> {
               children: [
                 const SizedBox(height: 20),
 
-                // Teks MENU disembunyikan jika jendela ditutup
                 if (!_isCollapsed)
                   const Padding(
                     padding: EdgeInsets.only(left: 23, bottom: 10),
@@ -271,7 +266,6 @@ class _PortalLayoutState extends State<PortalLayout> {
                     ),
                   ),
 
-                // Jaga jarak agar tidak loncat saat teks MENU hilang
                 if (_isCollapsed) const SizedBox(height: 25),
 
                 _sidebarMenu(
@@ -305,7 +299,8 @@ class _PortalLayoutState extends State<PortalLayout> {
                   'Keluar',
                   targetMenu: 'logout',
                   targetScreen: const LoginScreen(),
-                  isLogout: true,
+                  isLogout:
+                      true, // 👇 Ini juga perlu mengosongkan MockDatabase.logout() jika ditekan dari sidebar
                 ),
                 const SizedBox(height: 20),
               ],
@@ -338,6 +333,11 @@ class _PortalLayoutState extends State<PortalLayout> {
         waitDuration: const Duration(milliseconds: 500),
         child: InkWell(
           onTap: () {
+            // 👇 UBAH DI SINI: Bersihkan session jika menu Logout di sidebar diklik
+            if (isLogout) {
+              MockDatabase.logout();
+            }
+
             if (!isActive) {
               Navigator.pushReplacement(
                 context,
@@ -350,7 +350,6 @@ class _PortalLayoutState extends State<PortalLayout> {
           },
           child: Container(
             width: 260,
-            // 👇 UBAH PADDING DI SINI: left diubah menjadi 19 agar presisi di tengah
             padding: const EdgeInsets.only(
               left: 19,
               right: 20,
@@ -364,8 +363,7 @@ class _PortalLayoutState extends State<PortalLayout> {
               border: Border(
                 left: BorderSide(
                   color: isActive ? activeColor : Colors.transparent,
-                  width:
-                      4, // Border 4px ini + Padding 19px = 23px (Presisi Center!)
+                  width: 4,
                 ),
               ),
             ),
