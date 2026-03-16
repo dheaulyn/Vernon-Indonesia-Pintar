@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../auth/login_screen.dart';
 import 'dashboard_screen.dart';
 import 'status_beasiswa_screen.dart';
-import 'profil_saya_screen.dart';
-import '../../data/mock_database.dart'; // 👇 Pastikan ini sudah ter-import
+import '../../data/mock_database.dart'; 
 
 class PortalLayout extends StatefulWidget {
   final Widget content;
@@ -29,7 +28,7 @@ class _PortalLayoutState extends State<PortalLayout> {
     return Scaffold(
       backgroundColor: const Color(
         0xFFF4F6F9,
-      ), // Background abu-abu terang ala SAKTI
+      ), 
       appBar: _buildTopNavbar(),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,9 +40,6 @@ class _PortalLayoutState extends State<PortalLayout> {
     );
   }
 
-  // ==========================================
-  // 1. WIDGET TOP NAVBAR (HAMBURGER -> LOGO -> TEKS)
-  // ==========================================
   PreferredSizeWidget _buildTopNavbar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -74,9 +70,6 @@ class _PortalLayoutState extends State<PortalLayout> {
         ],
       ),
       actions: [
-        // ----------------------------------------
-        // 1. DROPDOWN NOTIFIKASI (MINIMALIS)
-        // ----------------------------------------
         PopupMenuButton<String>(
           tooltip: 'Notifikasi',
           onOpened: () {
@@ -130,29 +123,23 @@ class _PortalLayoutState extends State<PortalLayout> {
         ),
         const SizedBox(width: 15),
 
-        // ----------------------------------------
-        // 2. DROPDOWN PROFIL (BISA DIKLIK & ROUNDED)
-        // ----------------------------------------
         Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           clipBehavior: Clip.antiAlias,
           child: PopupMenuButton<String>(
-            tooltip: 'Menu Profil',
+            tooltip: 'Menu Akun',
             offset: const Offset(0, 45),
             color: Colors.white,
             elevation: 3,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-
-            // 👇 UBAH DI SINI: Hilangkan kata 'const' dan ganti nama jadi dinamis
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
                 children: [
                   Text(
-                    // 👇 MENGAMBIL NAMA DARI SESSION USER SAAT INI
                     MockDatabase.currentUser?['name'] ?? 'SISWA VIP',
                     style: const TextStyle(
                       color: Colors.black87,
@@ -169,22 +156,9 @@ class _PortalLayoutState extends State<PortalLayout> {
                 ],
               ),
             ),
-
+            
+            
             itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'profil',
-                child: Row(
-                  children: [
-                    Icon(Icons.person_outline, color: Colors.black54, size: 20),
-                    SizedBox(width: 10),
-                    Text(
-                      'Profil Saya',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
               const PopupMenuItem<String>(
                 value: 'logout',
                 child: Row(
@@ -203,22 +177,10 @@ class _PortalLayoutState extends State<PortalLayout> {
               ),
             ],
 
+            
             onSelected: (value) {
-              if (value == 'profil') {
-                if (widget.activeMenu != 'profil') {
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, anim1, anim2) =>
-                          const ProfilSayaScreen(),
-                      transitionDuration: Duration.zero,
-                    ),
-                  );
-                }
-              } else if (value == 'logout') {
-                // 👇 TAMBAHKAN INI: Hapus sesi user saat keluar/logout
+              if (value == 'logout') {
                 MockDatabase.logout();
-
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -232,9 +194,6 @@ class _PortalLayoutState extends State<PortalLayout> {
     );
   }
 
-  // ==========================================
-  // 2. WIDGET SIDEBAR KIRI (ANTI-ERROR)
-  // ==========================================
   Widget _buildSidebar(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -282,13 +241,7 @@ class _PortalLayoutState extends State<PortalLayout> {
                   targetMenu: 'status',
                   targetScreen: const StatusBeasiswaScreen(),
                 ),
-                _sidebarMenu(
-                  context,
-                  Icons.person,
-                  'Profil Saya',
-                  targetMenu: 'profil',
-                  targetScreen: const ProfilSayaScreen(),
-                ),
+                
 
                 const Spacer(),
                 const Divider(color: Colors.white24),
@@ -300,7 +253,7 @@ class _PortalLayoutState extends State<PortalLayout> {
                   targetMenu: 'logout',
                   targetScreen: const LoginScreen(),
                   isLogout:
-                      true, // 👇 Ini juga perlu mengosongkan MockDatabase.logout() jika ditekan dari sidebar
+                      true, 
                 ),
                 const SizedBox(height: 20),
               ],
@@ -311,9 +264,6 @@ class _PortalLayoutState extends State<PortalLayout> {
     );
   }
 
-  // ==========================================
-  // 3. WIDGET BANTUAN UNTUK ITEM MENU SIDEBAR
-  // ==========================================
   Widget _sidebarMenu(
     BuildContext context,
     IconData icon,
@@ -333,7 +283,7 @@ class _PortalLayoutState extends State<PortalLayout> {
         waitDuration: const Duration(milliseconds: 500),
         child: InkWell(
           onTap: () {
-            // 👇 UBAH DI SINI: Bersihkan session jika menu Logout di sidebar diklik
+            
             if (isLogout) {
               MockDatabase.logout();
             }
