@@ -1,48 +1,61 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
-import '../../screens/auth/login_screen.dart';
+import '../auth/login_screen.dart';
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback onAboutTap;
-  final VoidCallback onProgramTap;
-  final VoidCallback onHomeTap;
-  final VoidCallback onContactTap;
+  final VoidCallback? onHomeTap;
+  final VoidCallback? onAboutTap;
+  final VoidCallback? onProgramTap;
+  final VoidCallback? onContactTap;
+  final VoidCallback? onFAQTap; // Tambahan fungsi untuk klik FAQ
 
   const CustomNavbar({
     super.key,
-    required this.onAboutTap,
-    required this.onProgramTap,
-    required this.onHomeTap,
-    required this.onContactTap,
+    this.onHomeTap,
+    this.onAboutTap,
+    this.onProgramTap,
+    this.onContactTap,
+    this.onFAQTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Image.asset(
-            'assets/logo.png',
-            height: 100,
-            width: 150,
-            fit: BoxFit.contain,
-          ),
-
+          // LOGO KIRI
           Row(
             children: [
-              _HoverNavItem(title: "Beranda", onTap: onHomeTap),
-              _HoverNavItem(title: "Jenis Beasiswa", onTap: onProgramTap),
-              _HoverNavItem(title: "Tentang Kami", onTap: onAboutTap),
-              _HoverNavItem(title: "Kontak", onTap: onContactTap),
+              Image.asset(
+                'assets/logo.png',
+                height: 40,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.school, size: 40, color: Colors.black),
+              ),
+            ],
+          ),
 
-              const SizedBox(width: 20),
+          // MENU TENGAH DAN TOMBOL KANAN
+          Row(
+            children: [
+              _navbarItem("Beranda", onHomeTap),
+              const SizedBox(width: 30),
+              _navbarItem("Jenis Beasiswa", onProgramTap),
+              const SizedBox(width: 30),
+              _navbarItem("Tentang Kami", onAboutTap),
+              const SizedBox(width: 30),
 
+              // TAMPILKAN MENU FAQ
+              _navbarItem("FAQ", onFAQTap),
+
+              const SizedBox(width: 30),
+              _navbarItem("Kontak", onContactTap),
+              const SizedBox(width: 40),
+
+              // TOMBOL PORTAL SISWA
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -54,9 +67,8 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
+                    horizontal: 25,
                     vertical: 18,
                   ),
                   shape: RoundedRectangleBorder(
@@ -65,7 +77,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 child: const Text(
                   "Portal Siswa",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -75,43 +90,20 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  @override
-  Size get preferredSize => const Size.fromHeight(75);
-}
-
-class _HoverNavItem extends StatefulWidget {
-  final String title;
-  final VoidCallback onTap;
-
-  const _HoverNavItem({required this.title, required this.onTap});
-
-  @override
-  State<_HoverNavItem> createState() => _HoverNavItemState();
-}
-
-class _HoverNavItemState extends State<_HoverNavItem> {
-  bool isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Text(
-            widget.title,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: isHovered ? AppColors.primary : Colors.black87,
-            ),
-          ),
+  Widget _navbarItem(String title, VoidCallback? onTap) {
+    return InkWell(
+      onTap: onTap, // Menjalankan fungsi yang dikirim dari home_screen
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
 }

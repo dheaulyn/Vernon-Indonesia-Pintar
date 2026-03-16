@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../data/models/program_model.dart';
 import '../../core/app_colors.dart';
-import '../screens/auth/login_screen.dart';
+import 'shared/custom_navbar.dart';
 
-class ProgramDetailScreen extends StatelessWidget {
+class ProgramDetailScreen extends StatefulWidget {
   final ProgramModel program;
   final VoidCallback onHomeTap;
   final VoidCallback onProgramTap;
@@ -16,17 +16,43 @@ class ProgramDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
+}
+
+class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showNavbar = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 200 && !_showNavbar) {
+        setState(() {
+          _showNavbar = true;
+        });
+      } else if (_scrollController.offset <= 200 && _showNavbar) {
+        setState(() {
+          _showNavbar = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      // PERHATIKAN: Kita menghapus appBar bawaan sepenuhnya
       body: Stack(
         children: [
+          // --- LAPISAN 1: GAMBAR BACKGROUND (DIAM / PARALLAX) ---
           Positioned(
             top: 0,
             left: 0,
@@ -35,7 +61,7 @@ class ProgramDetailScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage(program.imageUrl),
+                  image: AssetImage(widget.program.imageUrl),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -53,17 +79,21 @@ class ProgramDetailScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // --- LAPISAN 2: KONTEN (BISA DI-SCROLL) ---
           SingleChildScrollView(
+            controller: _scrollController,
             child: Column(
               children: [
                 const SizedBox(height: 130),
 
+                // Judul dan Breadcrumb
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
                       Text(
-                        program.judul.toUpperCase(),
+                        widget.program.judul.toUpperCase(),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white,
@@ -80,8 +110,8 @@ class ProgramDetailScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.pop(context);
                               Future.delayed(
-                                const Duration(milliseconds: 300),
-                                onHomeTap,
+                                const Duration(milliseconds: 100),
+                                widget.onHomeTap,
                               );
                             },
                             child: const Text(
@@ -104,8 +134,8 @@ class ProgramDetailScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.pop(context);
                               Future.delayed(
-                                const Duration(milliseconds: 300),
-                                onProgramTap,
+                                const Duration(milliseconds: 100),
+                                widget.onProgramTap,
                               );
                             },
                             child: const Text(
@@ -117,9 +147,8 @@ class ProgramDetailScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           Text(
-                            "  /  ${program.judul}",
+                            "  /  ${widget.program.judul}",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.7),
                               fontSize: 15,
@@ -131,6 +160,7 @@ class ProgramDetailScreen extends StatelessWidget {
                   ),
                 ),
 
+                // Kartu Putih Melayang
                 Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(
@@ -155,7 +185,7 @@ class ProgramDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        program.deskripsi,
+                        widget.program.deskripsi,
                         style: TextStyle(
                           fontSize: 18,
                           height: 1.8,
@@ -164,9 +194,10 @@ class ProgramDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 60),
 
+                      // Cakupan Beasiswa
                       _buildModernSection(
                         "Benefit Beasiswa",
-                        program.benefit,
+                        widget.program.benefit,
                         Icons.stars_rounded,
                         Colors.orange,
                       ),
@@ -175,27 +206,24 @@ class ProgramDetailScreen extends StatelessWidget {
                         padding: EdgeInsets.symmetric(vertical: 40),
                         child: Divider(color: Colors.black12, thickness: 1),
                       ),
+
+                      // Persyaratan
                       _buildModernSection(
                         "Persyaratan Pendaftaran",
-                        program.syarat,
+                        widget.program.syarat,
                         Icons.check_circle,
                         Colors.green,
                       ),
 
                       const SizedBox(height: 60),
+
+                      // Tombol Daftar
                       Center(
                         child: SizedBox(
                           height: 55,
                           width: 300,
                           child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            },
+                            onPressed: () {},
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
@@ -224,11 +252,56 @@ class ProgramDetailScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          // --- LAPISAN 3: TOMBOL BACK CUSTOM ---
+          // Ini nangkring di atas gambar, TAPI posisinya di bawah Navbar putih
+          Positioned(
+            top: 40,
+            left: 20,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+
+          // --- LAPISAN 4: NAVBAR ANIMASI SCROLL (MUNCUL DARI ATAS) ---
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            top: _showNavbar ? 0 : -120, // Animasi turun naik
+            left: 0,
+            right: 0,
+            child: Material(
+              elevation: 4,
+              child: CustomNavbar(
+                onHomeTap: () {
+                  Navigator.pop(context);
+                  Future.delayed(
+                    const Duration(milliseconds: 100),
+                    widget.onHomeTap,
+                  );
+                },
+                onAboutTap: () => Navigator.pop(context),
+                onProgramTap: () {
+                  Navigator.pop(context);
+                  Future.delayed(
+                    const Duration(milliseconds: 100),
+                    widget.onProgramTap,
+                  );
+                },
+                onContactTap: () => Navigator.pop(context),
+                onFAQTap: () => Navigator.pop(context),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
+  // --- FUNGSI PEMBANTU ---
   Widget _buildModernSection(
     String title,
     List<String> items,
