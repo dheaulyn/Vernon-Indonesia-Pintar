@@ -21,15 +21,15 @@ class _FAQScreenState extends State<FAQScreen> {
   @override
   void initState() {
     super.initState();
-    // 2. LOGIKA ANIMASI SCROLL
+    
     _scrollController.addListener(() {
-      // Jika di-scroll lebih dari 150 pixel ke bawah, munculkan Navbar
+      
       if (_scrollController.offset > 150 && !_showNavbar) {
         setState(() {
           _showNavbar = true;
         });
       }
-      // Jika kembali ke atas, sembunyikan lagi
+      
       else if (_scrollController.offset <= 150 && _showNavbar) {
         setState(() {
           _showNavbar = false;
@@ -40,7 +40,7 @@ class _FAQScreenState extends State<FAQScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Bersihkan memori saat layar ditutup
+    _scrollController.dispose(); 
     super.dispose();
   }
 
@@ -100,6 +100,9 @@ class _FAQScreenState extends State<FAQScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 1. DETEKSI LEBAR LAYAR
+    final bool isMobile = MediaQuery.of(context).size.width < 850;
+
     final currentFaqList = selectedTabIndex == 0 ? faqBerprestasi : faqReguler;
     final String currentTitle = selectedTabIndex == 0
         ? "FAQ Beasiswa Berprestasi 2026"
@@ -107,20 +110,17 @@ class _FAQScreenState extends State<FAQScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      // PERHATIKAN: Kita menghapus properti appBar, dan menggantinya dengan Stack di body
       body: Stack(
         children: [
-          // ==========================================
-          // LAYER 1: KONTEN UTAMA YANG BISA DI-SCROLL
-          // ==========================================
+          
           SingleChildScrollView(
-            controller: _scrollController, // Pasang pendeteksi scroll di sini
+            controller: _scrollController,
             child: Column(
               children: [
-                // --- HEADER BANNER ALA VIP ---
+                
                 Container(
                   width: double.infinity,
-                  height: 380, // Ditinggikan sedikit agar lebih elegan
+                  height: isMobile ? 320 : 380, 
                   decoration: const BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage('assets/beranda.png'),
@@ -142,39 +142,42 @@ class _FAQScreenState extends State<FAQScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 30),
-                        const Text(
+                        Text(
                           "PUSAT BANTUAN",
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 16,
+                            fontSize: isMobile ? 13 : 16,
                             letterSpacing: 3,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Frequently Asked Questions",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
+                        SizedBox(height: isMobile ? 5 : 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            "Frequently Asked Questions",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isMobile ? 28 : 40, 
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // BREADCRUMB
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        
+                        Wrap(
+                          alignment: WrapAlignment.center,
                           children: [
                             InkWell(
                               onTap: () => _backToHome(context),
-                              child: const Text(
+                              child: Text(
                                 "Beranda",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 15,
+                                  fontSize: isMobile ? 13 : 15,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -183,7 +186,7 @@ class _FAQScreenState extends State<FAQScreen> {
                               "  /  FAQ",
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.7),
-                                fontSize: 15,
+                                fontSize: isMobile ? 13 : 15,
                               ),
                             ),
                           ],
@@ -193,36 +196,47 @@ class _FAQScreenState extends State<FAQScreen> {
                   ),
                 ),
 
-                // --- KONTEN FAQ ---
+                
                 Transform.translate(
                   offset: const Offset(0, -40),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 100),
+                    
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 100),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // --- TOMBOL TAB PILIHAN PREMIUM ---
-                        Row(
-                          children: [
-                            _buildTabButton("Beasiswa Berprestasi", 0),
-                            const SizedBox(width: 20),
-                            _buildTabButton("Beasiswa Reguler", 1),
-                          ],
-                        ),
+                        
+                        if (isMobile)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildTabButton("Beasiswa Berprestasi", 0, isMobile),
+                              const SizedBox(height: 15),
+                              _buildTabButton("Beasiswa Reguler", 1, isMobile),
+                            ],
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(child: _buildTabButton("Beasiswa Berprestasi", 0, isMobile)),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildTabButton("Beasiswa Reguler", 1, isMobile)),
+                            ],
+                          ),
 
-                        const SizedBox(height: 40),
+                        SizedBox(height: isMobile ? 30 : 40),
 
                         Text(
                           currentTitle,
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: isMobile ? 18 : 22,
                             fontWeight: FontWeight.bold,
                             color: Colors.grey[800],
                           ),
                         ),
                         const SizedBox(height: 25),
 
-                        // --- LIST FAQ ACCORDION ---
+                        
                         ...List.generate(currentFaqList.length, (index) {
                           final faq = currentFaqList[index];
                           final bool isExpanded = expandedIndex == index;
@@ -263,7 +277,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                   faq["tanya"]!,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: isMobile ? 14 : 16,
                                     color: isExpanded
                                         ? AppColors.primary
                                         : Colors.black87,
@@ -280,10 +294,10 @@ class _FAQScreenState extends State<FAQScreen> {
                                 },
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.only(
+                                    padding: EdgeInsets.only(
                                       left: 16,
                                       right: 16,
-                                      bottom: 20,
+                                      bottom: isMobile ? 15 : 20,
                                     ),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
@@ -292,7 +306,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                         style: TextStyle(
                                           color: Colors.grey[700],
                                           height: 1.6,
-                                          fontSize: 15,
+                                          fontSize: isMobile ? 14 : 15,
                                         ),
                                       ),
                                     ),
@@ -303,7 +317,7 @@ class _FAQScreenState extends State<FAQScreen> {
                           );
                         }),
 
-                        const SizedBox(height: 100),
+                        SizedBox(height: isMobile ? 60 : 100),
                       ],
                     ),
                   ),
@@ -312,21 +326,15 @@ class _FAQScreenState extends State<FAQScreen> {
             ),
           ),
 
-          // ==========================================
-          // LAYER 2: NAVBAR DENGAN ANIMASI MUNCUL
-          // ==========================================
+          
           AnimatedPositioned(
-            duration: const Duration(
-              milliseconds: 400,
-            ), // Kecepatan animasi turun
+            duration: const Duration(milliseconds: 400), 
             curve: Curves.easeInOut,
-            // Jika showNavbar true, posisinya di 0 (muncul penuh).
-            // Jika false, posisinya di -120 (tersembunyi di atas layar).
             top: _showNavbar ? 0 : -120,
             left: 0,
             right: 0,
             child: Material(
-              elevation: 4, // Memberikan bayangan halus saat navbar turun
+              elevation: 4, 
               child: CustomNavbar(
                 onHomeTap: () => _backToHome(context),
                 onAboutTap: () => _backToHome(context),
@@ -341,54 +349,55 @@ class _FAQScreenState extends State<FAQScreen> {
     );
   }
 
-  // WIDGET PEMBANTU UNTUK TOMBOL TAB ALA VIP
-  Widget _buildTabButton(String title, int index) {
+  
+  Widget _buildTabButton(String title, int index, bool isMobile) {
     bool isSelected = selectedTabIndex == index;
 
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            selectedTabIndex = index;
-            expandedIndex = -1;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.grey.shade300,
-              width: 1.5,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+    return InkWell(
+      onTap: () {
+        setState(() {
+          selectedTabIndex = index;
+          expandedIndex = -1; 
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(
+          vertical: isMobile ? 15 : 20, 
+          horizontal: 10
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+            width: 1.5,
           ),
-          child: Center(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: isSelected ? Colors.white : Colors.grey[600],
-              ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 14 : 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: isSelected ? Colors.white : Colors.grey[600],
             ),
           ),
         ),
