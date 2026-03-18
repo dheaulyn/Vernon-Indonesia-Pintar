@@ -7,6 +7,7 @@ class ProgramCard extends StatelessWidget {
   final ProgramModel program;
   final VoidCallback onHomeTap;
   final VoidCallback onProgramTap;
+  
   const ProgramCard({
     super.key,
     required this.program,
@@ -16,12 +17,18 @@ class ProgramCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    final bool isMobile = MediaQuery.of(context).size.width < 900;
+
     return Card(
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: SizedBox(
-        width: 350,
+        
+        width: double.infinity, 
         child: Column(
+          
+          crossAxisAlignment: CrossAxisAlignment.stretch, 
           children: [
             Hero(
               tag: program.judul,
@@ -31,12 +38,12 @@ class ProgramCard extends StatelessWidget {
                 ),
                 child: Image.asset(
                   program.imageUrl,
-                  height: 200,
-                  width: double.infinity,
+                  
+                  height: isMobile ? 180 : 220, 
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      height: 200,
+                      height: isMobile ? 180 : 220,
                       color: Colors.grey[200],
                       child: const Icon(Icons.broken_image),
                     );
@@ -46,25 +53,31 @@ class ProgramCard extends StatelessWidget {
             ),
 
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              
+              padding: EdgeInsets.all(isMobile ? 20.0 : 25.0), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     program.judul,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: isMobile ? 18 : 20, 
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     program.deskripsi,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    style: TextStyle(
+                      color: Colors.grey[600], 
+                      fontSize: isMobile ? 14 : 15, 
+                      height: 1.5,
+                    ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 25),
+                  SizedBox(height: isMobile ? 25 : 30),
+                  
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -82,17 +95,18 @@ class ProgramCard extends StatelessWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        padding: EdgeInsets.symmetric(vertical: isMobile ? 15 : 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                         elevation: 2,
                       ),
-                      child: const Text(
+                      child: Text(
                         "LIHAT DETAIL",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: isMobile ? 13 : 14,
                         ),
                       ),
                     ),

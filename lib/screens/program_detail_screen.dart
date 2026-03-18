@@ -47,17 +47,19 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
+    final bool isMobile = MediaQuery.of(context).size.width < 850;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      // PERHATIKAN: Kita menghapus appBar bawaan sepenuhnya
       body: Stack(
         children: [
-          // --- LAPISAN 1: GAMBAR BACKGROUND (DIAM / PARALLAX) ---
+          
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 450,
+            height: isMobile ? 350 : 450, 
             child: Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
@@ -80,14 +82,14 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
             ),
           ),
 
-          // --- LAPISAN 2: KONTEN (BISA DI-SCROLL) ---
+          
           SingleChildScrollView(
             controller: _scrollController,
             child: Column(
               children: [
-                const SizedBox(height: 130),
+                SizedBox(height: isMobile ? 100 : 130), 
 
-                // Judul dan Breadcrumb
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -95,16 +97,18 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                       Text(
                         widget.program.judul.toUpperCase(),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 38,
+                          fontSize: isMobile ? 26 : 38, 
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2.0,
                         ),
                       ),
                       const SizedBox(height: 15),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           InkWell(
                             onTap: () {
@@ -114,11 +118,11 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                                 widget.onHomeTap,
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               "Home",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 15,
+                                fontSize: isMobile ? 13 : 15,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -127,7 +131,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                             "  /  ",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 15,
+                              fontSize: isMobile ? 13 : 15,
                             ),
                           ),
                           InkWell(
@@ -138,11 +142,11 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                                 widget.onProgramTap,
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               "Jenis Beasiswa",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 15,
+                                fontSize: isMobile ? 13 : 15,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -151,7 +155,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                             "  /  ${widget.program.judul}",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 15,
+                              fontSize: isMobile ? 13 : 15,
                             ),
                           ),
                         ],
@@ -160,16 +164,17 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                   ),
                 ),
 
-                // Kartu Putih Melayang
+                
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(
-                    top: 60,
-                    left: 60,
-                    right: 60,
-                    bottom: 80,
+                  
+                  margin: EdgeInsets.only(
+                    top: isMobile ? 40 : 60,
+                    left: isMobile ? 20 : 60,
+                    right: isMobile ? 20 : 60,
+                    bottom: isMobile ? 40 : 80,
                   ),
-                  padding: const EdgeInsets.all(60),
+                  padding: EdgeInsets.all(isMobile ? 30 : 60),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -187,41 +192,43 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                       Text(
                         widget.program.deskripsi,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: isMobile ? 15 : 18, 
                           height: 1.8,
                           color: Colors.grey[800],
                         ),
                       ),
-                      const SizedBox(height: 60),
+                      SizedBox(height: isMobile ? 40 : 60),
 
-                      // Cakupan Beasiswa
+                      
                       _buildModernSection(
                         "Benefit Beasiswa",
                         widget.program.benefit,
                         Icons.stars_rounded,
                         Colors.orange,
+                        isMobile, 
                       ),
 
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Divider(color: Colors.black12, thickness: 1),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: isMobile ? 30 : 40),
+                        child: const Divider(color: Colors.black12, thickness: 1),
                       ),
 
-                      // Persyaratan
+                      
                       _buildModernSection(
                         "Persyaratan Pendaftaran",
                         widget.program.syarat,
                         Icons.check_circle,
                         Colors.green,
+                        isMobile,
                       ),
 
-                      const SizedBox(height: 60),
+                      SizedBox(height: isMobile ? 40 : 60),
 
-                      // Tombol Daftar
+                      
                       Center(
                         child: SizedBox(
-                          height: 55,
-                          width: 300,
+                          height: isMobile ? 50 : 55,
+                          width: isMobile ? double.infinity : 300, 
                           child: ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
@@ -234,12 +241,12 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                                 alpha: 0.5,
                               ),
                             ),
-                            child: const Text(
+                            child: Text(
                               "DAFTAR SEKARANG",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: isMobile ? 14 : 16,
                                 letterSpacing: 1.5,
                               ),
                             ),
@@ -253,24 +260,23 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
             ),
           ),
 
-          // --- LAPISAN 3: TOMBOL BACK CUSTOM ---
-          // Ini nangkring di atas gambar, TAPI posisinya di bawah Navbar putih
+          
           Positioned(
-            top: 40,
-            left: 20,
+            top: isMobile ? 20 : 40, 
+            left: isMobile ? 10 : 20,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+              icon: Icon(Icons.arrow_back, color: Colors.white, size: isMobile ? 24 : 28),
               onPressed: () {
                 Navigator.pop(context);
               },
             ),
           ),
 
-          // --- LAPISAN 4: NAVBAR ANIMASI SCROLL (MUNCUL DARI ATAS) ---
+          
           AnimatedPositioned(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeInOut,
-            top: _showNavbar ? 0 : -120, // Animasi turun naik
+            top: _showNavbar ? 0 : -120, 
             left: 0,
             right: 0,
             child: Material(
@@ -301,25 +307,26 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     );
   }
 
-  // --- FUNGSI PEMBANTU ---
+  
   Widget _buildModernSection(
     String title,
     List<String> items,
     IconData icon,
     Color iconColor,
+    bool isMobile,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 26,
+          style: TextStyle(
+            fontSize: isMobile ? 22 : 26, 
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 30),
+        SizedBox(height: isMobile ? 20 : 30),
         ...items
             .map(
               (item) => Padding(
@@ -327,13 +334,13 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(icon, color: iconColor, size: 24),
+                    Icon(icon, color: iconColor, size: isMobile ? 20 : 24),
                     const SizedBox(width: 15),
                     Expanded(
                       child: Text(
                         item,
                         style: TextStyle(
-                          fontSize: 17,
+                          fontSize: isMobile ? 15 : 17, 
                           height: 1.6,
                           color: Colors.grey[800],
                         ),
