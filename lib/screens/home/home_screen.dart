@@ -1,21 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Tambahan mesin rute
 import '../shared/custom_navbar.dart';
 import 'widgets/program_card.dart';
 import 'widgets/about_section.dart';
 import 'widgets/faq_screen.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
-import '../auth/login_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
+// 1. MENGUBAH MENJADI STATEFUL WIDGET
+class HomeScreen extends StatefulWidget {
+  final String? targetSection; // Kotak penerima pesan URL dari main.dart
+  const HomeScreen({super.key, this.targetSection});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey aboutKey = GlobalKey();
   final GlobalKey programKey = GlobalKey();
   final GlobalKey homeKey = GlobalKey();
   final GlobalKey faqKey = GlobalKey();
   final GlobalKey contactKey = GlobalKey();
   final GlobalKey stepKey = GlobalKey();
+
+  // 2. FUNGSI LIFECYCLE: Berjalan saat halaman pertama kali dimuat
+  @override
+  void initState() {
+    super.initState();
+    if (widget.targetSection != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _autoScrollToTarget();
+      });
+    }
+  }
+
+  // 3. FUNGSI LIFECYCLE: Berjalan jika user menekan menu lain saat masih di Home
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.targetSection != oldWidget.targetSection && widget.targetSection != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _autoScrollToTarget();
+      });
+    }
+  }
+
+  void _autoScrollToTarget() {
+    switch (widget.targetSection) {
+      case 'tentang-kami':
+        scrollToSection(aboutKey);
+        break;
+      case 'jenis-beasiswa':
+        scrollToSection(programKey);
+        break;
+      case 'kontak':
+        scrollToSection(contactKey);
+        break;
+      case 'panduan-pendaftaran':
+        scrollToSection(stepKey);
+        break;
+      default:
+        scrollToSection(homeKey);
+    }
+  }
 
   void scrollToSection(GlobalKey key) {
     if (key.currentContext != null) {
@@ -29,36 +77,27 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 768;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // 4. MENGUBAH AKSI NAVBAR MENJADI URL
       appBar: CustomNavbar(
-        onHomeTap: () => scrollToSection(homeKey),
-        onAboutTap: () => scrollToSection(aboutKey),
-        onProgramTap: () => scrollToSection(programKey),
-        onContactTap: () => scrollToSection(contactKey),
-        onFAQTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const FAQScreen()),
-          );
-        },
+        onHomeTap: () => context.go('/'),
+        onAboutTap: () => context.go('/tentang-kami'),
+        onProgramTap: () => context.go('/jenis-beasiswa'),
+        onContactTap: () => context.go('/kontak'),
+        onFAQTap: () => context.go('/faq'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Container(key: homeKey),
-            
             _buildHero(context, isMobile),
-            AboutSection(key: aboutKey), 
-
-            
+            AboutSection(key: aboutKey),
             Padding(
               key: programKey,
-              
               padding: EdgeInsets.only(
                 top: 30,
                 bottom: isMobile ? 40 : 80,
@@ -70,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                   RichText(
                     text: TextSpan(
                       style: TextStyle(
-                        fontSize: isMobile ? 32 : 45, 
+                        fontSize: isMobile ? 32 : 45,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'sans-serif',
                       ),
@@ -87,8 +126,6 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: isMobile ? 30 : 50),
-                  
-                  
                   if (isMobile)
                     Column(
                       children: DummyData.listProgram.map((p) {
@@ -122,14 +159,8 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            
             _buildRequirementSection(isMobile),
-
-            
             _buildFAQSection(context, isMobile),
-
-            
             _buildFooter(isMobile),
           ],
         ),
@@ -137,11 +168,9 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  
-
   Widget _buildHero(BuildContext context, bool isMobile) {
     return Container(
-      height: isMobile ? 500 : 650, 
+      height: isMobile ? 500 : 650,
       width: double.infinity,
       decoration: const BoxDecoration(
         image: DecorationImage(
@@ -180,7 +209,7 @@ class HomeScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: isMobile ? 36 : 55, 
+                fontSize: isMobile ? 36 : 55,
                 fontWeight: FontWeight.w900,
                 height: 1.1,
               ),
@@ -192,13 +221,11 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(color: Colors.white70, fontSize: isMobile ? 14 : 18),
             ),
             const SizedBox(height: 40),
-            
-            
             if (isMobile)
               Column(
                 children: [
                   SizedBox(
-                    width: double.infinity, 
+                    width: double.infinity,
                     child: _buildPrimaryButton(context, isMobile),
                   ),
                   const SizedBox(height: 15),
@@ -223,14 +250,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // 5. MENGUBAH AKSI TOMBOL LOGIN (DAFTAR SEKARANG)
   Widget _buildPrimaryButton(BuildContext context, bool isMobile) {
     return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      },
+      onPressed: () => context.go('/login'), // Pakai URL sekarang
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         padding: EdgeInsets.symmetric(
@@ -248,7 +271,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildSecondaryButton(bool isMobile) {
     return OutlinedButton(
-      onPressed: () => scrollToSection(stepKey),
+      onPressed: () => context.go('/panduan-pendaftaran'),
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Colors.white, width: 2),
         padding: EdgeInsets.symmetric(
@@ -269,7 +292,7 @@ class HomeScreen extends StatelessWidget {
       key: stepKey,
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100, 
+        vertical: isMobile ? 60 : 100,
         horizontal: isMobile ? 20 : 50,
       ),
       color: Colors.white,
@@ -279,13 +302,11 @@ class HomeScreen extends StatelessWidget {
             "Langkah Pendaftaran Beasiswa",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isMobile ? 24 : 32, 
+              fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: isMobile ? 40 : 60),
-          
-          
           if (isMobile)
             Column(
               children: [
@@ -316,7 +337,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildStepItem(IconData icon, String title, String desc) {
     return Column(
-      mainAxisSize: MainAxisSize.min, 
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.all(25),
@@ -361,7 +382,6 @@ class HomeScreen extends StatelessWidget {
       },
     ];
 
-    
     Widget faqContent = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
@@ -387,15 +407,12 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
         SizedBox(height: isMobile ? 30 : 40),
-        
         FAQAccordion(faqs: previewFaqs),
-        
         SizedBox(height: isMobile ? 20 : 30),
         
+        // 6. MENGUBAH TOMBOL "LIHAT LEBIH BANYAK"
         ElevatedButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const FAQScreen()));
-          },
+          onPressed: () => context.go('/faq'), // Pakai URL sekarang
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
@@ -406,7 +423,6 @@ class HomeScreen extends StatelessWidget {
       ],
     );
 
-    
     Widget illustration = Container(
       height: isMobile ? 250 : 500,
       decoration: BoxDecoration(
@@ -423,11 +439,11 @@ class HomeScreen extends StatelessWidget {
       key: faqKey,
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100, 
+        vertical: isMobile ? 60 : 100,
         horizontal: isMobile ? 20 : 80,
       ),
       color: const Color(0xFFFDFCF8),
-      child: isMobile 
+      child: isMobile
           ? Column(
               children: [
                 illustration,
@@ -447,7 +463,6 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildFooter(bool isMobile) {
-    // Info Tentang
     Widget aboutFooter = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
@@ -465,7 +480,6 @@ class HomeScreen extends StatelessWidget {
       ],
     );
 
-    
     Widget contactFooter = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
@@ -488,7 +502,7 @@ class HomeScreen extends StatelessWidget {
       width: double.infinity,
       color: const Color(0xFF1A1A1A),
       padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 40 : 60, 
+        vertical: isMobile ? 40 : 60,
         horizontal: isMobile ? 30 : 50,
       ),
       child: Column(
@@ -510,7 +524,6 @@ class HomeScreen extends StatelessWidget {
                 Expanded(child: contactFooter),
               ],
             ),
-          
           SizedBox(height: isMobile ? 30 : 50),
           Text(
             "© 2026 Vernon Indonesia Pintar. All Rights Reserved.",
@@ -537,7 +550,9 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
+// ==========================================
+// KODE AKORDION TETAP SAMA TIDAK BERUBAH
+// ==========================================
 class FAQAccordion extends StatefulWidget {
   final List<Map<String, String>> faqs;
   const FAQAccordion({super.key, required this.faqs});

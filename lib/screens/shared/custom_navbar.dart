@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Tambahkan mesin rute
 import '../../core/app_colors.dart';
-import '../auth/login_screen.dart';
+// import '../auth/login_screen.dart'; <--- INI SUDAH DIHAPUS
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onHomeTap;
@@ -20,17 +21,14 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
     return Container(
       color: Colors.white,
-      
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 50, vertical: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          
           Row(
             children: [
               Image.asset(
@@ -41,8 +39,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-
-          
           if (isMobile)
             _buildMobileMenu(context)
           else
@@ -52,7 +48,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  
   Widget _buildMobileMenu(BuildContext context) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu, color: Colors.black87, size: 30),
@@ -64,8 +59,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         if (value == 'about') onAboutTap?.call();
         if (value == 'faq') onFAQTap?.call();
         if (value == 'contact') onContactTap?.call();
+        
+        // UBAH: Menggunakan GoRouter untuk versi Mobile
         if (value == 'login') {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+          context.go('/login'); 
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -86,7 +83,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  
   Widget _buildDesktopMenu(BuildContext context) {
     return Row(
       children: [
@@ -101,15 +97,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _navbarItem("Kontak", onContactTap),
         const SizedBox(width: 40),
 
-  
         ElevatedButton(
+          // UBAH: Menggunakan GoRouter untuk versi Desktop
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const LoginScreen(),
-              ),
-            );
+            context.go('/login');
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
