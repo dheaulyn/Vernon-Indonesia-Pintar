@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Tambahan mesin rute
+import 'package:go_router/go_router.dart';
 import '../shared/custom_navbar.dart';
 import 'widgets/program_card.dart';
 import 'widgets/about_section.dart';
@@ -7,9 +7,8 @@ import 'widgets/faq_screen.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
 
-// 1. MENGUBAH MENJADI STATEFUL WIDGET
 class HomeScreen extends StatefulWidget {
-  final String? targetSection; // Kotak penerima pesan URL dari main.dart
+  final String? targetSection;
   const HomeScreen({super.key, this.targetSection});
 
   @override
@@ -24,18 +23,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey contactKey = GlobalKey();
   final GlobalKey stepKey = GlobalKey();
 
-  // 2. FUNGSI LIFECYCLE: Berjalan saat halaman pertama kali dimuat
   @override
   void initState() {
     super.initState();
     if (widget.targetSection != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _autoScrollToTarget();
+      // JEDA 300ms AGAR DARI FAQ BISA SCROLL MULUS
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _autoScrollToTarget();
       });
     }
   }
 
-  // 3. FUNGSI LIFECYCLE: Berjalan jika user menekan menu lain saat masih di Home
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -60,6 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'panduan-pendaftaran':
         scrollToSection(stepKey);
         break;
+      case 'faq':
+        scrollToSection(faqKey);
+        break;
       default:
         scrollToSection(homeKey);
     }
@@ -82,14 +83,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // 4. MENGUBAH AKSI NAVBAR MENJADI URL
-      appBar: CustomNavbar(
-        onHomeTap: () => context.go('/'),
-        onAboutTap: () => context.go('/tentang-kami'),
-        onProgramTap: () => context.go('/jenis-beasiswa'),
-        onContactTap: () => context.go('/kontak'),
-        onFAQTap: () => context.go('/faq'),
-      ),
+      
+      // NAVBAR SEKARANG SANGAT BERSIH!
+      appBar: const CustomNavbar(), 
+      
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -99,29 +96,19 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               key: programKey,
               padding: EdgeInsets.only(
-                top: 30,
-                bottom: isMobile ? 40 : 80,
-                left: isMobile ? 20 : 50,
-                right: isMobile ? 20 : 50,
+                top: 30, bottom: isMobile ? 40 : 80,
+                left: isMobile ? 20 : 50, right: isMobile ? 20 : 50,
               ),
               child: Column(
                 children: [
                   RichText(
                     text: TextSpan(
                       style: TextStyle(
-                        fontSize: isMobile ? 32 : 45,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'sans-serif',
+                        fontSize: isMobile ? 32 : 45, fontWeight: FontWeight.bold, fontFamily: 'sans-serif',
                       ),
                       children: [
-                        TextSpan(
-                          text: "Jenis ",
-                          style: TextStyle(color: AppColors.primary),
-                        ),
-                        const TextSpan(
-                          text: "Beasiswa",
-                          style: TextStyle(color: Colors.black),
-                        ),
+                        TextSpan(text: "Jenis ", style: TextStyle(color: AppColors.primary)),
+                        const TextSpan(text: "Beasiswa", style: TextStyle(color: Colors.black)),
                       ],
                     ),
                   ),
@@ -182,12 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.4),
-              Colors.black.withValues(alpha: 0.7),
-            ],
+            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+            colors: [Colors.black.withValues(alpha: 0.4), Colors.black.withValues(alpha: 0.7)],
           ),
         ),
         child: Column(
@@ -196,23 +179,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               "PROGRAM BEASISWA VERNON INDONESIA PINTAR",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isMobile ? 12 : 14,
-                letterSpacing: isMobile ? 1 : 3,
-                fontWeight: FontWeight.w400,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: isMobile ? 12 : 14, letterSpacing: isMobile ? 1 : 3, fontWeight: FontWeight.w400),
             ),
             SizedBox(height: isMobile ? 10 : 20),
             Text(
               "Membuka Pintu Dunia\nLewat Pendidikan",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isMobile ? 36 : 55,
-                fontWeight: FontWeight.w900,
-                height: 1.1,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: isMobile ? 36 : 55, fontWeight: FontWeight.w900, height: 1.1),
             ),
             SizedBox(height: isMobile ? 10 : 15),
             Text(
@@ -224,15 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
             if (isMobile)
               Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: _buildPrimaryButton(context, isMobile),
-                  ),
+                  SizedBox(width: double.infinity, child: _buildPrimaryButton(context, isMobile)),
                   const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _buildSecondaryButton(isMobile),
-                  ),
+                  SizedBox(width: double.infinity, child: _buildSecondaryButton(isMobile)),
                 ],
               )
             else
@@ -250,22 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 5. MENGUBAH AKSI TOMBOL LOGIN (DAFTAR SEKARANG)
   Widget _buildPrimaryButton(BuildContext context, bool isMobile) {
     return ElevatedButton(
-      onPressed: () => context.go('/login'), // Pakai URL sekarang
+      onPressed: () => context.go('/login'),
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 20 : 35,
-          vertical: isMobile ? 18 : 25,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 35, vertical: isMobile ? 18 : 25),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
-      child: const Text(
-        "DAFTAR SEKARANG",
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
+      child: const Text("DAFTAR SEKARANG", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -274,37 +234,23 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () => context.go('/panduan-pendaftaran'),
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Colors.white, width: 2),
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 20 : 35,
-          vertical: isMobile ? 18 : 25,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 35, vertical: isMobile ? 18 : 25),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
-      child: const Text(
-        "PANDUAN PENDAFTARAN",
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
+      child: const Text("PANDUAN PENDAFTARAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
     );
   }
 
   Widget _buildRequirementSection(bool isMobile) {
     return Container(
-      key: stepKey,
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100,
-        horizontal: isMobile ? 20 : 50,
-      ),
+      key: stepKey, width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 60 : 100, horizontal: isMobile ? 20 : 50),
       color: Colors.white,
       child: Column(
         children: [
           Text(
-            "Langkah Pendaftaran Beasiswa",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.bold,
-            ),
+            "Langkah Pendaftaran Beasiswa", textAlign: TextAlign.center,
+            style: TextStyle(fontSize: isMobile ? 24 : 32, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: isMobile ? 40 : 60),
           if (isMobile)
@@ -321,8 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           else
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly, crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _buildStepItem(Icons.edit_note_rounded, "Isi Formulir", "Lengkapi data diri di Portal Siswa.")),
                 Expanded(child: _buildStepItem(Icons.cloud_upload_outlined, "Unggah Berkas", "Upload scan rapor & prestasi.")),
@@ -341,45 +286,23 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(25),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
           child: Icon(icon, color: AppColors.primary, size: 40),
         ),
         const SizedBox(height: 25),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        Text(
-          desc,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[600], fontSize: 15),
-        ),
+        Text(desc, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[600], fontSize: 15)),
       ],
     );
   }
 
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     final List<Map<String, String>> previewFaqs = [
-      {
-        "tanya": "Apa itu Beasiswa Vernon Indonesia Pintar?",
-        "jawab": "Beasiswa VIP adalah program apresiasi pendidikan untuk siswa dan mahasiswa berprestasi dari seluruh Indonesia.",
-      },
-      {
-        "tanya": "Apa saja jenis Beasiswa yang tersedia?",
-        "jawab": "Terdapat dua jalur: Beasiswa Berprestasi (Akademik/Non-Akademik) dan Beasiswa Reguler (Bantuan Finansial).",
-      },
-      {
-        "tanya": "Siapa saja yang bisa mendaftar?",
-        "jawab": "Siswa SMA/SMK/MA sederajat kelas 12 dan Mahasiswa aktif maksimal semester 4.",
-      },
-      {
-        "tanya": "Apakah pendaftaran dipungut biaya?",
-        "jawab": "Tidak. Seluruh proses seleksi Beasiswa VIP 100% GRATIS dan tidak dipungut biaya apapun.",
-      },
+      {"tanya": "Apa itu Beasiswa Vernon Indonesia Pintar?", "jawab": "Beasiswa VIP adalah program apresiasi pendidikan untuk siswa dan mahasiswa berprestasi dari seluruh Indonesia."},
+      {"tanya": "Apa saja jenis Beasiswa yang tersedia?", "jawab": "Terdapat dua jalur: Beasiswa Berprestasi (Akademik/Non-Akademik) dan Beasiswa Reguler (Bantuan Finansial)."},
+      {"tanya": "Siapa saja yang bisa mendaftar?", "jawab": "Siswa SMA/SMK/MA sederajat kelas 12 dan Mahasiswa aktif maksimal semester 4."},
+      {"tanya": "Apakah pendaftaran dipungut biaya?", "jawab": "Tidak. Seluruh proses seleksi Beasiswa VIP 100% GRATIS dan tidak dipungut biaya apapun."},
     ];
 
     Widget faqContent = Column(
@@ -388,12 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
         RichText(
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
           text: TextSpan(
-            style: TextStyle(
-              fontSize: isMobile ? 28 : 38,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'sans-serif',
-              height: 1.2,
-            ),
+            style: TextStyle(fontSize: isMobile ? 28 : 38, fontWeight: FontWeight.bold, fontFamily: 'sans-serif', height: 1.2),
             children: [
               TextSpan(text: "Pertanyaan seputar\n", style: TextStyle(color: AppColors.primary)),
               const TextSpan(text: "Beasiswa VIP", style: TextStyle(color: Colors.black87)),
@@ -401,18 +319,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 15),
-        Text(
-          "Hal umum yang sering ditanyakan oleh pendaftar.",
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-        ),
+        Text("Hal umum yang sering ditanyakan oleh pendaftar.", textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
         SizedBox(height: isMobile ? 30 : 40),
         FAQAccordion(faqs: previewFaqs),
         SizedBox(height: isMobile ? 20 : 30),
-        
-        // 6. MENGUBAH TOMBOL "LIHAT LEBIH BANYAK"
         ElevatedButton(
-          onPressed: () => context.go('/faq'), // Pakai URL sekarang
+          onPressed: () => context.go('/pusat-bantuan'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
@@ -425,40 +337,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Widget illustration = Container(
       height: isMobile ? 250 : 500,
-      decoration: BoxDecoration(
-        image: const DecorationImage(
-          image: AssetImage('assets/faq_illustration.png'),
-          fit: BoxFit.contain,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(image: const DecorationImage(image: AssetImage('assets/faq_illustration.png'), fit: BoxFit.contain), borderRadius: BorderRadius.circular(20)),
       child: const Icon(Icons.live_help_outlined, size: 200, color: Colors.black12),
     );
 
     return Container(
-      key: faqKey,
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100,
-        horizontal: isMobile ? 20 : 80,
-      ),
+      key: faqKey, width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 60 : 100, horizontal: isMobile ? 20 : 80),
       color: const Color(0xFFFDFCF8),
       child: isMobile
-          ? Column(
-              children: [
-                illustration,
-                const SizedBox(height: 40),
-                faqContent,
-              ],
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(flex: 5, child: faqContent),
-                const SizedBox(width: 80),
-                Expanded(flex: 4, child: illustration),
-              ],
-            ),
+          ? Column(children: [illustration, const SizedBox(height: 40), faqContent])
+          : Row(crossAxisAlignment: CrossAxisAlignment.center, children: [Expanded(flex: 5, child: faqContent), const SizedBox(width: 80), Expanded(flex: 4, child: illustration)]),
     );
   }
 
@@ -466,70 +355,32 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget aboutFooter = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        const Text(
-          "VERNON INDONESIA PINTAR",
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        const Text("VERNON INDONESIA PINTAR", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 15),
-        Text(
-          "Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.",
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
-        ),
+        Text("Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.", textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14)),
       ],
     );
 
     Widget contactFooter = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        const Text(
-          "HUBUNGI KAMI",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        const Text("HUBUNGI KAMI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         const SizedBox(height: 15),
         _footerLink("WhatsApp: +62 812-3456-7890", isMobile),
         _footerLink("Email: info@vip.or.id", isMobile),
-        _footerLink(
-          "Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia",
-          isMobile,
-        ),
+        _footerLink("Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia", isMobile),
       ],
     );
 
     return Container(
-      key: contactKey,
-      width: double.infinity,
-      color: const Color(0xFF1A1A1A),
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 40 : 60,
-        horizontal: isMobile ? 30 : 50,
-      ),
+      key: contactKey, width: double.infinity, color: const Color(0xFF1A1A1A),
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60, horizontal: isMobile ? 30 : 50),
       child: Column(
         children: [
-          if (isMobile)
-            Column(
-              children: [
-                aboutFooter,
-                const SizedBox(height: 40),
-                contactFooter,
-              ],
-            )
-          else
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(flex: 2, child: aboutFooter),
-                const SizedBox(width: 50),
-                Expanded(child: contactFooter),
-              ],
-            ),
+          if (isMobile) Column(children: [aboutFooter, const SizedBox(height: 40), contactFooter])
+          else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 2, child: aboutFooter), const SizedBox(width: 50), Expanded(child: contactFooter)]),
           SizedBox(height: isMobile ? 30 : 50),
-          Text(
-            "© 2026 Vernon Indonesia Pintar. All Rights Reserved.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
-          ),
+          Text("© 2026 Vernon Indonesia Pintar. All Rights Reserved.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12)),
         ],
       ),
     );
@@ -538,14 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _footerLink(String title, bool isMobile) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {},
-        child: Text(
-          title,
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15),
-        ),
-      ),
+      child: InkWell(onTap: () {}, child: Text(title, textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15))),
     );
   }
 }
@@ -556,71 +400,28 @@ class _HomeScreenState extends State<HomeScreen> {
 class FAQAccordion extends StatefulWidget {
   final List<Map<String, String>> faqs;
   const FAQAccordion({super.key, required this.faqs});
-
   @override
   State<FAQAccordion> createState() => _FAQAccordionState();
 }
-
 class _FAQAccordionState extends State<FAQAccordion> {
   int expandedIndex = -1;
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: List.generate(widget.faqs.length, (index) {
         final faq = widget.faqs[index];
         final bool isExpanded = expandedIndex == index;
-
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 5, offset: const Offset(0, 2))]),
           child: Theme(
             data: ThemeData().copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               key: Key(index.toString() + isExpanded.toString()),
-              initiallyExpanded: isExpanded,
-              iconColor: AppColors.primary,
-              collapsedIconColor: Colors.grey,
-              title: Text(
-                faq["tanya"]!,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.black87,
-                ),
-              ),
-              onExpansionChanged: (bool expanded) {
-                setState(() {
-                  if (expanded) {
-                    expandedIndex = index;
-                  } else {
-                    expandedIndex = -1;
-                  }
-                });
-              },
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      faq["jawab"]!,
-                      style: TextStyle(color: Colors.grey[700], height: 1.6),
-                    ),
-                  ),
-                ),
-              ],
+              initiallyExpanded: isExpanded, iconColor: AppColors.primary, collapsedIconColor: Colors.grey,
+              title: Text(faq["tanya"]!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
+              onExpansionChanged: (bool expanded) { setState(() { if (expanded) { expandedIndex = index; } else { expandedIndex = -1; } }); },
+              children: [Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20), child: Align(alignment: Alignment.centerLeft, child: Text(faq["jawab"]!, style: TextStyle(color: Colors.grey[700], height: 1.6))))],
             ),
           ),
         );

@@ -1,23 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Tambahkan mesin rute
+import 'package:go_router/go_router.dart'; 
 import '../../core/app_colors.dart';
-// import '../auth/login_screen.dart'; <--- INI SUDAH DIHAPUS
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback? onHomeTap;
-  final VoidCallback? onAboutTap;
-  final VoidCallback? onProgramTap;
-  final VoidCallback? onContactTap;
-  final VoidCallback? onFAQTap; 
-
-  const CustomNavbar({
-    super.key,
-    this.onHomeTap,
-    this.onAboutTap,
-    this.onProgramTap,
-    this.onContactTap,
-    this.onFAQTap,
-  });
+  // Tidak perlu lagi menerima banyak parameter panjang!
+  const CustomNavbar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,16 +41,13 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       offset: const Offset(0, 45),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: (value) {
-        if (value == 'home') onHomeTap?.call();
-        if (value == 'program') onProgramTap?.call();
-        if (value == 'about') onAboutTap?.call();
-        if (value == 'faq') onFAQTap?.call();
-        if (value == 'contact') onContactTap?.call();
-        
-        // UBAH: Menggunakan GoRouter untuk versi Mobile
-        if (value == 'login') {
-          context.go('/login'); 
-        }
+        // NAVIGASI PINTAR GOROUTER UNTUK MOBILE
+        if (value == 'home') context.go('/');
+        if (value == 'program') context.go('/jenis-beasiswa');
+        if (value == 'about') context.go('/tentang-kami');
+        if (value == 'faq') context.go('/faq');
+        if (value == 'contact') context.go('/kontak');
+        if (value == 'login') context.go('/login'); 
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(value: 'home', child: Text('Beranda')),
@@ -86,38 +70,28 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildDesktopMenu(BuildContext context) {
     return Row(
       children: [
-        _navbarItem("Beranda", onHomeTap),
+        // NAVIGASI PINTAR GOROUTER UNTUK DESKTOP
+        _navbarItem("Beranda", () => context.go('/')),
         const SizedBox(width: 30),
-        _navbarItem("Jenis Beasiswa", onProgramTap),
+        _navbarItem("Jenis Beasiswa", () => context.go('/jenis-beasiswa')),
         const SizedBox(width: 30),
-        _navbarItem("Tentang Kami", onAboutTap),
+        _navbarItem("Tentang Kami", () => context.go('/tentang-kami')),
         const SizedBox(width: 30),
-        _navbarItem("FAQ", onFAQTap),
+        _navbarItem("FAQ", () => context.go('/faq')),
         const SizedBox(width: 30),
-        _navbarItem("Kontak", onContactTap),
+        _navbarItem("Kontak", () => context.go('/kontak')),
         const SizedBox(width: 40),
 
         ElevatedButton(
-          // UBAH: Menggunakan GoRouter untuk versi Desktop
-          onPressed: () {
-            context.go('/login');
-          },
+          onPressed: () => context.go('/login'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 25,
-              vertical: 18,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           child: const Text(
             "Portal Siswa",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
       ],

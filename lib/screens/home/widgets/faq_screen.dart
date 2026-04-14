@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Tambahkan ini
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
-import '../home_screen.dart';
+// import '../home_screen.dart'; <--- INI SUDAH DIHAPUS
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -17,56 +18,40 @@ class _FAQScreenState extends State<FAQScreen> {
   final List<Map<String, String>> faqBerprestasi = [
     {
       "tanya": "Apa syarat nilai/prestasi untuk Beasiswa Berprestasi?",
-      "jawab":
-          "Pendaftar wajib memiliki IPK minimal 3.20 (untuk mahasiswa) atau rata-rata rapor 85.00 (untuk siswa SMA). Prestasi tingkat nasional atau internasional akan menjadi nilai tambah yang besar.",
+      "jawab": "Pendaftar wajib memiliki IPK minimal 3.20 (untuk mahasiswa) atau rata-rata rapor 85.00 (untuk siswa SMA). Prestasi tingkat nasional atau internasional akan menjadi nilai tambah yang besar.",
     },
     {
       "tanya": "Apakah Beasiswa Berprestasi mengcover biaya hidup?",
-      "jawab":
-          "Ya, Beasiswa Berprestasi memberikan pembebasan biaya pendidikan (UKT/SPP) 100% sekaligus uang saku bulanan sebesar Rp 1.500.000.",
+      "jawab": "Ya, Beasiswa Berprestasi memberikan pembebasan biaya pendidikan (UKT/SPP) 100% sekaligus uang saku bulanan sebesar Rp 1.500.000.",
     },
     {
       "tanya": "Apakah saya harus aktif berorganisasi?",
-      "jawab":
-          "Sangat disarankan. Kami mencari calon pemimpin masa depan, sehingga rekam jejak kepemimpinan dalam organisasi sekolah/kampus akan sangat dipertimbangkan.",
+      "jawab": "Sangat disarankan. Kami mencari calon pemimpin masa depan, sehingga rekam jejak kepemimpinan dalam organisasi sekolah/kampus akan sangat dipertimbangkan.",
     },
     {
       "tanya": "Bagaimana format surat rekomendasi yang benar?",
-      "jawab":
-          "Surat rekomendasi diketik bebas, namun wajib menggunakan kop surat resmi sekolah/kampus, ditandatangani oleh Kepala Sekolah/Dekan, dan diberi stempel basah.",
+      "jawab": "Surat rekomendasi diketik bebas, namun wajib menggunakan kop surat resmi sekolah/kampus, ditandatangani oleh Kepala Sekolah/Dekan, dan diberi stempel basah.",
     },
   ];
 
   final List<Map<String, String>> faqReguler = [
     {
       "tanya": "Apa itu Beasiswa Reguler?",
-      "jawab":
-          "Program bantuan pendidikan yang ditujukan bagi masyarakat umum guna menjamin keberlangsungan pendidikan bagi siswa/mahasiswa yang memiliki keterbatasan finansial.",
+      "jawab": "Program bantuan pendidikan yang ditujukan bagi masyarakat umum guna menjamin keberlangsungan pendidikan bagi siswa/mahasiswa yang memiliki keterbatasan finansial.",
     },
     {
       "tanya": "Apakah ada syarat batas pendapatan orang tua?",
-      "jawab":
-          "Ya, untuk jalur Reguler, gabungan pendapatan kotor kedua orang tua/wali maksimal adalah Rp 4.000.000 per bulan, dibuktikan dengan slip gaji atau Surat Keterangan Tidak Mampu (SKTM).",
+      "jawab": "Ya, untuk jalur Reguler, gabungan pendapatan kotor kedua orang tua/wali maksimal adalah Rp 4.000.000 per bulan, dibuktikan dengan slip gaji atau Surat Keterangan Tidak Mampu (SKTM).",
     },
     {
       "tanya": "Berapa minimal IPK/Rapor untuk jalur Reguler?",
-      "jawab":
-          "Syarat akademik untuk jalur Reguler lebih ringan, yaitu minimal IPK 2.75 untuk mahasiswa, dan nilai rata-rata rapor 75.00 untuk siswa.",
+      "jawab": "Syarat akademik untuk jalur Reguler lebih ringan, yaitu minimal IPK 2.75 untuk mahasiswa, dan nilai rata-rata rapor 75.00 untuk siswa.",
     },
     {
       "tanya": "Apa saja benefit dari Beasiswa Reguler?",
-      "jawab":
-          "Penerima akan mendapatkan bantuan biaya pendidikan penuh dan uang saku bulanan sebesar Rp 750.000.",
+      "jawab": "Penerima akan mendapatkan bantuan biaya pendidikan penuh dan uang saku bulanan sebesar Rp 750.000.",
     },
   ];
-
-  void _backToHome(BuildContext context) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
-      (Route<dynamic> route) => false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,17 +63,9 @@ class _FAQScreenState extends State<FAQScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
 
-      // PERUBAHAN: Navbar kita kembalikan menjadi appBar standar
-      // Sekarang dia akan selalu muncul di atas tanpa perlu di-scroll!
-      appBar: CustomNavbar(
-        onHomeTap: () => _backToHome(context),
-        onAboutTap: () => _backToHome(context),
-        onProgramTap: () => _backToHome(context),
-        onContactTap: () => _backToHome(context),
-        onFAQTap: () {}, // Diam saja karena sedang di halaman FAQ
-      ),
+      // APPBAR SANGAT BERSIH! Karena Navbar sudah mandiri
+      appBar: const CustomNavbar(),
 
-      // PERUBAHAN: Stack dan Pendeteksi Scroll sudah dihapus sepenuhnya
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -143,7 +120,7 @@ class _FAQScreenState extends State<FAQScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         InkWell(
-                          onTap: () => _backToHome(context),
+                          onTap: () => context.go('/'), // UBAH: Pakai GoRouter
                           child: const Text(
                             "Beranda",
                             style: TextStyle(

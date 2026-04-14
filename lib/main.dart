@@ -27,10 +27,10 @@ final GoRouter _router = GoRouter(
     ),
     
     // RUTE STATIS (HALAMAN BERBEDA)
+    // Kita ganti URL halaman penuhnya menjadi pusat-bantuan
     GoRoute(
-      path: '/faq', 
-      builder: (context, state) => const FAQScreen(),
-    ),
+      path: '/pusat-bantuan', 
+      builder: (context, state) => const FAQScreen()),
     GoRoute(
       path: '/login', 
       builder: (context, state) => const LoginScreen(),
@@ -53,8 +53,6 @@ final GoRouter _router = GoRouter(
 
         return ProgramDetailScreen(
           program: dataProgram,
-          onHomeTap: () => context.go('/'),
-          onProgramTap: () => context.go('/portal'),
         ); 
       },
     ),
