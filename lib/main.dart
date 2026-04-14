@@ -1,49 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Mesin rute baru
-import 'package:flutter_web_plugins/url_strategy.dart'; // Pembersih tanda '#' di URL
+import 'package:go_router/go_router.dart'; 
+import 'package:flutter_web_plugins/url_strategy.dart'; 
 
-// --- 1. PANGGIL SEMUA HALAMAN DI SINI ---
+// --- 1. IMPORT SEMUA HALAMAN ---
 import 'screens/home/home_screen.dart';
 import 'screens/home/widgets/faq_screen.dart'; 
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/portal/dashboard_screen.dart';
 import 'screens/program_detail_screen.dart'; 
-
-// --- PANGGIL MODEL DATA ---
-// Ini wajib dipanggil agar main.dart mengenali apa itu 'ProgramModel'
 import 'data/models/program_model.dart'; 
 
 void main() {
-  // MANTRA WEB: Menghilangkan tanda pagar (#) agar URL bersih
   usePathUrlStrategy(); 
   runApp(const YayasanApp());
 }
 
-// --- 2. BUAT PETA RUTE WEBSITE ---
+// --- 2. PETA RUTE WEBSITE (ROUTER) ---
 final GoRouter _router = GoRouter(
-  initialLocation: '/', // Saat web dibuka, langsung ke Home
+  initialLocation: '/',
   routes: [
+    // RUTE UTAMA (BERANDA)
     GoRoute(
       path: '/', 
-      builder: (context, state) => HomeScreen(),
+      builder: (context, state) => const HomeScreen(),
     ),
-    GoRoute(
-      path: '/tentang-kami', 
-      builder: (context, state) => const HomeScreen(targetSection: 'tentang-kami'),
-    ),
-    GoRoute(
-      path: '/jenis-beasiswa', 
-      builder: (context, state) => const HomeScreen(targetSection: 'jenis-beasiswa'),
-    ),
-    GoRoute(
-      path: '/kontak', 
-      builder: (context, state) => const HomeScreen(targetSection: 'kontak'),
-    ),
-    GoRoute(
-      path: '/panduan-pendaftaran', 
-      builder: (context, state) => const HomeScreen(targetSection: 'panduan-pendaftaran'),
-    ),
+    
+    // RUTE STATIS (HALAMAN BERBEDA)
     GoRoute(
       path: '/faq', 
       builder: (context, state) => const FAQScreen(),
@@ -61,29 +44,28 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const DashboardScreen(),
     ),
     
-    // --- PERBAIKAN RUTE DINAMIS DETAIL PROGRAM ---
+    // RUTE DETAIL PROGRAM (DENGAN DATA EXTRA)
     GoRoute(
       path: '/program/:id', 
       builder: (context, state) {
-        // 1. Menangkap data 'extra' yang dilempar dari halaman sebelumnya
-        // Jika data kosong (misal karena user me-refresh web), kita siapkan penanganan sementaranya
         final dataProgram = state.extra as ProgramModel?;
+        if (dataProgram == null) return const HomeScreen(); 
 
-        // Jika data tidak sengaja kosong, kembalikan saja ke Beranda (Home)
-        if (dataProgram == null) {
-          return HomeScreen(); 
-        }
-
-        // 2. Memasukkan 3 syarat wajib ke dalam halaman detail
         return ProgramDetailScreen(
-          program: dataProgram, // Syarat 1: Data model program
-          onHomeTap: () {
-            context.go('/'); // Syarat 2: Aksi jika klik tombol Home
-          },
-          onProgramTap: () {
-            context.go('/portal'); // Syarat 3: Aksi jika klik tombol Program
-          },
+          program: dataProgram,
+          onHomeTap: () => context.go('/'),
+          onProgramTap: () => context.go('/portal'),
         ); 
+      },
+    ),
+
+    // --- MANTRA: RUTE DINAMIS UNTUK SEKSI HOMESCREEN ---
+    // Letakkan di paling bawah agar tidak "memakan" rute /login atau /faq
+    GoRoute(
+      path: '/:section', 
+      builder: (context, state) {
+        final section = state.pathParameters['section'];
+        return HomeScreen(targetSection: section);
       },
     ),
   ],
