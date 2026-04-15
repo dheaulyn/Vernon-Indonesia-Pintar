@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // Tambahkan ini
+import 'package:go_router/go_router.dart'; 
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
-// import '../home_screen.dart'; <--- INI SUDAH DIHAPUS
+
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -63,13 +63,11 @@ class _FAQScreenState extends State<FAQScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
 
-      // APPBAR SANGAT BERSIH! Karena Navbar sudah mandiri
       appBar: const CustomNavbar(),
 
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER BANNER ALA VIP ---
             Container(
               width: double.infinity,
               height: 320,
@@ -115,12 +113,11 @@ class _FAQScreenState extends State<FAQScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // BREADCRUMB
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         InkWell(
-                          onTap: () => context.go('/'), // UBAH: Pakai GoRouter
+                          onTap: () => context.go('/'), 
                           child: const Text(
                             "Beranda",
                             style: TextStyle(
@@ -144,7 +141,6 @@ class _FAQScreenState extends State<FAQScreen> {
               ),
             ),
 
-            // --- KONTEN FAQ ---
             Transform.translate(
               offset: const Offset(0, -40),
               child: Padding(
@@ -152,7 +148,6 @@ class _FAQScreenState extends State<FAQScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- TOMBOL TAB PILIHAN PREMIUM ---
                     Row(
                       children: [
                         _buildTabButton("Beasiswa Berprestasi", 0),
@@ -173,7 +168,6 @@ class _FAQScreenState extends State<FAQScreen> {
                     ),
                     const SizedBox(height: 25),
 
-                    // --- LIST FAQ ACCORDION ---
                     ...List.generate(currentFaqList.length, (index) {
                       final faq = currentFaqList[index];
                       final bool isExpanded = expandedIndex == index;
@@ -265,7 +259,6 @@ class _FAQScreenState extends State<FAQScreen> {
     );
   }
 
-  // WIDGET PEMBANTU UNTUK TOMBOL TAB ALA VIP
   Widget _buildTabButton(String title, int index) {
     bool isSelected = selectedTabIndex == index;
 
