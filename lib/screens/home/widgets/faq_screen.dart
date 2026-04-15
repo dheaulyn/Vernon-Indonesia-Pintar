@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
-
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -59,18 +58,19 @@ class _FAQScreenState extends State<FAQScreen> {
     final String currentTitle = selectedTabIndex == 0
         ? "FAQ Beasiswa Berprestasi 2026"
         : "FAQ Beasiswa Reguler 2026";
+        
+    // Deteksi apakah layar sedang diakses via HP atau PC
+    final bool isMobile = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-
       appBar: const CustomNavbar(),
-
       body: SingleChildScrollView(
         child: Column(
           children: [
             Container(
               width: double.infinity,
-              height: 320,
+              height: isMobile ? 250 : 320, 
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/beranda.png'),
@@ -91,51 +91,58 @@ class _FAQScreenState extends State<FAQScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "PUSAT BANTUAN",
                       style: TextStyle(
                         color: Colors.white70,
-                        fontSize: 16,
+                        fontSize: isMobile ? 14 : 16, 
                         letterSpacing: 3,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      "Frequently Asked Questions",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
+                    
+                    // PERBAIKAN 1: Padding agar teks tidak mepet layar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        "Frequently Asked Questions",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isMobile ? 28 : 40, 
+                          fontWeight: FontWeight.bold,
+                          height: 1.2,
+                        ),
                       ),
                     ),
+                    
                     const SizedBox(height: 20),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        InkWell(
-                          onTap: () => context.go('/'), 
-                          child: const Text(
-                            "Beranda",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          "  /  FAQ",
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
+                    // BREADCRUMB
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    //     InkWell(
+                    //       onTap: () => context.go('/'),
+                    //       child: Text(
+                    //         "Beranda",
+                    //         style: TextStyle(
+                    //           color: Colors.white,
+                    //           fontSize: isMobile ? 13 : 15,
+                    //           fontWeight: FontWeight.bold,
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     Text(
+                    //       "  /  FAQ",
+                    //       style: TextStyle(
+                    //         color: Colors.white.withValues(alpha: 0.7),
+                    //         fontSize: isMobile ? 13 : 15,
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
@@ -144,15 +151,15 @@ class _FAQScreenState extends State<FAQScreen> {
             Transform.translate(
               offset: const Offset(0, -40),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 100),
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        _buildTabButton("Beasiswa Berprestasi", 0),
-                        const SizedBox(width: 20),
-                        _buildTabButton("Beasiswa Reguler", 1),
+                        _buildTabButton("Beasiswa Berprestasi", 0, isMobile),
+                        const SizedBox(width: 15),
+                        _buildTabButton("Beasiswa Reguler", 1, isMobile),
                       ],
                     ),
 
@@ -161,12 +168,12 @@ class _FAQScreenState extends State<FAQScreen> {
                     Text(
                       currentTitle,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: isMobile ? 20 : 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[800],
                       ),
                     ),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 20),
 
                     ...List.generate(currentFaqList.length, (index) {
                       final faq = currentFaqList[index];
@@ -174,10 +181,10 @@ class _FAQScreenState extends State<FAQScreen> {
 
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.only(bottom: 15),
+                        margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isExpanded
                                 ? AppColors.primary.withValues(alpha: 0.5)
@@ -185,9 +192,9 @@ class _FAQScreenState extends State<FAQScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
@@ -203,12 +210,12 @@ class _FAQScreenState extends State<FAQScreen> {
                             ),
                             initiallyExpanded: isExpanded,
                             iconColor: AppColors.primary,
-                            collapsedIconColor: Colors.grey[400],
+                            collapsedIconColor: Colors.grey,
                             title: Text(
                               faq["tanya"]!,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 15,
                                 color: isExpanded
                                     ? AppColors.primary
                                     : Colors.black87,
@@ -259,7 +266,8 @@ class _FAQScreenState extends State<FAQScreen> {
     );
   }
 
-  Widget _buildTabButton(String title, int index) {
+  // WIDGET PEMBANTU UNTUK TOMBOL TAB ALA VIP
+  Widget _buildTabButton(String title, int index, bool isMobile) {
     bool isSelected = selectedTabIndex == index;
 
     return Expanded(
@@ -272,7 +280,9 @@ class _FAQScreenState extends State<FAQScreen> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+          // PERBAIKAN 2: Menggunakan tinggi pasti (height)
+          height: isMobile ? 65 : 75,
+          padding: const EdgeInsets.symmetric(horizontal: 5),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary : Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -300,10 +310,14 @@ class _FAQScreenState extends State<FAQScreen> {
             child: Text(
               title,
               textAlign: TextAlign.center,
+              // PERBAIKAN 3: Membatasi maksimal baris dan overflow teks
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: isMobile ? 12 : 16, 
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+                letterSpacing: 1.0,
+                height: 1.2,
                 color: isSelected ? Colors.white : Colors.grey[600],
               ),
             ),
