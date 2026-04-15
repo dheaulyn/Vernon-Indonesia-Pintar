@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../shared/custom_navbar.dart';
 import 'widgets/program_card.dart';
 import 'widgets/about_section.dart';
-import 'widgets/faq_screen.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
 
