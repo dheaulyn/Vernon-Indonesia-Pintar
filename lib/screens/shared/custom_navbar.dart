@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 
 class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
-  // Tidak perlu lagi menerima banyak parameter panjang!
   const CustomNavbar({super.key});
 
   @override
@@ -12,17 +11,24 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 50, vertical: 15),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 50,
+        vertical: 15,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              Image.asset(
-                'assets/logo.png',
-                height: 40,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.school, size: 40, color: Colors.black),
+              InkWell(
+                onTap: () => context.go('/'),
+                mouseCursor: SystemMouseCursors.click,
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.school, size: 40, color: Colors.black),
+                ),
               ),
             ],
           ),
@@ -41,18 +47,23 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       offset: const Offset(0, 45),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: (value) {
-        // NAVIGASI PINTAR GOROUTER UNTUK MOBILE
         if (value == 'home') context.go('/');
         if (value == 'program') context.go('/jenis-beasiswa');
         if (value == 'about') context.go('/tentang-kami');
         if (value == 'faq') context.go('/faq');
         if (value == 'contact') context.go('/kontak');
-        if (value == 'login') context.go('/login'); 
+        if (value == 'login') context.go('/login');
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(value: 'home', child: Text('Beranda')),
-        const PopupMenuItem<String>(value: 'program', child: Text('Jenis Beasiswa')),
-        const PopupMenuItem<String>(value: 'about', child: Text('Tentang Kami')),
+        const PopupMenuItem<String>(
+          value: 'program',
+          child: Text('Jenis Beasiswa'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'about',
+          child: Text('Tentang Kami'),
+        ),
         const PopupMenuItem<String>(value: 'faq', child: Text('FAQ')),
         const PopupMenuItem<String>(value: 'contact', child: Text('Kontak')),
         const PopupMenuDivider(),
@@ -60,7 +71,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           value: 'login',
           child: Text(
             'Portal Siswa',
-            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -70,7 +84,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildDesktopMenu(BuildContext context) {
     return Row(
       children: [
-        // NAVIGASI PINTAR GOROUTER UNTUK DESKTOP
         _navbarItem("Beranda", () => context.go('/')),
         const SizedBox(width: 30),
         _navbarItem("Jenis Beasiswa", () => context.go('/jenis-beasiswa')),
@@ -87,7 +100,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
           child: const Text(
             "Portal Siswa",
@@ -100,7 +115,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _navbarItem(String title, VoidCallback? onTap) {
     return InkWell(
-      onTap: onTap, 
+      onTap: onTap,
       child: Text(
         title,
         style: const TextStyle(

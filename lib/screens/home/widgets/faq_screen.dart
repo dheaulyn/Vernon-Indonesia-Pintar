@@ -68,7 +68,6 @@ class _FAQScreenState extends State<FAQScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER BANNER ALA VIP ---
             Container(
               width: double.infinity,
               height: isMobile ? 250 : 320, 
@@ -149,7 +148,6 @@ class _FAQScreenState extends State<FAQScreen> {
               ),
             ),
 
-            // --- KONTEN FAQ ---
             Transform.translate(
               offset: const Offset(0, -40),
               child: Padding(
@@ -157,7 +155,6 @@ class _FAQScreenState extends State<FAQScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- TOMBOL TAB PILIHAN PREMIUM ---
                     Row(
                       children: [
                         _buildTabButton("Beasiswa Berprestasi", 0, isMobile),
@@ -178,7 +175,6 @@ class _FAQScreenState extends State<FAQScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // --- LIST FAQ ACCORDION ---
                     ...List.generate(currentFaqList.length, (index) {
                       final faq = currentFaqList[index];
                       final bool isExpanded = expandedIndex == index;
