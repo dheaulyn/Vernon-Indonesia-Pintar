@@ -9,6 +9,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/portal/dashboard_screen.dart';
 import 'screens/program_detail_screen.dart'; 
+import 'screens/admin/layout_dashboard.dart'; 
 import 'data/models/program_model.dart'; 
 
 void main() {
@@ -42,6 +43,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/portal', 
       builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: '/admin', 
+      builder: (context, state) => const LayoutDashboard(),
     ),
     
     // RUTE DETAIL PROGRAM (DENGAN DATA EXTRA)
