@@ -4,13 +4,13 @@ class MockDatabase {
       'name': 'TES',
       'email': 'tes@mail.com',
       'password': 'tes',
-      'role': 'siswa', // 👇 Tambahkan peran (role) untuk user biasa
+      'role': 'siswa', 
     },
     'admin@vip.com': {
       'name': 'ADMINISTRATOR VIP',
       'email': 'admin@vip.com',
       'password': 'admin',
-      'role': 'admin', // 👇 Tambahkan peran (role) khusus admin
+      'role': 'admin', 
     },
   };
 
