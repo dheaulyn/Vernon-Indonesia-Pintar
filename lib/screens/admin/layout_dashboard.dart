@@ -6,7 +6,7 @@ import '../../data/mock_database.dart';
 // Import halaman-halaman konten
 import 'home_dashboard.dart';
 import 'faq_admin.dart';
-import 'jenis_beasiswa_admin.dart'; // Nanti kamu buat file ini
+import 'jenis_beasiswa_admin.dart';
 
 class LayoutDashboard extends StatefulWidget {
   const LayoutDashboard({super.key});
@@ -21,14 +21,14 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
 
   final List<Widget> _adminPages = [
     const HomeDashboard(),
-    const Center(child: Text("Halaman Kelola Beasiswa (Sedang Dibangun)", style: TextStyle(fontSize: 20))),
+    const JenisBeasiswaAdmin(),
     const KelolaFAQPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
-    
+
     // Jika di mobile, paksa sidebar terlipat atau gunakan Drawer
     final bool isSidebarCollapsed = isMobile ? true : _isCollapsed;
 
@@ -40,7 +40,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
         children: [
           // Sidebar ala Portal Siswa
           _buildSidebar(isSidebarCollapsed),
-          
+
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -113,8 +113,13 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   const SizedBox(width: 15),
                   const CircleAvatar(
                     radius: 16,
-                    backgroundColor: Colors.blueAccent, // Beda warna avatar untuk admin
-                    child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 20),
+                    backgroundColor:
+                        Colors.blueAccent, // Beda warna avatar untuk admin
+                    child: Icon(
+                      Icons.admin_panel_settings,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -126,7 +131,13 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   children: [
                     Icon(Icons.logout, color: Colors.redAccent, size: 20),
                     SizedBox(width: 10),
-                    Text('Keluar', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Keluar',
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -168,24 +179,56 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                     padding: EdgeInsets.only(left: 23, bottom: 10),
                     child: Text(
                       'MENU ADMIN',
-                      style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ),
                 if (isCollapsed) const SizedBox(height: 25),
 
                 // Daftar Menu Admin
-                _sidebarMenu(Icons.grid_view_rounded, "Home Dashboard", 0, isCollapsed),
-                _sidebarMenu(Icons.auto_awesome_motion_rounded, "Jenis Beasiswa", 1, isCollapsed),
-                _sidebarMenu(Icons.help_center_rounded, "Kelola FAQ", 2, isCollapsed),
+                _sidebarMenu(
+                  Icons.grid_view_rounded,
+                  "Home Dashboard",
+                  0,
+                  isCollapsed,
+                ),
+                _sidebarMenu(
+                  Icons.auto_awesome_motion_rounded,
+                  "Jenis Beasiswa",
+                  1,
+                  isCollapsed,
+                ),
+                _sidebarMenu(
+                  Icons.help_center_rounded,
+                  "Kelola FAQ",
+                  2,
+                  isCollapsed,
+                ),
 
                 const Spacer(),
                 const Divider(color: Colors.white24),
 
                 // Tombol Lihat Web Publik (Fitur Khusus Admin)
-                _sidebarMenu(Icons.public, "Lihat Web Publik", -2, isCollapsed, isWebLink: true),
-                
+                _sidebarMenu(
+                  Icons.public,
+                  "Lihat Web Publik",
+                  -2,
+                  isCollapsed,
+                  isWebLink: true,
+                ),
+
                 // Tombol Keluar
-                _sidebarMenu(Icons.power_settings_new_rounded, "Keluar", -1, isCollapsed, isLogout: true),
+                _sidebarMenu(
+                  Icons.power_settings_new_rounded,
+                  "Keluar",
+                  -1,
+                  isCollapsed,
+                  isLogout: true,
+                ),
                 const SizedBox(height: 20),
               ],
             ),
@@ -195,9 +238,18 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
     );
   }
 
-  Widget _sidebarMenu(IconData icon, String title, int index, bool isCollapsed, {bool isLogout = false, bool isWebLink = false}) {
+  Widget _sidebarMenu(
+    IconData icon,
+    String title,
+    int index,
+    bool isCollapsed, {
+    bool isLogout = false,
+    bool isWebLink = false,
+  }) {
     final bool isActive = _currentTabIndex == index;
-    final Color activeColor = isLogout ? Colors.redAccent : (isWebLink ? Colors.green : AppColors.primary);
+    final Color activeColor = isLogout
+        ? Colors.redAccent
+        : (isWebLink ? Colors.green : AppColors.primary);
     final Color inactiveColor = Colors.white54;
 
     return Material(
@@ -220,20 +272,39 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
             width: 260,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
-              color: isActive ? activeColor.withOpacity(0.15) : Colors.transparent,
-              border: Border(left: BorderSide(color: isActive ? activeColor : Colors.transparent, width: 4)),
+              color: isActive
+                  ? activeColor.withOpacity(0.15)
+                  : Colors.transparent,
+              border: Border(
+                left: BorderSide(
+                  color: isActive ? activeColor : Colors.transparent,
+                  width: 4,
+                ),
+              ),
             ),
             child: Row(
               children: [
-                Icon(icon, color: isActive ? activeColor : (isWebLink ? Colors.green.withOpacity(0.7) : inactiveColor), size: 24),
+                Icon(
+                  icon,
+                  color: isActive
+                      ? activeColor
+                      : (isWebLink
+                            ? Colors.green.withOpacity(0.7)
+                            : inactiveColor),
+                  size: 24,
+                ),
                 if (!isCollapsed) ...[
                   const SizedBox(width: 15),
                   Expanded(
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: isActive ? Colors.white : (isWebLink ? Colors.green : Colors.white70),
-                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        color: isActive
+                            ? Colors.white
+                            : (isWebLink ? Colors.green : Colors.white70),
+                        fontWeight: isActive
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: 14,
                       ),
                       maxLines: 1,

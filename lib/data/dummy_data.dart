@@ -3,6 +3,7 @@ import 'models/program_model.dart';
 class DummyData {
   static List<ProgramModel> listProgram = [
     ProgramModel(
+      id: 'bea-1',
       judul: "Beasiswa Berprestasi",
       deskripsi:
           "Program apresiasi bagi siswa dan mahasiswa yang memiliki prestasi luar biasa baik di bidang akademik maupun non-akademik (olahraga, seni, dan organisasi). Beasiswa ini bertujuan untuk mencetak calon pemimpin masa depan yang kompetitif dan memiliki dedikasi tinggi dalam mengharumkan nama bangsa.",
@@ -22,6 +23,7 @@ class DummyData {
       ],
     ),
     ProgramModel(
+      id: 'bea-2',
       judul: "Beasiswa Reguler",
       deskripsi:
           "Program bantuan pendidikan yang ditujukan bagi masyarakat umum guna menjamin keberlangsungan pendidikan bagi siswa/mahasiswa yang memiliki keterbatasan finansial namun memiliki semangat belajar yang tinggi. Beasiswa ini merupakan bentuk komitmen kami dalam memeratakan akses pendidikan berkualitas di seluruh Indonesia.",

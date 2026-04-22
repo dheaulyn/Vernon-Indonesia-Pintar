@@ -1,4 +1,5 @@
 class ProgramModel {
+  final String id;
   final String judul;
   final String deskripsi;
   final String imageUrl;
@@ -6,6 +7,7 @@ class ProgramModel {
   final List<String> syarat;
 
   ProgramModel({
+    this.id = '',
     required this.judul,
     required this.deskripsi,
     required this.imageUrl,
