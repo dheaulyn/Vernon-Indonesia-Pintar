@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // 👇 1. Import GoRouter
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart'; // 👇 Import Mock Database
-import '../home/home_screen.dart';
-import 'register_screen.dart';
-import '../portal/dashboard_screen.dart';
+import '../../data/mock_database.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,21 +11,18 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // 👇 1. Tambahkan Controller untuk mengambil inputan form
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
-
-  // 👇 2. Tambahkan State untuk animasi Loading dan Pesan Error
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // 👇 3. Fungsi Login yang terhubung dengan MockDatabase
+  // 👇 2. Fungsi Login yang sudah di-upgrade dengan sistem Role (RBAC)
   Future<void> _handleLogin() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = ''; // Hapus pesan error sebelumnya (jika ada)
+      _errorMessage = ''; 
     });
 
     final email = _emailController.text.trim();
@@ -42,20 +37,24 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Panggil Mock Database untuk mencocokkan data
-    final success = await MockDatabase.login(email, password);
+    // 👇 Panggil loginRole untuk mendapatkan peran (admin / siswa)
+    final String? userRole = await MockDatabase.loginRole(email, password);
 
     setState(() {
       _isLoading = false;
     });
 
-    if (success) {
+    // Jika userRole ada isinya (Login Berhasil)
+    if (userRole != null) {
       if (!mounted) return;
-      // Jika berhasil, arahkan ke Dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
+      
+      // 👇 PENYORTIRAN OTOMATIS BERDASARKAN ROLE
+      if (userRole == 'admin') {
+        context.go('/admin'); // Masuk ke ruangan kepala sekolah (Admin)
+      } else {
+        context.go('/portal'); // Masuk ke kelas (Portal Siswa)
+      }
+      
     } else {
       // Jika gagal, tampilkan pesan error
       setState(() {
@@ -64,7 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // 👇 4. Jangan lupa dispose controller
   @override
   void dispose() {
     _emailController.dispose();
@@ -103,10 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => HomeScreen()),
-                        );
+                        // 👇 Gunakan GoRouter untuk kembali ke beranda
+                        context.go('/');
                       },
                       tooltip: 'Kembali ke Beranda',
                     ),
@@ -115,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
                 const Text(
-                  'Masuk ke Portal Siswa',
+                  'Masuk ke Sistem VIP', // Sedikit diubah agar cocok untuk Admin & Siswa
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -124,12 +120,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Silakan masuk untuk melanjutkan pendaftaran beasiswa Anda.',
+                  'Silakan masuk dengan akun Anda untuk melanjutkan.',
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
 
-                // 👇 5. Tampilkan kotak pesan error jika ada
                 if (_errorMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
@@ -158,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _emailController, // Pasang Controller
+                  controller: _emailController, 
                   decoration: InputDecoration(
                     hintText: 'Masukkan email Anda',
                     border: OutlineInputBorder(
@@ -179,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _passwordController, // Pasang Controller
+                  controller: _passwordController, 
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     hintText: 'Masukkan password Anda',
@@ -217,10 +212,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // 👇 Tombol Masuk (Dengan Animasi Loading)
+                // Tombol Masuk
                 SizedBox(
                   width: double.infinity,
-                  height: 50, // Fix tinggi tombol agar stabil
+                  height: 50, 
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
@@ -257,12 +252,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text('Belum punya akun?'),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        );
+                        // 👇 Gunakan GoRouter untuk ke halaman register
+                        context.go('/register');
                       },
                       child: const Text(
                         'Daftar di sini',
