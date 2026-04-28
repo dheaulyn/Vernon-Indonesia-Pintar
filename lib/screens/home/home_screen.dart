@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _autoScrollToTarget() {
     switch (widget.targetSection) {
-      case 'tentang-kami':
+      case 'tentang':
         scrollToSection(aboutKey);
         break;
       case 'program':

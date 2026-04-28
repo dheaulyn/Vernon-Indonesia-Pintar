@@ -115,9 +115,9 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                             style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: isMobile ? 13 : 15),
                           ),
                           InkWell(
-                            onTap: () => context.go('/jenis-beasiswa'), // Langsung ke Jenis Beasiswa
+                            onTap: () => context.go('/program'), // Langsung ke Jenis Beasiswa
                             child: Text(
-                              "Jenis Beasiswa",
+                              "Program",
                               style: TextStyle(
                                 color: Colors.white, fontSize: isMobile ? 13 : 15, fontWeight: FontWeight.bold,
                               ),

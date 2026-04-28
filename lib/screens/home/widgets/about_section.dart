@@ -19,7 +19,7 @@ class AboutSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          "Lebih dari Sekadar Bantuan Biaya Pendidikan",
+          "Membantu Anak Bangsa Meraih Mimpi",
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
           style: TextStyle(
             fontSize: isMobile ? 26 : 32, 
@@ -29,7 +29,7 @@ class AboutSection extends StatelessWidget {
         ),
         const SizedBox(height: 25),
         Text(
-          "Vernon Indonesia Pintar adalah yayasan nirlaba yang berfokus pada pemberdayaan generasi muda. Melalui Beasiswa Reguler dan Berprestasi, kami berkomitmen untuk menciptakan ekosistem pendidikan yang adil bagi seluruh talenta hebat di Indonesia.",
+          "Vernon Indonesia Pintar bukan sekadar yayasan beasiswa. Kami adalah inkubator karir bagi pemuda berpotensi dari keluarga tidak mampu.",
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
           style: TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.6),
         ),

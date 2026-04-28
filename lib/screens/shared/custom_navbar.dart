@@ -15,22 +15,18 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: (value) {
         if (value == 'home') context.go('/');
+        if (value == 'about') context.go('/tentang');
         if (value == 'program') context.go('/program');
-        if (value == 'about') context.go('/tentang-kami');
+        if (value == 'beasiswa') context.go('/beasiswa');
         if (value == 'faq') context.go('/faq');
         if (value == 'contact') context.go('/kontak');
         if (value == 'login') context.go('/login');
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         const PopupMenuItem<String>(value: 'home', child: Text('Beranda')),
-        const PopupMenuItem<String>(
-          value: 'program',
-          child: Text('Program'),
-        ),
-        const PopupMenuItem<String>(
-          value: 'about',
-          child: Text('Tentang Kami'),
-        ),
+        const PopupMenuItem<String>(value: 'about', child: Text('Tentang')),
+        const PopupMenuItem<String>(value: 'program', child: Text('Program')),
+        const PopupMenuItem<String>(value: 'beasiswa', child: Text('Beasiswa')),
         const PopupMenuItem<String>(value: 'faq', child: Text('FAQ')),
         const PopupMenuItem<String>(value: 'contact', child: Text('Kontak')),
         const PopupMenuDivider(),
@@ -53,9 +49,11 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         _navbarItem("Beranda", () => context.go('/')),
         const SizedBox(width: 30),
+        _navbarItem("Tentang", () => context.go('/tentang')),
+        const SizedBox(width: 30),
         _navbarItem("Program", () => context.go('/program')),
         const SizedBox(width: 30),
-        _navbarItem("Tentang Kami", () => context.go('/tentang-kami')),
+        _navbarItem("Beasiswa", () => context.go('/beasiswa')),
         const SizedBox(width: 30),
         _navbarItem("FAQ", () => context.go('/faq')),
         const SizedBox(width: 30),
