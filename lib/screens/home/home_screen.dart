@@ -6,7 +6,7 @@ import 'widgets/about_section.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
 import '../../data/hero_banner_data.dart';
-import '../../data/faq_data.dart'; // Pastikan path ini sesuai dengan struktur folder Anda
+import '../../data/faq_data.dart'; 
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -229,7 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPrimaryButton(BuildContext context, bool isMobile) {
     return ElevatedButton(
-      onPressed: () => context.go('/login'),
+      // 👇 PERUBAHAN DI SINI: Mengarah ke halaman form beasiswa
+      onPressed: () => context.go('/beasiswa'), 
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 35, vertical: isMobile ? 18 : 25),
@@ -311,13 +312,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListenableBuilder(
       listenable: globalFaqStore,
       builder: (context, _) {
-        // Menggabungkan faqBerprestasi dan faqReguler dari FaqDataStore Anda
         final List<Map<String, String>> allFaqs = [
           ...globalFaqStore.faqBerprestasi,
           ...globalFaqStore.faqReguler,
         ];
 
-        // Mengambil 4 pertanyaan pertama sebagai cuplikan di Beranda
         final List<Map<String, String>> previewFaqs = allFaqs.take(4).toList();
 
         Widget faqContent = Column(
@@ -337,7 +336,6 @@ class _HomeScreenState extends State<HomeScreen> {
             Text("Hal umum yang sering ditanyakan oleh pendaftar.", textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
             SizedBox(height: isMobile ? 30 : 40),
             
-            // Mengirim list Map ke widget Accordion
             FAQAccordion(faqs: previewFaqs),
             
             SizedBox(height: isMobile ? 20 : 30),
@@ -414,32 +412,99 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// 👇 INI JUGA SAYA PERBARUI KEMBALI AGAR SERAGAM DENGAN PUSAT BANTUAN
 class FAQAccordion extends StatefulWidget {
   final List<Map<String, String>> faqs;
   const FAQAccordion({super.key, required this.faqs});
+  
   @override
   State<FAQAccordion> createState() => _FAQAccordionState();
 }
 
 class _FAQAccordionState extends State<FAQAccordion> {
   int expandedIndex = -1;
+
   @override
   Widget build(BuildContext context) {
+    if (widget.faqs.isEmpty) {
+       return const Center(
+         child: Text(
+           "Belum ada pertanyaan pada kategori ini.",
+           style: TextStyle(color: Colors.grey, fontSize: 16),
+         ),
+       );
+    }
+
     return Column(
       children: List.generate(widget.faqs.length, (index) {
         final faq = widget.faqs[index];
         final bool isExpanded = expandedIndex == index;
-        return Container(
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2))]),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isExpanded
+                  ? AppColors.primary.withOpacity(0.5)
+                  : Colors.grey.shade200,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Theme(
-            data: ThemeData().copyWith(dividerColor: Colors.transparent),
+            data: ThemeData().copyWith(
+              dividerColor: Colors.transparent, 
+            ),
             child: ExpansionTile(
               key: Key(index.toString() + isExpanded.toString()),
-              initiallyExpanded: isExpanded, iconColor: AppColors.primary, collapsedIconColor: Colors.grey,
-              title: Text(faq["tanya"]!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
-              onExpansionChanged: (bool expanded) { setState(() { if (expanded) { expandedIndex = index; } else { expandedIndex = -1; } }); },
-              children: [Padding(padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20), child: Align(alignment: Alignment.centerLeft, child: Text(faq["jawab"]!, style: TextStyle(color: Colors.grey[700], height: 1.6))))],
+              initiallyExpanded: isExpanded,
+              iconColor: AppColors.primary,
+              collapsedIconColor: Colors.grey,
+              title: Text(
+                faq["tanya"]!,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: isExpanded ? AppColors.primary : Colors.black87,
+                ),
+              ),
+              onExpansionChanged: (bool expanded) {
+                setState(() {
+                  if (expanded) {
+                    expandedIndex = index;
+                  } else {
+                    expandedIndex = -1;
+                  }
+                });
+              },
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    bottom: 20,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      faq["jawab"]!,
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        height: 1.6,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );

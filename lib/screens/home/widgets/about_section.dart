@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // 👇 1. Tambahkan import go_router
 import '../../../core/app_colors.dart';
 
 class AboutSection extends StatelessWidget {
@@ -6,10 +7,8 @@ class AboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
-    
     Widget textContent = Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
@@ -35,7 +34,6 @@ class AboutSection extends StatelessWidget {
         ),
         const SizedBox(height: 30),
         
-        
         Wrap(
           spacing: 40,
           runSpacing: 20,
@@ -44,31 +42,52 @@ class AboutSection extends StatelessWidget {
             _buildStatItem("500+", "Penerima", isMobile),
             _buildStatItem("20+", "Mitra Universitas", isMobile),
           ],
-        )
+        ),
+        
+        // 👇 2. TAMBAHKAN TOMBOL SELENGKAPNYA DI SINI
+        const SizedBox(height: 40),
+        ElevatedButton(
+          onPressed: () => context.go('/profil-yayasan'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            elevation: 0, // Dibuat flat agar elegan
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "BACA SELENGKAPNYA",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(width: 10),
+              Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+            ],
+          ),
+        ),
       ],
     );
 
-    
     Widget imageContent = ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Image.asset(
         'assets/tentang.png', 
         fit: BoxFit.cover,
         width: double.infinity,
-        
         height: isMobile ? 250 : null, 
       ),
     );
 
     return Container(
-      
       padding: EdgeInsets.symmetric(
         vertical: isMobile ? 60 : 100, 
         horizontal: isMobile ? 20 : 50,
       ),
       color: Colors.white,
       child: isMobile
-          
           ? Column(
               children: [
                 textContent,
@@ -76,7 +95,6 @@ class AboutSection extends StatelessWidget {
                 imageContent,
               ],
             )
-          
           : Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -94,7 +112,6 @@ class AboutSection extends StatelessWidget {
     );
   }
 
-  
   Widget _buildStatItem(String value, String label, bool isMobile) {
     return Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,

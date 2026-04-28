@@ -226,7 +226,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
 
                 _sidebarMenu(
                   Icons.auto_awesome_motion_rounded,
-                  "Jenis Beasiswa",
+                  "Kelola Program",
                   1,
                   isCollapsed,
                 ),

@@ -11,6 +11,8 @@ import 'screens/portal/dashboard_screen.dart';
 import 'screens/program_detail_screen.dart'; 
 import 'screens/admin/layout_dashboard.dart'; 
 import 'data/models/program_model.dart'; 
+import 'screens/home/widgets/profil_yayasan.dart';
+import 'screens/home/widgets/form_beasiswa.dart';
 
 void main() {
   usePathUrlStrategy(); 
@@ -48,8 +50,14 @@ final GoRouter _router = GoRouter(
       path: '/admin', 
       builder: (context, state) => const LayoutDashboard(),
     ),
-    
-    // RUTE DETAIL PROGRAM (DENGAN DATA EXTRA)
+    GoRoute(
+      path: '/profil-yayasan',
+      builder: (context, state) => const ProfilYayasanScreen(),
+    ),
+    GoRoute(
+      path: '/beasiswa',
+      builder: (context, state) => const FormBeasiswaScreen(),
+),
     GoRoute(
       path: '/program/:id', 
       builder: (context, state) {
