@@ -14,7 +14,7 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
   List<ProgramModel> listBeasiswa = DummyData.listProgram;
 
   // ==========================================
-  // WIDGET BANTUAN UNTUK FORM INPUT (BIAR RAPI)
+  // WIDGET 1: INPUT TEKS BIASA (Judul & Deskripsi)
   // ==========================================
   Widget _buildInputField({
     required TextEditingController controller,
@@ -52,112 +52,227 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
     );
   }
 
+  // ==========================================
+  // WIDGET 2: INPUT DAFTAR DINAMIS (Benefit & Syarat)
+  // ==========================================
+  Widget _buildDynamicListField({
+    required String label,
+    required List<TextEditingController> controllers,
+    required void Function(VoidCallback)
+    dialogSetState, // Butuh fungsi ini untuk update pop-up
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ),
+        ...controllers.asMap().entries.map((entry) {
+          int index = entry.key;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: entry.value,
+                    decoration: InputDecoration(
+                      hintText: "Masukkan poin...",
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      isDense: true, // Biar kotaknya tidak terlalu tinggi
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Tombol hapus poin (muncul kalau kotaknya lebih dari 1)
+                if (controllers.length > 1)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.remove_circle,
+                      color: Colors.redAccent,
+                    ),
+                    tooltip: "Hapus Poin",
+                    onPressed: () =>
+                        dialogSetState(() => controllers.removeAt(index)),
+                  )
+                else
+                  const SizedBox(
+                    width: 40,
+                  ), // Jaga jarak kalau tidak ada tombol hapus
+              ],
+            ),
+          );
+        }),
+        // Tombol Tambah Poin Baru
+        TextButton.icon(
+          onPressed: () =>
+              dialogSetState(() => controllers.add(TextEditingController())),
+          icon: Icon(Icons.add, color: AppColors.primary, size: 18),
+          label: Text(
+            "Tambah Poin Baru",
+            style: TextStyle(color: AppColors.primary),
+          ),
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            alignment: Alignment.centerLeft,
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   // --- FUNGSI CREATE (TAMBAH DATA) ---
   void _showAddForm() {
     TextEditingController judulCtrl = TextEditingController();
     TextEditingController deskripsiCtrl = TextEditingController();
-    TextEditingController benefitCtrl = TextEditingController();
+
+    // Ubah jadi List karena kita butuh banyak kotak
+    List<TextEditingController> benefitCtrls = [TextEditingController()];
+    List<TextEditingController> syaratCtrls = [TextEditingController()];
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        // 👇 StatefulBuilder agar pop-up bisa me-refresh dirinya sendiri saat tambah kotak
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.add_circle_outline, color: AppColors.primary),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "Tambah Beasiswa",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.add_circle_outline, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      const Text(
+                        "Tambah Beasiswa",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
                   ),
+                  const Divider(height: 20, thickness: 1),
                 ],
               ),
-              const Divider(height: 20, thickness: 1),
-            ],
-          ),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildInputField(
-                    controller: judulCtrl,
-                    label: "Judul Beasiswa",
+              content: SizedBox(
+                width: 500,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildInputField(
+                        controller: judulCtrl,
+                        label: "Judul Beasiswa",
+                      ),
+                      _buildInputField(
+                        controller: deskripsiCtrl,
+                        label: "Deskripsi Singkat",
+                        maxLines: 3,
+                      ),
+
+                      // 👇 Panggil fungsi kotak dinamis
+                      _buildDynamicListField(
+                        label: "Benefit Beasiswa",
+                        controllers: benefitCtrls,
+                        dialogSetState: setStateDialog,
+                      ),
+                      _buildDynamicListField(
+                        label: "Persyaratan Pendaftaran",
+                        controllers: syaratCtrls,
+                        dialogSetState: setStateDialog,
+                      ),
+                    ],
                   ),
-                  _buildInputField(
-                    controller: deskripsiCtrl,
-                    label: "Deskripsi Singkat",
-                    maxLines: 3,
-                  ),
-                  _buildInputField(
-                    controller: benefitCtrl,
-                    label: "Benefit (Tiap baris = 1 poin)",
-                    maxLines: 4,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Batal",
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  listBeasiswa.add(
-                    ProgramModel(
-                      id: 'bea-${DateTime.now().millisecondsSinceEpoch}',
-                      judul: judulCtrl.text,
-                      deskripsi: deskripsiCtrl.text,
-                      benefit: benefitCtrl.text.split('\n').toList(),
-                      syarat: ["Warga Negara Indonesia", "Berkelakuan Baik"],
-                      imageUrl: 'assets/beareguler.png',
+              actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Batal",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Beasiswa ditambahkan!"),
-                    backgroundColor: Colors.green,
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 15,
                 ),
-              ),
-              child: const Text(
-                "Simpan Data",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      listBeasiswa.add(
+                        ProgramModel(
+                          id: 'bea-${DateTime.now().millisecondsSinceEpoch}',
+                          judul: judulCtrl.text,
+                          deskripsi: deskripsiCtrl.text,
+                          // 👇 Kumpulkan semua teks dari kotak, buang yang kosong
+                          benefit: benefitCtrls
+                              .map((c) => c.text)
+                              .where((t) => t.trim().isNotEmpty)
+                              .toList(),
+                          syarat: syaratCtrls
+                              .map((c) => c.text)
+                              .where((t) => t.trim().isNotEmpty)
+                              .toList(),
+                          imageUrl: 'assets/beareguler.png',
+                        ),
+                      );
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Beasiswa ditambahkan!"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 15,
+                    ),
+                  ),
+                  child: const Text(
+                    "Simpan Data",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -171,108 +286,133 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
     TextEditingController deskripsiCtrl = TextEditingController(
       text: program.deskripsi,
     );
-    TextEditingController benefitCtrl = TextEditingController(
-      text: program.benefit.join('\n'),
-    );
+
+    // Pecah data lama menjadi banyak kotak
+    List<TextEditingController> benefitCtrls = program.benefit.isNotEmpty
+        ? program.benefit.map((e) => TextEditingController(text: e)).toList()
+        : [TextEditingController()];
+
+    List<TextEditingController> syaratCtrls = program.syarat.isNotEmpty
+        ? program.syarat.map((e) => TextEditingController(text: e)).toList()
+        : [TextEditingController()];
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.edit, color: Colors.orange, size: 28),
-                  const SizedBox(width: 10),
-                  const Text(
-                    "Edit Beasiswa",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  Row(
+                    children: [
+                      const Icon(Icons.edit, color: Colors.orange, size: 28),
+                      const SizedBox(width: 10),
+                      const Text(
+                        "Edit Beasiswa",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ],
                   ),
+                  const Divider(height: 20, thickness: 1),
                 ],
               ),
-              const Divider(height: 20, thickness: 1),
-            ],
-          ),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildInputField(
-                    controller: judulCtrl,
-                    label: "Judul Beasiswa",
+              content: SizedBox(
+                width: 500,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildInputField(
+                        controller: judulCtrl,
+                        label: "Judul Beasiswa",
+                      ),
+                      _buildInputField(
+                        controller: deskripsiCtrl,
+                        label: "Deskripsi Singkat",
+                        maxLines: 3,
+                      ),
+
+                      _buildDynamicListField(
+                        label: "Benefit Beasiswa",
+                        controllers: benefitCtrls,
+                        dialogSetState: setStateDialog,
+                      ),
+                      _buildDynamicListField(
+                        label: "Persyaratan Pendaftaran",
+                        controllers: syaratCtrls,
+                        dialogSetState: setStateDialog,
+                      ),
+                    ],
                   ),
-                  _buildInputField(
-                    controller: deskripsiCtrl,
-                    label: "Deskripsi Singkat",
-                    maxLines: 3,
-                  ),
-                  _buildInputField(
-                    controller: benefitCtrl,
-                    label: "Benefit (Tiap baris = 1 poin)",
-                    maxLines: 4,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Batal",
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  listBeasiswa[index] = ProgramModel(
-                    id: program.id,
-                    judul: judulCtrl.text,
-                    deskripsi: deskripsiCtrl.text,
-                    benefit: benefitCtrl.text.split('\n').toList(),
-                    syarat: program.syarat,
-                    imageUrl: program.imageUrl,
-                  );
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Data diperbarui!"),
-                    backgroundColor: Colors.blue,
+              actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    "Batal",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 15,
                 ),
-              ),
-              child: const Text(
-                "Simpan Perubahan",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      listBeasiswa[index] = ProgramModel(
+                        id: program.id,
+                        judul: judulCtrl.text,
+                        deskripsi: deskripsiCtrl.text,
+                        benefit: benefitCtrls
+                            .map((c) => c.text)
+                            .where((t) => t.trim().isNotEmpty)
+                            .toList(),
+                        syarat: syaratCtrls
+                            .map((c) => c.text)
+                            .where((t) => t.trim().isNotEmpty)
+                            .toList(),
+                        imageUrl: program.imageUrl,
+                      );
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Data diperbarui!"),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 15,
+                    ),
+                  ),
+                  child: const Text(
+                    "Simpan Perubahan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -339,7 +479,6 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 👇 INI YANG BIKIN TOMBOL MENTOK KANAN
           SizedBox(
             width: double.infinity,
             child: Wrap(
@@ -456,7 +595,6 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // 👇 IKON UPDATE (ORANYE)
                             IconButton(
                               icon: const Icon(
                                 Icons.edit,
@@ -466,7 +604,6 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
                               onPressed: () => _showEditForm(item, index),
                             ),
                             const SizedBox(width: 5),
-                            // 👇 IKON DELETE (MERAH)
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               tooltip: "Hapus",
@@ -516,12 +653,10 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 👇 IKON UPDATE (ORANYE)
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.orange),
                   onPressed: () => _showEditForm(item, index),
                 ),
-                // 👇 IKON DELETE (MERAH)
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
                   onPressed: () => _deleteBeasiswa(index, item.judul),
