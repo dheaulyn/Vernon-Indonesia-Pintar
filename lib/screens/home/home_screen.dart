@@ -5,6 +5,7 @@ import 'widgets/program_card.dart';
 import 'widgets/about_section.dart';
 import '../../data/dummy_data.dart';
 import '../../core/app_colors.dart';
+import '../../data/hero_banner_data.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -172,45 +173,64 @@ class _HomeScreenState extends State<HomeScreen> {
             colors: [Colors.black.withValues(alpha: 0.4), Colors.black.withValues(alpha: 0.7)],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "PROGRAM BEASISWA VERNON INDONESIA PINTAR",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: isMobile ? 12 : 14, letterSpacing: isMobile ? 1 : 3, fontWeight: FontWeight.w400),
-            ),
-            SizedBox(height: isMobile ? 10 : 20),
-            Text(
-              "Membuka Pintu Dunia\nLewat Pendidikan",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: isMobile ? 36 : 55, fontWeight: FontWeight.w900, height: 1.1),
-            ),
-            SizedBox(height: isMobile ? 10 : 15),
-            Text(
-              "Pendaftaran Beasiswa Periode 2026 Telah Dibuka",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: isMobile ? 14 : 18),
-            ),
-            const SizedBox(height: 40),
-            if (isMobile)
-              Column(
-                children: [
-                  SizedBox(width: double.infinity, child: _buildPrimaryButton(context, isMobile)),
-                  const SizedBox(height: 15),
-                  SizedBox(width: double.infinity, child: _buildSecondaryButton(isMobile)),
-                ],
-              )
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildPrimaryButton(context, isMobile),
-                  const SizedBox(width: 20),
-                  _buildSecondaryButton(isMobile),
-                ],
-              ),
-          ],
+        // 👇 Ubah menjadi globalHeroBannerStore
+        child: ListenableBuilder(
+          listenable: globalHeroBannerStore,
+          builder: (context, child) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  globalHeroBannerStore.heroSubtitle1, // 👈 Ubah di sini
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: isMobile ? 12 : 14, letterSpacing: isMobile ? 1 : 3, fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: isMobile ? 10 : 20),
+                Text(
+                  globalHeroBannerStore.heroTitle, // 👈 Ubah di sini
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: isMobile ? 36 : 55, fontWeight: FontWeight.w900, height: 1.1),
+                ),
+                SizedBox(height: isMobile ? 10 : 15),
+                Text(
+                  "${globalHeroBannerStore.heroSubtitle2Base} ${globalHeroBannerStore.isRegistrationOpen ? 'Telah Dibuka' : 'Telah Ditutup'}",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white70, 
+                    fontSize: isMobile ? 14 : 18,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                
+                // 👇 LOGIKA PENYEMBUNYIAN TOMBOL ADA DI SINI
+                if (isMobile)
+                  Column(
+                    children: [
+                      // Jika status BUKA, tampilkan tombol DAFTAR
+                      if (globalHeroBannerStore.isRegistrationOpen) ...[
+                        SizedBox(width: double.infinity, child: _buildPrimaryButton(context, isMobile)),
+                        const SizedBox(height: 15),
+                      ],
+                      // Tombol Panduan tetap muncul walau ditutup
+                      SizedBox(width: double.infinity, child: _buildSecondaryButton(isMobile)),
+                    ],
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Jika status BUKA, tampilkan tombol DAFTAR
+                      if (globalHeroBannerStore.isRegistrationOpen) ...[
+                        _buildPrimaryButton(context, isMobile),
+                        const SizedBox(width: 20),
+                      ],
+                      // Tombol Panduan tetap muncul walau ditutup
+                      _buildSecondaryButton(isMobile),
+                    ],
+                  ),
+              ],
+            );
+          }
         ),
       ),
     );

@@ -7,6 +7,7 @@ import '../../data/mock_database.dart';
 import 'home_dashboard.dart';
 import 'faq_admin.dart';
 import 'jenis_beasiswa_admin.dart';
+import 'hero_banner_admin.dart'; // Pastikan file ini juga dibuat kembali nanti
 
 class LayoutDashboard extends StatefulWidget {
   const LayoutDashboard({super.key});
@@ -17,14 +18,14 @@ class LayoutDashboard extends StatefulWidget {
 
 class _LayoutDashboardState extends State<LayoutDashboard> {
   int _currentTabIndex = 0;
-  bool _isCollapsed = false; // Fitur lipat sidebar ala Portal Siswa
+  bool _isCollapsed = false; 
 
   final List<Widget> _adminPages = [
     const HomeDashboard(),         // Index 0
     const JenisBeasiswaAdmin(),    // Index 1
     const KelolaFAQPage(),         // Index 2
-    const Center(child: Text("Halaman Kelola Hero Banner (Sedang Dibangun)", style: TextStyle(fontSize: 20))), // Index 3
-    const Center(child: Text("Halaman Kelola Footer & Kontak (Sedang Dibangun)", style: TextStyle(fontSize: 20))), // Index 4
+    const HeroBannerAdmin(),       // Index 3: Halaman Kelola Hero Banner Asli
+    const Center(child: Text("Halaman Kelola Footer (Sedang Dibangun)", style: TextStyle(fontSize: 20))), // Index 4
   ];
 
   @override
@@ -35,12 +36,11 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
     final bool isSidebarCollapsed = isMobile ? true : _isCollapsed;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9), // Warna background sama persis
-      appBar: _buildTopNavbar(), // Navbar sama persis
+      backgroundColor: const Color(0xFFF4F6F9), 
+      appBar: _buildTopNavbar(), 
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sidebar ala Portal Siswa
           _buildSidebar(isSidebarCollapsed),
 
           Expanded(
@@ -74,10 +74,10 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
             },
           ),
           const SizedBox(width: 10),
-          Image.asset('assets/logo.png', height: 32), // Logo VIP
+          Image.asset('assets/logo.png', height: 32),
           const SizedBox(width: 10),
           const Text(
-            'ADMINISTRATOR VIP', // Judul diganti untuk Admin
+            'ADMINISTRATOR VIP',
             style: TextStyle(
               color: Colors.black87,
               fontWeight: FontWeight.bold,
@@ -87,7 +87,6 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
         ],
       ),
       actions: [
-        // Menu Profil Akun
         Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
@@ -115,7 +114,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   const SizedBox(width: 15),
                   const CircleAvatar(
                     radius: 16,
-                    backgroundColor: Colors.blueAccent, // Beda warna avatar untuk admin
+                    backgroundColor: Colors.blueAccent,
                     child: Icon(Icons.admin_panel_settings, color: Colors.white, size: 20),
                   ),
                 ],
@@ -154,7 +153,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: isCollapsed ? 70 : 260,
-      color: const Color(0xFF2B3240), // Warna gelap sama
+      color: const Color(0xFF2B3240),
       child: ClipRect(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -167,7 +166,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                 const SizedBox(height: 20),
                 
                 // ==========================================
-                // KATEGORI 1: MENU ADMIN (Operasional)
+                // KATEGORI 1: MENU ADMIN
                 // ==========================================
                 if (!isCollapsed)
                   const Padding(
@@ -180,12 +179,11 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                 if (isCollapsed) const SizedBox(height: 25),
 
                 _sidebarMenu(Icons.grid_view_rounded, "Home Dashboard", 0, isCollapsed),
-                // Nanti menu seperti "Data Pendaftar" atau "Verifikasi Berkas" ditaruh di sini
                 
-                const SizedBox(height: 15), // Jarak antar kategori
+                const SizedBox(height: 15),
 
                 // ==========================================
-                // KATEGORI 2: MENU CMS (Konten Website)
+                // KATEGORI 2: MENU CMS
                 // ==========================================
                 if (!isCollapsed)
                   const Padding(
@@ -235,7 +233,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
               MockDatabase.logout();
               context.go('/login');
             } else if (isWebLink) {
-              context.go('/'); // Pindah ke halaman beranda
+              context.go('/'); 
             } else {
               setState(() => _currentTabIndex = index);
             }

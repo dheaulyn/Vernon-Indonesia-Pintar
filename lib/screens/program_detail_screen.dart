@@ -225,7 +225,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               Expanded(child: Text(item, style: TextStyle(fontSize: isMobile ? 15 : 17, height: 1.6, color: Colors.grey[800]))),
             ],
           ),
-        )).toList(),
+        )),
       ],
     );
   }
