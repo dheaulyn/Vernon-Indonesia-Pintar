@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; 
 import '../../shared/custom_navbar.dart';
+import '../../shared/custom_footer.dart';
 import '/core/app_colors.dart';
 
 class FormBeasiswaScreen extends StatefulWidget {
@@ -77,14 +78,14 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
 
                       const SizedBox(height: 40),
 
-                      // TOMBOL SUBMIT DENGAN ALUR LOADING, REDIRECT, & HYBRID WARNING
+                      // TOMBOL SUBMIT DENGAN ALUR POP-UP DI TENGAH
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // JIKA VALIDASI SUKSES
+                              // JIKA VALIDASI SUKSES: Munculkan loading
                               showDialog(
                                 context: context,
                                 barrierDismissible: false,
@@ -93,27 +94,59 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                                 ),
                               );
 
-                              // Simulasi jeda waktu pengiriman data ke server
+                              // Simulasi delay server
                               await Future.delayed(const Duration(seconds: 2));
 
                               if (context.mounted) {
-                                // Tutup dialog loading
+                                // Tutup indikator loading
                                 Navigator.pop(context);
                                 
-                                // Arahkan ke halaman login
-                                context.go('/login');
-                                
-                                // 👇 PERUBAHAN DI SINI: Tampilkan notifikasi instruksi cek email
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Pendaftaran berhasil! Password sementara telah dikirim ke email Anda. Silakan cek Kotak Masuk atau folder Spam.'),
-                                    backgroundColor: Colors.green,
-                                    duration: Duration(seconds: 5), // Waktu ditambah jadi 5 detik
+                                // 👇 PERUBAHAN: TAMPILKAN POP-UP SUKSES DI TENGAH LAYAR
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false, // Harus klik tombol untuk menutup
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    contentPadding: const EdgeInsets.all(30),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.check_circle, color: Colors.green, size: 80),
+                                        const SizedBox(height: 20),
+                                        const Text(
+                                          "Pendaftaran Berhasil!",
+                                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 15),
+                                        Text(
+                                          "Password sementara telah dikirim ke email Anda. Silakan cek Kotak Masuk atau folder Spam sebelum melakukan Login.",
+                                          style: TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.5),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 30),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 50,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(context); // Tutup dialog
+                                              context.go('/login');   // Redirect ke login
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.primary,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                            child: const Text("Tutup & Lanjut Login", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               }
                             } else {
-                              // JIKA VALIDASI GAGAL: MUNCULKAN POP-UP WARNING
+                              // JIKA VALIDASI GAGAL: Munculkan peringatan hybrid (SnackBar)
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Row(
@@ -148,18 +181,13 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                 ),
               ),
             ),
-
-            // 3. FOOTER LENGKAP
-            _buildFooter(isMobile),
+            const CustomFooter(),
           ],
         ),
       ),
     );
   }
 
-  // ==========================================
-  // WIDGET: HEADER BANNER 
-  // ==========================================
   Widget _buildHeader(bool isMobile) {
     return Container(
       width: double.infinity,
@@ -191,9 +219,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET: SECTION TITLE (Angka & Judul)
-  // ==========================================
   Widget _buildSectionTitle(String number, String title) {
     return Row(
       children: [
@@ -213,9 +238,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET: INPUT FIELD DENGAN VALIDASI REGEX
-  // ==========================================
   Widget _buildTextField(String label, String hint, {int maxLines = 1, bool isEmail = false, bool isPhone = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -276,9 +298,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET: DROPDOWN PENDIDIKAN
-  // ==========================================
   Widget _buildDropdownPendidikan() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -310,9 +329,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET: INFO TAHAPAN SELEKSI
-  // ==========================================
   Widget _buildTahapanSeleksi(bool isMobile) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -360,51 +376,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
         const SizedBox(width: 10),
         Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87)),
       ],
-    );
-  }
-
-  // ==========================================
-  // WIDGET: FOOTER LENGKAP (SERAGAM)
-  // ==========================================
-  Widget _buildFooter(bool isMobile) {
-    Widget aboutFooter = Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        const Text("VERNON INDONESIA PINTAR", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 15),
-        Text("Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.", textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14)),
-      ],
-    );
-
-    Widget contactFooter = Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        const Text("HUBUNGI KAMI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 15),
-        _footerLink("WhatsApp: +62 812-3456-7890", isMobile),
-        _footerLink("Email: info@vip.or.id", isMobile),
-        _footerLink("Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia", isMobile),
-      ],
-    );
-
-    return Container(
-      width: double.infinity, color: const Color(0xFF1A1A1A),
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60, horizontal: isMobile ? 30 : 50),
-      child: Column(
-        children: [
-          if (isMobile) Column(children: [aboutFooter, const SizedBox(height: 40), contactFooter])
-          else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 2, child: aboutFooter), const SizedBox(width: 50), Expanded(child: contactFooter)]),
-          SizedBox(height: isMobile ? 30 : 50),
-          Text("© 2026 Vernon Indonesia Pintar. All Rights Reserved.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _footerLink(String title, bool isMobile) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(onTap: () {}, child: Text(title, textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15))),
     );
   }
 }

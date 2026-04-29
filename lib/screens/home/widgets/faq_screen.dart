@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 // import 'package:go_router/go_router.dart';
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
-import '../../../data/faq_data.dart'; // 👇 1. IMPORT GUDANG DATA
+import '../../shared/custom_footer.dart'; // 👇 1. IMPORT CUSTOM FOOTER
+import '../../../data/faq_data.dart'; 
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -15,19 +16,15 @@ class _FAQScreenState extends State<FAQScreen> {
   int expandedIndex = -1;
   int selectedTabIndex = 0;
 
-  // 👇 2. DATA DUMMY DIHAPUS DARI SINI KARENA SUDAH PINDAH KE faq_data.dart
-
   @override
   Widget build(BuildContext context) {
     // Deteksi apakah layar sedang diakses via HP atau PC
     final bool isMobile = MediaQuery.of(context).size.width < 800;
 
-    // 👇 3. BUNGKUS DENGAN LISTENABLE BUILDER UNTUK REAL-TIME UPDATE
     return ListenableBuilder(
       listenable: globalFaqStore, // Pantau perubahan di Gudang Data
       builder: (context, child) {
         
-        // 👇 4. AMBIL DATA DARI GUDANG DATA SECARA LANGSUNG
         final currentFaqList = selectedTabIndex == 0 ? globalFaqStore.faqBerprestasi : globalFaqStore.faqReguler;
         
         final String currentTitle = selectedTabIndex == 0
@@ -121,7 +118,6 @@ class _FAQScreenState extends State<FAQScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // 👇 JIKA DATA KOSONG, TAMPILKAN PESAN
                         if (currentFaqList.isEmpty)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 40),
@@ -213,11 +209,14 @@ class _FAQScreenState extends State<FAQScreen> {
                             );
                           }),
 
-                        const SizedBox(height: 100),
+                        const SizedBox(height: 60), // Kurangi sedikit padding bawah agar footer lebih proporsional
                       ],
                     ),
                   ),
                 ),
+
+                // 👇 2. PANGGIL CUSTOM FOOTER DI BAGIAN PALING BAWAH
+                const CustomFooter(),
               ],
             ),
           ),
