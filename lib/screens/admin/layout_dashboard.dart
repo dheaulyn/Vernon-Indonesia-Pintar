@@ -5,10 +5,11 @@ import '../../data/mock_database.dart';
 
 // Import halaman-halaman konten
 import 'home_dashboard.dart';
+import 'manajemen_pendaftar_admin.dart'; // 👇 Import halaman baru (Sesuaikan nama foldernya ya!)
 import 'faq_admin.dart';
 import 'jenis_beasiswa_admin.dart';
 import 'hero_banner_admin.dart';
-import 'footer_admin.dart'; // Pastikan file ini juga dibuat kembali nanti
+import 'footer_admin.dart';
 
 class LayoutDashboard extends StatefulWidget {
   const LayoutDashboard({super.key});
@@ -21,19 +22,19 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
   int _currentTabIndex = 0;
   bool _isCollapsed = false;
 
+  // 👇 PERUBAHAN: Index bergeser karena ada tambahan Manajemen Pendaftar
   final List<Widget> _adminPages = [
     const HomeDashboard(), // Index 0
-    const JenisBeasiswaAdmin(), // Index 1
-    const KelolaFAQPage(), // Index 2
-    const HeroBannerAdmin(), // Index 3: Halaman Kelola Hero Banner Asli
-    const FooterAdmin(), // Index 4
+    const ManajemenPendaftarAdmin(), // Index 1 (Halaman Baru)
+    const JenisBeasiswaAdmin(), // Index 2
+    const KelolaFAQPage(), // Index 3
+    const HeroBannerAdmin(), // Index 4
+    const FooterAdmin(), // Index 5
   ];
 
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
-
-    // Jika di mobile, paksa sidebar terlipat atau gunakan Drawer
     final bool isSidebarCollapsed = isMobile ? true : _isCollapsed;
 
     return Scaffold(
@@ -43,7 +44,6 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSidebar(isSidebarCollapsed),
-
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -75,7 +75,12 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
             },
           ),
           const SizedBox(width: 10),
-          Image.asset('assets/logo.png', height: 32),
+          Image.asset(
+            'assets/logo.png',
+            height: 32,
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.school),
+          ),
           const SizedBox(width: 10),
           const Text(
             'ADMINISTRATOR VIP',
@@ -115,7 +120,6 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   const SizedBox(width: 15),
                   const CircleAvatar(
                     radius: 16,
-
                     backgroundColor: Colors.blueAccent,
                     child: Icon(
                       Icons.admin_panel_settings,
@@ -202,10 +206,16 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   isCollapsed,
                 ),
 
+                // 👇 PERUBAHAN: Menu Data Pendaftar dimasukkan ke kategori Admin (Index 1)
+                _sidebarMenu(
+                  Icons.people_alt_rounded,
+                  "Data Pendaftar",
+                  1,
+                  isCollapsed,
+                ),
+
                 const SizedBox(height: 15),
 
-                // Nanti menu seperti "Data Pendaftar" atau "Verifikasi Berkas" ditaruh di sini
-                const SizedBox(height: 15), // Jarak antar kategori
                 // ==========================================
                 // KATEGORI 2: MENU CMS
                 // ==========================================
@@ -224,28 +234,29 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   ),
                 if (isCollapsed) const SizedBox(height: 10),
 
+                // 👇 PERUBAHAN: Semua index CMS bergeser +1
                 _sidebarMenu(
                   Icons.auto_awesome_motion_rounded,
                   "Kelola Program",
-                  1,
+                  2,
                   isCollapsed,
                 ),
                 _sidebarMenu(
                   Icons.help_center_rounded,
                   "Kelola FAQ",
-                  2,
+                  3,
                   isCollapsed,
                 ),
                 _sidebarMenu(
                   Icons.image_rounded,
                   "Kelola Hero Banner",
-                  3,
+                  4,
                   isCollapsed,
                 ),
                 _sidebarMenu(
                   Icons.contact_mail_rounded,
                   "Kelola Footer",
-                  4,
+                  5,
                   isCollapsed,
                 ),
 

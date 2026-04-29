@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
-import 'package:flutter_web_plugins/url_strategy.dart'; 
+import 'package:go_router/go_router.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 // --- 1. IMPORT SEMUA HALAMAN ---
 import 'screens/home/home_screen.dart';
-import 'screens/home/widgets/faq_screen.dart'; 
+import 'screens/home/widgets/faq_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/portal/dashboard_screen.dart';
-import 'screens/program_detail_screen.dart'; 
-import 'screens/admin/layout_dashboard.dart'; 
-import 'data/models/program_model.dart'; 
+import 'screens/program_detail_screen.dart';
+import 'screens/admin/layout_dashboard.dart';
+import 'data/models/program_model.dart';
 import 'screens/home/widgets/profil_yayasan.dart';
 import 'screens/home/widgets/form_beasiswa.dart';
-import 'screens/home/widgets/fund_pool_screen.dart';
+import 'screens/home/fund_pool_screen.dart';
 import 'screens/home/donasi_screen.dart';
 
 void main() {
-  usePathUrlStrategy(); 
+  usePathUrlStrategy();
   runApp(const YayasanApp());
 }
 
@@ -26,30 +26,25 @@ final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
     // RUTE UTAMA (BERANDA)
-    GoRoute(
-      path: '/', 
-      builder: (context, state) => const HomeScreen(),
-    ),
-    
+    GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+
     // RUTE STATIS (HALAMAN BERBEDA)
     // Kita ganti URL halaman penuhnya menjadi pusat-bantuan
     GoRoute(
-      path: '/pusat-bantuan', 
-      builder: (context, state) => const FAQScreen()),
-    GoRoute(
-      path: '/login', 
-      builder: (context, state) => const LoginScreen(),
+      path: '/pusat-bantuan',
+      builder: (context, state) => const FAQScreen(),
     ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
-      path: '/register', 
+      path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
-      path: '/portal', 
+      path: '/portal',
       builder: (context, state) => const DashboardScreen(),
     ),
     GoRoute(
-      path: '/admin', 
+      path: '/admin',
       builder: (context, state) => const LayoutDashboard(),
     ),
     GoRoute(
@@ -64,26 +59,18 @@ final GoRouter _router = GoRouter(
       path: '/fund-pool',
       builder: (context, state) => const FundPoolScreen(),
     ),
+    GoRoute(path: '/donasi', builder: (context, state) => const DonasiScreen()),
+    // Di dalam GoRouter main.dart kamu:
     GoRoute(
-      path: '/donasi',
-      builder: (context, state) => const DonasiScreen(),
-    ),
-    GoRoute(
-      path: '/program/:id', 
-      builder: (context, state) {
-        final dataProgram = state.extra as ProgramModel?;
-        if (dataProgram == null) return const HomeScreen(); 
-
-        return ProgramDetailScreen(
-          program: dataProgram,
-        ); 
-      },
+      path: '/program',
+      builder: (context, state) =>
+          const ProgramDetailScreen(), // Pastikan mengarah ke sini
     ),
 
     // --- MANTRA: RUTE DINAMIS UNTUK SEKSI HOMESCREEN ---
     // Letakkan di paling bawah agar tidak "memakan" rute /login atau /faq
     GoRoute(
-      path: '/:section', 
+      path: '/:section',
       builder: (context, state) {
         final section = state.pathParameters['section'];
         return HomeScreen(targetSection: section);
@@ -100,12 +87,12 @@ class YayasanApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Vernon Indonesia Pintar',
-      debugShowCheckedModeBanner: false, 
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         primaryColor: const Color(0xFFE53935),
       ),
-      routerConfig: _router, 
+      routerConfig: _router,
     );
   }
 }

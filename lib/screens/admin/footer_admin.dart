@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_colors.dart'; // Sesuaikan titik-titiknya dengan posisi filemu
+import '../../../core/app_colors.dart'; // Sesuaikan titiknya jika error
+import '../shared/custom_footer.dart'; // 👇 Import database bohongan dari file footer publik
 
 class FooterAdmin extends StatefulWidget {
   const FooterAdmin({super.key});
@@ -9,7 +10,6 @@ class FooterAdmin extends StatefulWidget {
 }
 
 class _FooterAdminState extends State<FooterAdmin> {
-  // Karena datanya tunggal, kita pakai variabel langsung (Dummy Data)
   // Datanya sudah disamakan dengan desain web publikmu
   String _deskripsi =
       "Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.";
@@ -18,9 +18,7 @@ class _FooterAdminState extends State<FooterAdmin> {
   String _alamat =
       "Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia";
 
-  // ==========================================
-  // WIDGET BANTUAN UNTUK FORM INPUT (Sama persis kayak sebelumnya)
-  // ==========================================
+  // WIDGET BANTUAN UNTUK FORM INPUT
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -63,7 +61,6 @@ class _FooterAdminState extends State<FooterAdmin> {
 
   // --- FUNGSI UPDATE TUNGGAL ---
   void _showEditForm() {
-    // Isi controller dengan data yang ada saat ini
     TextEditingController descCtrl = TextEditingController(text: _deskripsi);
     TextEditingController waCtrl = TextEditingController(text: _whatsapp);
     TextEditingController emailCtrl = TextEditingController(text: _email);
@@ -99,7 +96,7 @@ class _FooterAdminState extends State<FooterAdmin> {
             ],
           ),
           content: SizedBox(
-            width: 500, // Lebar pop up menyesuaikan layar
+            width: 500,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -141,14 +138,23 @@ class _FooterAdminState extends State<FooterAdmin> {
                 ),
               ),
             ),
+            // 👇 INI POSISI YANG BENAR UNTUK TOMBOL SIMPAN
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  // Menyimpan perubahan ke variabel utama
+                  // 1. Simpan perubahan ke variabel utama admin
                   _deskripsi = descCtrl.text;
                   _whatsapp = waCtrl.text;
                   _email = emailCtrl.text;
                   _alamat = alamatCtrl.text;
+
+                  // 2. Kirim perubahan ke Web Publik (Real-time Simulasi)
+                  DummyFooterDB.data.value = {
+                    'deskripsi': descCtrl.text,
+                    'whatsapp': 'WhatsApp: ${waCtrl.text}',
+                    'email': 'Email: ${emailCtrl.text}',
+                    'alamat': 'Alamat: ${alamatCtrl.text}',
+                  };
                 });
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -160,7 +166,7 @@ class _FooterAdminState extends State<FooterAdmin> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: const StadiumBorder(), // Sama dengan tombol sebelumnya
+                shape: const StadiumBorder(),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 15,
@@ -226,7 +232,7 @@ class _FooterAdminState extends State<FooterAdmin> {
           ),
           const SizedBox(height: 20),
 
-          // AREA KONTEN (Menampilkan data saat ini tanpa tabel)
+          // AREA KONTEN TAMPILAN ADMIN
           Expanded(
             child: SingleChildScrollView(
               child: Card(
@@ -250,7 +256,6 @@ class _FooterAdminState extends State<FooterAdmin> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Menampilkan Data pakai ListTile agar rapi
                       _buildInfoTile(
                         Icons.info_outline,
                         "Deskripsi Yayasan",
@@ -281,7 +286,6 @@ class _FooterAdminState extends State<FooterAdmin> {
     );
   }
 
-  // Widget kecil untuk menampilkan baris data di dalam Card
   Widget _buildInfoTile(IconData icon, String title, String content) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
