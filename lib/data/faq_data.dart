@@ -1,58 +1,56 @@
-// lib/data/faq_data.dart
 import 'package:flutter/material.dart';
 
-// Gunakan ChangeNotifier agar UI bisa otomatis me-refresh jika data berubah
 class FaqDataStore extends ChangeNotifier {
-  // Ini adalah data yang akan dipakai BERSAMA
-  final List<Map<String, String>> faqBerprestasi = [
+  // Data FAQ tunggal yang disesuaikan dengan konten Instagram resmi @yayasanvip
+  final List<Map<String, String>> faqList = [
     {
-      "tanya": "Apa syarat nilai/prestasi untuk Beasiswa Berprestasi?",
-      "jawab": "Pendaftar wajib memiliki IPK minimal 3.20 (untuk mahasiswa) atau rata-rata rapor 85.00 (untuk siswa SMA). Prestasi tingkat nasional atau internasional akan menjadi nilai tambah yang besar.",
+      "tanya": "Apa itu Yayasan Vernon Indonesia Pintar (VIP)?",
+      "jawab": "Kami adalah yayasan pendidikan yang berdedikasi memberdayakan generasi muda Indonesia melalui akses setara ke pendidikan berkualitas, pelatihan vokasi, dan peluang karier."
     },
     {
-      "tanya": "Apakah Beasiswa Berprestasi mengcover biaya hidup?",
-      "jawab": "Ya, Beasiswa Berprestasi memberikan pembebasan biaya pendidikan (UKT/SPP) 100% sekaligus uang saku bulanan sebesar Rp 1.500.000.",
+      "tanya": "Apa itu Program Beasiswa VIP?",
+      "jawab": "Program Beasiswa Vernon Indonesia Pintar (VIP) memberikan beasiswa penuh bagi anak-anak yang memenuhi kriteria agar mendapatkan pelatihan dan bantuan yang tepat."
+    },
+    {
+      "tanya": "Berapa lama durasi program beasiswa ini berlangsung?",
+      "jawab": "Program ini dirancang secara terstruktur dengan durasi:\n• Beasiswa Vokasi: 10 Bulan\n• Magang Industri: 4 Bulan"
+    },
+    {
+      "tanya": "Fasilitas apa saja yang didapatkan oleh penerima beasiswa?",
+      "jawab": "Penerima beasiswa mendapatkan dukungan penuh melalui:\n• Tanggungan Biaya Pelatihan\n• Laptop & Alat Belajar\n• Uang Saku Bulanan\n• Akomodasi (Mess)\n• Sertifikasi Industri"
+    },
+    {
+      "tanya": "Apakah program beasiswa ini dipungut biaya?",
+      "jawab": "Tidak. Program Beasiswa VIP memberikan beasiswa penuh (100% gratis) bagi mereka yang memenuhi kriteria, mulai dari awal pelatihan hingga magang."
+    },
+    {
+      "tanya": "Bagaimana cara menghubungi pihak Yayasan VIP?",
+      "jawab": "Anda dapat menghubungi kami melalui email di vernonindonesiapintar@gmail.com atau mengunjungi website resmi di yayasan.vip."
     },
   ];
 
-  final List<Map<String, String>> faqReguler = [
-    {
-      "tanya": "Apa itu Beasiswa Reguler?",
-      "jawab": "Program bantuan pendidikan yang ditujukan bagi masyarakat umum guna menjamin keberlangsungan pendidikan bagi siswa/mahasiswa yang memiliki keterbatasan finansial.",
-    },
-  ];
-
-  // Fungsi untuk Tambah Data
-  void addFaq(int tabIndex, String tanya, String jawab) {
-    if (tabIndex == 0) {
-      faqBerprestasi.add({"tanya": tanya, "jawab": jawab});
-    } else {
-      faqReguler.add({"tanya": tanya, "jawab": jawab});
-    }
-    notifyListeners(); // Beri tahu seluruh halaman untuk me-refresh!
+  // Fungsi Tambah Data (Tanpa tabIndex karena kategori sudah digabung)
+  void addFaq(String tanya, String jawab) {
+    faqList.add({"tanya": tanya, "jawab": jawab});
+    notifyListeners(); 
   }
 
-  // Fungsi untuk Edit Data
-  void editFaq(int tabIndex, int itemIndex, String tanya, String jawab) {
-    if (tabIndex == 0) {
-      faqBerprestasi[itemIndex] = {"tanya": tanya, "jawab": jawab};
-    } else {
-      faqReguler[itemIndex] = {"tanya": tanya, "jawab": jawab};
+  // Fungsi Edit Data
+  void editFaq(int itemIndex, String tanya, String jawab) {
+    if (itemIndex >= 0 && itemIndex < faqList.length) {
+      faqList[itemIndex] = {"tanya": tanya, "jawab": jawab};
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  // Fungsi untuk Hapus Data
-  void removeFaq(int tabIndex, int itemIndex) {
-    if (tabIndex == 0) {
-      faqBerprestasi.removeAt(itemIndex);
-    } else {
-      faqReguler.removeAt(itemIndex);
+  // Fungsi Hapus Data
+  void removeFaq(int itemIndex) {
+    if (itemIndex >= 0 && itemIndex < faqList.length) {
+      faqList.removeAt(itemIndex);
+      notifyListeners();
     }
-    notifyListeners();
   }
 }
 
-// Global variable (Sederhana untuk tahap testing)
-// Nanti, tim backend akan mengganti ini dengan Provider/Riverpod yang lebih kokoh
+// Global variable untuk testing dan sinkronisasi antar halaman
 final globalFaqStore = FaqDataStore();

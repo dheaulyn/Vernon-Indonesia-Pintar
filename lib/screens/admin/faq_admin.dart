@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/app_colors.dart'; 
-import '../../../../data/faq_data.dart'; // Pastikan path ini mengarah ke faq_data.dart
+import '../../../../data/faq_data.dart'; 
 
 class KelolaFAQPage extends StatefulWidget {
   const KelolaFAQPage({super.key});
@@ -10,17 +10,14 @@ class KelolaFAQPage extends StatefulWidget {
 }
 
 class _KelolaFAQPageState extends State<KelolaFAQPage> {
-  int selectedTabIndex = 0; 
+  // 👇 PERUBAHAN: selectedTabIndex dihapus
   final TextEditingController _tanyaController = TextEditingController();
   final TextEditingController _jawabController = TextEditingController();
 
   // FUNGSI POP-UP FORM
   void _showFormDialog({int? indexToEdit}) {
-    List<Map<String, String>> currentList = selectedTabIndex == 0 
-        ? globalFaqStore.faqBerprestasi 
-        : globalFaqStore.faqReguler;
+    List<Map<String, String>> currentList = globalFaqStore.faqList;
 
-    // Jika indexToEdit tidak kosong, berarti mode EDIT. Isi form dengan data lama.
     if (indexToEdit != null) {
       _tanyaController.text = currentList[indexToEdit]["tanya"]!;
       _jawabController.text = currentList[indexToEdit]["jawab"]!;
@@ -60,15 +57,13 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                // Logika Simpan
+                // 👇 PERUBAHAN: Fungsi Add/Edit tidak lagi membutuhkan selectedTabIndex
                 if (indexToEdit != null) {
-                  // Mode Edit
-                  globalFaqStore.editFaq(selectedTabIndex, indexToEdit, _tanyaController.text, _jawabController.text);
+                  globalFaqStore.editFaq(indexToEdit, _tanyaController.text, _jawabController.text);
                 } else {
-                  // Mode Tambah Baru
-                  globalFaqStore.addFaq(selectedTabIndex, _tanyaController.text, _jawabController.text);
+                  globalFaqStore.addFaq(_tanyaController.text, _jawabController.text);
                 }
-                Navigator.pop(context); // Tutup dialog
+                Navigator.pop(context); 
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
               child: const Text("Simpan", style: TextStyle(color: Colors.white)),
@@ -81,20 +76,18 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
 
   // FUNGSI HAPUS
   void _hapusFaq(int index) {
-    globalFaqStore.removeFaq(selectedTabIndex, index);
+    // 👇 PERUBAHAN: Hapus index tab
+    globalFaqStore.removeFaq(index);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 👇 KUNCI UTAMANYA ADA DI SINI: ListenableBuilder akan memantau perubahan
     return ListenableBuilder(
       listenable: globalFaqStore,
       builder: (context, child) {
         
-        // Ambil data terbaru dari Gudang Data
-        List<Map<String, String>> currentList = selectedTabIndex == 0 
-            ? globalFaqStore.faqBerprestasi 
-            : globalFaqStore.faqReguler;
+        // 👇 Panggil data terbaru dari satu list saja
+        List<Map<String, String>> currentList = globalFaqStore.faqList;
 
         return Padding(
           padding: const EdgeInsets.all(30),
@@ -122,16 +115,6 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                 ],
               ),
               const SizedBox(height: 30),
-
-              // TAB
-              Row(
-                children: [
-                  _buildTabAdmin("Beasiswa Berprestasi", 0),
-                  const SizedBox(width: 15),
-                  _buildTabAdmin("Beasiswa Reguler", 1),
-                ],
-              ),
-              const SizedBox(height: 20),
 
               // LIST FAQ
               Expanded(
@@ -177,28 +160,6 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
           ),
         );
       }
-    );
-  }
-
-  Widget _buildTabAdmin(String title, int index) {
-    bool isSelected = selectedTabIndex == index;
-    return InkWell(
-      onTap: () => setState(() => selectedTabIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Colors.grey[600],
-          ),
-        ),
-      ),
     );
   }
 }

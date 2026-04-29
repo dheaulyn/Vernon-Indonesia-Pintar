@@ -35,7 +35,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           child: Text(
             'Donasi',
             style: TextStyle(
-              // 👇 Merah menyala kalau aktif, agak pudar kalau tidak
               color: isDonasiActive
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.5),
@@ -106,15 +105,11 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () => context.go('/donasi'),
           style: OutlinedButton.styleFrom(
             side: BorderSide(
-              // 👇 Garis merah terang jika aktif, merah transparan jika tidak
               color: isDonasiActive
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.4),
-              width: isDonasiActive
-                  ? 2.0
-                  : 1.2, // Sedikit lebih tebal kalau lagi aktif
+              width: isDonasiActive ? 2.0 : 1.2, 
             ),
-            // 👇 Kasih efek background merah super tipis kalau lagi aktif
             backgroundColor: isDonasiActive
                 ? AppColors.primary.withValues(alpha: 0.05)
                 : Colors.transparent,
@@ -126,7 +121,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           child: Text(
             "Donasi",
             style: TextStyle(
-              // 👇 Teks merah terang jika aktif, merah pudar jika tidak
               color: isDonasiActive
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.6),
@@ -137,7 +131,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
         const SizedBox(width: 15),
 
-        // TOMBOL LOGIN (FILLED) - Biarkan merah solid agar jadi Fokus Utama
+        // TOMBOL LOGIN (FILLED)
         ElevatedButton(
           onPressed: () => context.go('/login'),
           style: ElevatedButton.styleFrom(
@@ -156,6 +150,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  // 👇 DIBERSIHKAN: Column dan efek Underline dihapus agar teks center-aligned
   Widget _navbarItem(
     BuildContext context,
     String title,
@@ -169,30 +164,13 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       hoverColor: Colors.transparent,
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: isActive ? AppColors.primary : Colors.black87,
-              fontSize: 15,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 3,
-            width: isActive ? 30 : 0,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ],
+      child: Text(
+        title,
+        style: TextStyle(
+          color: isActive ? AppColors.primary : Colors.black87,
+          fontSize: 15,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+        ),
       ),
     );
   }
@@ -210,6 +188,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center, // Memastikan semua sejajar di tengah vertikal
         children: [
           Row(
             children: [

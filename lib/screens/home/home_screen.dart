@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
-import 'widgets/about_section.dart'; // Aktifkan kalau kamu masih pakai section ini
+import 'widgets/about_section.dart'; 
 import '../../core/app_colors.dart';
 import '../../data/hero_banner_data.dart';
 import '../../data/faq_data.dart';
@@ -47,24 +47,21 @@ class _HomeScreenState extends State<HomeScreen> {
   // Data Dummy Program Crowdfunding
   final List<ProgramDonasi> listProgramDonasi = [
     ProgramDonasi(
-      imageUrl:
-          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop',
       kategori: 'Pendidikan',
       judul: 'Beasiswa Vokasi 10 Bulan',
       terkumpul: 75,
       target: 100,
     ),
     ProgramDonasi(
-      imageUrl:
-          'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop',
       kategori: 'Impact',
       judul: 'Bantuan Alat Belajar',
       terkumpul: 45,
       target: 100,
     ),
     ProgramDonasi(
-      imageUrl:
-          'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop',
       kategori: 'Karir',
       judul: 'Magang Industri 4 Bulan',
       terkumpul: 90,
@@ -137,23 +134,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Container(key: homeKey),
-            // 1. HERO BANNER
             _buildNewHero(context, isMobile),
-
-            // 👇 2. SECTION BARU: ANGKA STATISTIK (IMPACT)
             _buildImpactSection(isMobile),
-
-            // 3. TENTANG KAMI
             AboutSection(key: aboutKey),
-
-            // 4. PROGRAM UNGGULAN (CROWDFUNDING)
             _buildProgramUnggulan(context, isMobile),
-
-            // 5. LANGKAH PENDAFTARAN & FAQ
             _buildRequirementSection(isMobile),
             _buildFAQSection(context, isMobile),
-
-            // 6. FOOTER
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -161,9 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET HERO BANNER
-  // ==========================================
   Widget _buildNewHero(BuildContext context, bool isMobile) {
     return Container(
       height: isMobile ? 550 : 650,
@@ -172,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
         image: DecorationImage(
           image: NetworkImage(
             'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop',
-          ), // Sesuaikan dengan asset kamu
+          ),
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
         ),
@@ -295,20 +278,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET STATISTIK / IMPACT (BARU)
-  // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFFBFBFB), // Warna background soft agar menyatu
+      color: const Color(0xFFFBFBFB), 
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 80,
         vertical: 80,
       ),
       child: Column(
         children: [
-          // Konteks & Judul
           const Text(
             "DAMPAK NYATA VIP",
             style: TextStyle(
@@ -342,14 +321,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 50),
 
-          // Deretan Kartu Angka
           if (isMobile)
             Column(
               children: [
-                _buildStatCard(
-                  "Rp 0",
-                  "Total Donasi Terkumpul",
-                ), // Nanti "0" bisa diganti dengan angka statis atau dari API
+                _buildStatCard("Rp 0", "Total Donasi Terkumpul"), 
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Penerima Beasiswa"),
                 const SizedBox(height: 20),
@@ -361,9 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             Row(
               children: [
-                Expanded(
-                  child: _buildStatCard("Rp 0", "Total Donasi Terkumpul"),
-                ),
+                Expanded(child: _buildStatCard("Rp 0", "Total Donasi Terkumpul")),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
                 const SizedBox(width: 25),
@@ -377,7 +350,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Desain Kartu Angkanya
   Widget _buildStatCard(String value, String label) {
     return Container(
       width: double.infinity,
@@ -419,9 +391,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET PROGRAM UNGGULAN (CROWDFUNDING)
-  // ==========================================
   Widget _buildProgramUnggulan(BuildContext context, bool isMobile) {
     return Container(
       key: programKey,
@@ -474,9 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           (item) => Expanded(
                             child: Padding(
                               padding: EdgeInsets.only(
-                                right: item != listProgramDonasi.last
-                                    ? 25.0
-                                    : 0,
+                                right: item != listProgramDonasi.last ? 25.0 : 0,
                               ),
                               child: _buildDonationCard(context, item),
                             ),
@@ -566,9 +533,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       value: item.progress,
                       minHeight: 8,
                       backgroundColor: Colors.grey.shade200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.red,
-                      ),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -635,9 +600,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ==========================================
-  // WIDGET LANGKAH PENDAFTARAN
-  // ==========================================
   Widget _buildRequirementSection(bool isMobile) {
     return Container(
       key: stepKey,
@@ -754,16 +716,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET FAQ
+  // WIDGET FAQ (DIPERBARUI)
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return ListenableBuilder(
       listenable: globalFaqStore,
       builder: (context, _) {
-        final List<Map<String, String>> allFaqs = [
-          ...globalFaqStore.faqBerprestasi,
-          ...globalFaqStore.faqReguler,
-        ];
+        // 👇 PERUBAHAN: Panggil langsung dari faqList tunggal
+        final List<Map<String, String>> allFaqs = globalFaqStore.faqList;
+        
         final List<Map<String, String>> previewFaqs = allFaqs.take(4).toList();
 
         Widget faqContent = Column(
@@ -884,13 +845,14 @@ class _FAQAccordionState extends State<FAQAccordion> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.faqs.isEmpty)
+    if (widget.faqs.isEmpty) {
       return const Center(
         child: Text(
-          "Belum ada pertanyaan pada kategori ini.",
+          "Belum ada pertanyaan saat ini.",
           style: TextStyle(color: Colors.grey, fontSize: 16),
         ),
       );
+    }
 
     return Column(
       children: List.generate(widget.faqs.length, (index) {
