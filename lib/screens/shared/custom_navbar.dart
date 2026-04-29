@@ -18,8 +18,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         if (value == 'about') context.go('/tentang');
         if (value == 'program') context.go('/program');
         if (value == 'beasiswa') context.go('/beasiswa');
+        if (value == 'fundpool') context.go('/fund-pool'); // Navigasi Fund Pool
         if (value == 'faq') context.go('/faq');
         if (value == 'contact') context.go('/kontak');
+        if (value == 'donasi') context.go('/donasi');
         if (value == 'login') context.go('/login');
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -27,9 +29,20 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         const PopupMenuItem<String>(value: 'about', child: Text('Tentang')),
         const PopupMenuItem<String>(value: 'program', child: Text('Program')),
         const PopupMenuItem<String>(value: 'beasiswa', child: Text('Beasiswa')),
+        const PopupMenuItem<String>(value: 'fundpool', child: Text('Fund Pool')), // Tambahan di Mobile
         const PopupMenuItem<String>(value: 'faq', child: Text('FAQ')),
         const PopupMenuItem<String>(value: 'contact', child: Text('Kontak')),
         const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'donasi',
+          child: Text(
+            'Donasi',
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         PopupMenuItem<String>(
           value: 'login',
           child: Text(
@@ -55,11 +68,38 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 30),
         _navbarItem("Beasiswa", () => context.go('/beasiswa')),
         const SizedBox(width: 30),
+        
+        // 👇 MENU BARU: FUND POOL
+        _navbarItem("Fund Pool", () => context.go('/fund-pool')),
+        const SizedBox(width: 30),
+
         _navbarItem("FAQ", () => context.go('/faq')),
         const SizedBox(width: 30),
         _navbarItem("Kontak", () => context.go('/kontak')),
         const SizedBox(width: 40),
 
+        // TOMBOL DONASI (OUTLINE)
+        OutlinedButton(
+          onPressed: () => context.go('/donasi'),
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: AppColors.primary, width: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            "Donasi",
+            style: TextStyle(
+              color: AppColors.primary, 
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        
+        const SizedBox(width: 15),
+
+        // TOMBOL LOGIN (FILLED)
         ElevatedButton(
           onPressed: () => context.go('/login'),
           style: ElevatedButton.styleFrom(

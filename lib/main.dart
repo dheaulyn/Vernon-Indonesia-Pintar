@@ -13,6 +13,8 @@ import 'screens/admin/layout_dashboard.dart';
 import 'data/models/program_model.dart'; 
 import 'screens/home/widgets/profil_yayasan.dart';
 import 'screens/home/widgets/form_beasiswa.dart';
+import 'screens/home/widgets/fund_pool_screen.dart';
+import 'screens/home/donasi_screen.dart';
 
 void main() {
   usePathUrlStrategy(); 
@@ -57,7 +59,15 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/beasiswa',
       builder: (context, state) => const FormBeasiswaScreen(),
-),
+    ),
+    GoRoute(
+      path: '/fund-pool',
+      builder: (context, state) => const FundPoolScreen(),
+    ),
+    GoRoute(
+      path: '/donasi',
+      builder: (context, state) => const DonasiScreen(),
+    ),
     GoRoute(
       path: '/program/:id', 
       builder: (context, state) {
