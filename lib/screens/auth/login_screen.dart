@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // 👇 1. Import GoRouter
+import 'package:go_router/go_router.dart'; 
 import '../../core/app_colors.dart';
 import '../../data/mock_database.dart'; 
 
@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // 👇 2. Fungsi Login yang sudah di-upgrade dengan sistem Role (RBAC)
   Future<void> _handleLogin() async {
     setState(() {
       _isLoading = true;
@@ -37,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // 👇 Panggil loginRole untuk mendapatkan peran (admin / siswa)
+    // Panggil loginRole untuk mendapatkan peran (admin / siswa)
     final String? userRole = await MockDatabase.loginRole(email, password);
 
     setState(() {
@@ -48,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (userRole != null) {
       if (!mounted) return;
       
-      // 👇 PENYORTIRAN OTOMATIS BERDASARKAN ROLE
+      // PENYORTIRAN OTOMATIS BERDASARKAN ROLE
       if (userRole == 'admin') {
         context.go('/admin'); // Masuk ke ruangan kepala sekolah (Admin)
       } else {
@@ -101,7 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () {
-                        // 👇 Gunakan GoRouter untuk kembali ke beranda
                         context.go('/');
                       },
                       tooltip: 'Kembali ke Beranda',
@@ -111,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
                 const Text(
-                  'Masuk ke Sistem VIP', // Sedikit diubah agar cocok untuk Admin & Siswa
+                  'Masuk ke Sistem VIP', 
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -203,7 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // TODO: Halaman Lupa Password
+                    },
                     child: const Text(
                       'Lupa Password?',
                       style: TextStyle(color: AppColors.primary),
@@ -249,11 +249,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Belum punya akun?'),
+                    const Text('Belum mendaftar beasiswa?'),
                     TextButton(
                       onPressed: () {
-                        // 👇 Gunakan GoRouter untuk ke halaman register
-                        context.go('/register');
+                        // 👇 MENGARAH KE FORM BEASISWA
+                        context.go('/beasiswa');
                       },
                       child: const Text(
                         'Daftar di sini',

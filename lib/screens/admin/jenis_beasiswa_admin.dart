@@ -470,75 +470,6 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 768;
-
-    return Padding(
-      padding: EdgeInsets.all(isMobile ? 15.0 : 30.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 15,
-              runSpacing: 15,
-              children: [
-                const Text(
-                  "Kelola Jenis Beasiswa",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _showAddForm,
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    "Tambah Beasiswa",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                    shape: const StadiumBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: Card(
-              color: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: listBeasiswa.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Belum ada data beasiswa.",
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    )
-                  : isMobile
-                  ? _buildMobileView()
-                  : _buildDesktopView(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDesktopView() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -666,6 +597,75 @@ class _JenisBeasiswaAdminState extends State<JenisBeasiswaAdmin> {
           ),
         );
       },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isMobile = MediaQuery.of(context).size.width < 768;
+
+    return Padding(
+      padding: EdgeInsets.all(isMobile ? 15.0 : 30.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 15,
+              runSpacing: 15,
+              children: [
+                const Text(
+                  "Kelola Jenis Beasiswa",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _showAddForm,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    "Tambah Beasiswa",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: const StadiumBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          Expanded(
+            child: Card(
+              color: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: listBeasiswa.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "Belum ada data beasiswa.",
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    )
+                  : isMobile
+                  ? _buildMobileView()
+                  : _buildDesktopView(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

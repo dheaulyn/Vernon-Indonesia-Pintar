@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; 
 import '../../shared/custom_navbar.dart';
 import '/core/app_colors.dart';
 
@@ -19,33 +20,28 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     final bool isMobile = screenWidth < 900;
 
     return Scaffold(
-      // 👇 1. GANTI LATAR BELAKANG SCROLLABLE MENJADI PUTIH BERSIH
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 2. HEADER BANNER
+            // 1. HEADER BANNER
             _buildHeader(isMobile),
             
-            // 3. KONTEN FORMULIR
+            // 2. KONTEN FORMULIR
             Padding(
               padding: EdgeInsets.symmetric(
                 vertical: 50,
-                // Di Desktop form akan berada di tengah dan tidak terlalu lebar
                 horizontal: isMobile ? 20 : screenWidth * 0.2, 
               ),
               child: Container(
                 padding: EdgeInsets.all(isMobile ? 20 : 40),
                 decoration: BoxDecoration(
-                  // 👇 2. KOTAK FORMULIR TETAP PUTIH BERSIH
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
-                    // 👇 3. BAYANGAN LEMBUT ALA PROFIL (SEDIKIT LEBIH PROPORSIONAL)
                     BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 15, offset: const Offset(0, 8)),
                   ],
-                  // 👇 4. OPTIONAL: TAMBAHKAN BORDER ABU-ABU TIPIS SEPERTI FAQ PROFIL
                   border: Border.all(color: Colors.grey.shade100),
                 ),
                 child: Form(
@@ -53,6 +49,13 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // INFO TAHAPAN SELEKSI
+                      _buildTahapanSeleksi(isMobile),
+                      
+                      const SizedBox(height: 30),
+                      const Divider(color: Colors.black12), 
+                      const SizedBox(height: 30),
+
                       // SECTION 1: DATA PRIBADI
                       _buildSectionTitle("1", "Data Pribadi"),
                       const SizedBox(height: 20),
@@ -63,32 +66,69 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       _buildDropdownPendidikan(),
 
                       const SizedBox(height: 40),
-                      const Divider(color: Colors.black12,), // Divider lebih tipis
+                      const Divider(color: Colors.black12), 
                       const SizedBox(height: 40),
 
                       // SECTION 2: KONDISI & MOTIVASI
                       _buildSectionTitle("2", "Kondisi & Motivasi"),
                       const SizedBox(height: 20),
-                      _buildTextField("Ceritakan singkat kondisi ekonomi keluarga Anda", "Jelaskan secara singkat...", maxLines: 4),
-                      _buildTextField("Mengapa Anda layak mendapatkan beasiswa ini?", "Jelaskan motivasi dan alasan Anda...", maxLines: 4),
+                      _buildTextField("Kondisi Ekonomi Keluarga", "Jelaskan secara singkat...", maxLines: 4),
+                      _buildTextField("Alasan Layak Mendapatkan Beasiswa", "Jelaskan motivasi dan alasan Anda...", maxLines: 4),
 
                       const SizedBox(height: 40),
 
-                      // TAHAPAN SELEKSI BOX
-                      _buildTahapanSeleksi(isMobile),
-
-                      const SizedBox(height: 40),
-
-                      // TOMBOL SUBMIT
+                      // TOMBOL SUBMIT DENGAN ALUR LOADING, REDIRECT, & HYBRID WARNING
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // Aksi ketika form valid
+                              // JIKA VALIDASI SUKSES
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+
+                              // Simulasi jeda waktu pengiriman data ke server
+                              await Future.delayed(const Duration(seconds: 2));
+
+                              if (context.mounted) {
+                                // Tutup dialog loading
+                                Navigator.pop(context);
+                                
+                                // Arahkan ke halaman login
+                                context.go('/login');
+                                
+                                // 👇 PERUBAHAN DI SINI: Tampilkan notifikasi instruksi cek email
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Pendaftaran berhasil! Password sementara telah dikirim ke email Anda. Silakan cek Kotak Masuk atau folder Spam.'),
+                                    backgroundColor: Colors.green,
+                                    duration: Duration(seconds: 5), // Waktu ditambah jadi 5 detik
+                                  ),
+                                );
+                              }
+                            } else {
+                              // JIKA VALIDASI GAGAL: MUNCULKAN POP-UP WARNING
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Formulir berhasil dikirim!')),
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text('Mohon periksa kembali. Ada kolom yang masih kosong atau formatnya salah.'),
+                                      ),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.redAccent,
+                                  behavior: SnackBarBehavior.floating, 
+                                  duration: Duration(seconds: 3),
+                                ),
                               );
                             }
                           },
@@ -109,7 +149,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               ),
             ),
 
-            // 4. FOOTER LENGKAP
+            // 3. FOOTER LENGKAP
             _buildFooter(isMobile),
           ],
         ),
@@ -118,14 +158,13 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   }
 
   // ==========================================
-  // WIDGET: HEADER BANNER (Gaya Premium FAQ/Profil)
+  // WIDGET: HEADER BANNER 
   // ==========================================
   Widget _buildHeader(bool isMobile) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: isMobile ? 50 : 80, horizontal: 20),
       decoration: BoxDecoration(
-        // 👇 5. GANTI HEADER MENJADI LIGHT GRADIENT PRIMER SEPERTI FAQ PUSAT BANTUAN
         color: AppColors.primary.withValues(alpha: 0.05),
         border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
       ),
@@ -139,7 +178,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
           Text(
             "Mulai Langkahmu Bersama VIP",
             textAlign: TextAlign.center,
-            // 👇 6. WARNA TEKS JADI HITAM KARENA BACKGROUND TERANG
             style: TextStyle(fontSize: isMobile ? 28 : 40, fontWeight: FontWeight.w900, color: Colors.black87),
           ),
           const SizedBox(height: 15),
@@ -176,7 +214,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   }
 
   // ==========================================
-  // WIDGET: INPUT FIELD (Teks)
+  // WIDGET: INPUT FIELD DENGAN VALIDASI REGEX
   // ==========================================
   Widget _buildTextField(String label, String hint, {int maxLines = 1, bool isEmail = false, bool isPhone = false}) {
     return Padding(
@@ -209,8 +247,28 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               fillColor: Colors.grey.shade50,
             ),
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Field ini tidak boleh kosong';
-              return null;
+              if (value == null || value.trim().isEmpty) {
+                return '$label tidak boleh kosong';
+              }
+              
+              if (isEmail) {
+                final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                if (!emailRegex.hasMatch(value)) {
+                  return 'Format email tidak valid (contoh: budi@gmail.com)';
+                }
+              }
+
+              if (isPhone) {
+                final phoneRegex = RegExp(r'^[0-9]+$');
+                if (!phoneRegex.hasMatch(value)) {
+                  return '$label hanya boleh berisi angka';
+                }
+                if (value.length < 9) {
+                  return '$label terlalu pendek (minimal 9 angka)';
+                }
+              }
+
+              return null; 
             },
           ),
         ],
@@ -245,7 +303,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               DropdownMenuItem(value: "SMA", child: Text("SMA / SMK / Sederajat")),
             ],
             onChanged: (value) => setState(() => _selectedPendidikan = value),
-            validator: (value) => value == null ? 'Pilih pendidikan terakhir Anda' : null,
+            validator: (value) => value == null ? 'Pendidikan Terakhir harus dipilih' : null,
           ),
         ],
       ),
