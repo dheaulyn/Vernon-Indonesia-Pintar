@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-
-// --- 1. IMPORT SEMUA HALAMAN ---
 import 'screens/home/home_screen.dart';
 import 'screens/home/widgets/faq_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -14,7 +12,9 @@ import 'data/models/program_model.dart';
 import 'screens/home/widgets/profil_yayasan.dart';
 import 'screens/home/widgets/form_beasiswa.dart';
 import 'screens/home/fund_pool_screen.dart';
-import 'screens/home/donasi_screen.dart';
+import 'screens/donatur/donatur_dashboard_screen.dart';
+import 'screens/auth/login_donatur_screen.dart';
+import 'screens/auth/register_donatur_screen.dart';
 
 void main() {
   usePathUrlStrategy();
@@ -29,7 +29,6 @@ final GoRouter _router = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
 
     // RUTE STATIS (HALAMAN BERBEDA)
-    // Kita ganti URL halaman penuhnya menjadi pusat-bantuan
     GoRoute(
       path: '/pusat-bantuan',
       builder: (context, state) => const FAQScreen(),
@@ -48,6 +47,21 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const LayoutDashboard(),
     ),
     GoRoute(
+      path: '/login-donatur',
+      builder: (context, state) => const LoginDonaturScreen(),
+    ),
+    GoRoute(
+      path: '/register-donatur',
+      builder: (context, state) => const RegisterDonaturScreen(),
+    ),
+    // 👇 INI DIA TAMBAHAN RUTENYA UNTUK DASHBOARD DONATUR
+    GoRoute(
+      path: '/dashboard-donatur',
+      builder: (context, state) => const DonaturDashboardScreen(),
+    ),
+
+    // ----------------------------------------------------
+    GoRoute(
       path: '/profil-yayasan',
       builder: (context, state) => const ProfilYayasanScreen(),
     ),
@@ -59,12 +73,13 @@ final GoRouter _router = GoRouter(
       path: '/fund-pool',
       builder: (context, state) => const FundPoolScreen(),
     ),
-    GoRoute(path: '/donasi', builder: (context, state) => const DonasiScreen()),
-    // Di dalam GoRouter main.dart kamu:
+    GoRoute(
+      path: '/donasi',
+      builder: (context, state) => const DonaturDashboardScreen(),
+    ),
     GoRoute(
       path: '/program',
-      builder: (context, state) =>
-          const ProgramDetailScreen(), // Pastikan mengarah ke sini
+      builder: (context, state) => const ProgramDetailScreen(),
     ),
 
     // --- MANTRA: RUTE DINAMIS UNTUK SEKSI HOMESCREEN ---
