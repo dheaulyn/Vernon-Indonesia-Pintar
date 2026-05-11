@@ -105,14 +105,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                              onPressed: () {
-                                context.go('/');
-                              },
-                              tooltip: 'Kembali ke Beranda',
-                              padding: EdgeInsets.zero,
-                              alignment: Alignment.centerLeft,
+                            // 👇 PERUBAHAN: Gunakan Transform.translate untuk menggeser ke kiri 
+                            // tanpa merusak posisi lingkaran hover/splash
+                            Transform.translate(
+                              offset: const Offset(-8, 0), // Geser 8px ke kiri agar rata dengan teks di bawahnya
+                              child: IconButton(
+                                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                                onPressed: () {
+                                  context.go('/');
+                                },
+                                tooltip: 'Kembali ke Beranda',
+                                // padding dan alignment yang bikin error sudah dihapus
+                              ),
                             ),
                             Image.asset('assets/logo.png', height: 40),
                           ],

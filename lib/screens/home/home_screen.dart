@@ -2,31 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
-import 'widgets/about_section.dart'; 
+import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
 import '../../data/hero_banner_data.dart';
 import '../../data/faq_data.dart';
-
-// ==========================================
-// MODEL DATA DONASI SEMENTARA
-// ==========================================
-class ProgramDonasi {
-  final String imageUrl;
-  final String kategori;
-  final String judul;
-  final int terkumpul;
-  final int target;
-
-  ProgramDonasi({
-    required this.imageUrl,
-    required this.kategori,
-    required this.judul,
-    required this.terkumpul,
-    required this.target,
-  });
-
-  double get progress => terkumpul / target;
-}
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -43,31 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey faqKey = GlobalKey();
   final GlobalKey contactKey = GlobalKey();
   final GlobalKey stepKey = GlobalKey();
-
-  // Data Dummy Program Crowdfunding
-  final List<ProgramDonasi> listProgramDonasi = [
-    ProgramDonasi(
-      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop',
-      kategori: 'Pendidikan',
-      judul: 'Beasiswa Vokasi 10 Bulan',
-      terkumpul: 75,
-      target: 100,
-    ),
-    ProgramDonasi(
-      imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop',
-      kategori: 'Impact',
-      judul: 'Bantuan Alat Belajar',
-      terkumpul: 45,
-      target: 100,
-    ),
-    ProgramDonasi(
-      imageUrl: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=600&auto=format&fit=crop',
-      kategori: 'Karir',
-      judul: 'Magang Industri 4 Bulan',
-      terkumpul: 90,
-      target: 100,
-    ),
-  ];
 
   @override
   void initState() {
@@ -147,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ==========================================
+  // WIDGET HERO BANNER
+  // ==========================================
   Widget _buildNewHero(BuildContext context, bool isMobile) {
     return Container(
       height: isMobile ? 550 : 650,
@@ -223,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
               runSpacing: 15,
               children: [
                 ElevatedButton(
-                  onPressed: () => context.go('/donasi'),
+                  onPressed: () => context.go('/login-donatur'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(
@@ -278,10 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ==========================================
+  // WIDGET IMPACT SECTION
+  // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFFFBFBFB), 
+      color: const Color(0xFFFBFBFB),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 80,
         vertical: 80,
@@ -324,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (isMobile)
             Column(
               children: [
-                _buildStatCard("Rp 0", "Total Donasi Terkumpul"), 
+                _buildStatCard("Rp 0", "Total Donasi Terkumpul"),
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Penerima Beasiswa"),
                 const SizedBox(height: 20),
@@ -336,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen> {
           else
             Row(
               children: [
-                Expanded(child: _buildStatCard("Rp 0", "Total Donasi Terkumpul")),
+                Expanded(
+                  child: _buildStatCard("Rp 0", "Total Donasi Terkumpul"),
+                ),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
                 const SizedBox(width: 25),
@@ -391,6 +353,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ==========================================
+  // WIDGET PROGRAM UNGGULAN (FIXED LAYOUT)
+  // ==========================================
   Widget _buildProgramUnggulan(BuildContext context, bool isMobile) {
     return Container(
       key: programKey,
@@ -400,198 +365,198 @@ class _HomeScreenState extends State<HomeScreen> {
         horizontal: isMobile ? 20 : 80,
         vertical: 80,
       ),
-      child: Column(
-        children: [
-          const Text(
-            "PROGRAM UNGGULAN",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "Wujudkan Perubahan Nyata",
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 50),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (isMobile) {
-                return Column(
-                  children: listProgramDonasi
-                      .map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 25.0),
-                          child: _buildDonationCard(context, item),
-                        ),
-                      )
-                      .toList(),
-                );
-              } else {
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: listProgramDonasi
-                        .map(
-                          (item) => Expanded(
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                right: item != listProgramDonasi.last ? 25.0 : 0,
-                              ),
-                              child: _buildDonationCard(context, item),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDonationCard(BuildContext context, ProgramDonasi item) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            child: AspectRatio(
-              aspectRatio: 16 / 10,
-              child: Image.network(
-                item.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey.shade300,
-                  child: const Icon(Icons.image, color: Colors.grey),
+      child: Center(
+        child: SizedBox(
+          width: isMobile ? double.infinity : 1100,
+          child: Column(
+            children: [
+              const Text(
+                "PROGRAM UNGGULAN",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+              const SizedBox(height: 10),
+              Text(
+                "Wujudkan Perubahan Nyata",
+                style: TextStyle(
+                  fontSize: isMobile ? 28 : 36,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 50),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade600,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      item.kategori,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    item.judul,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: item.progress,
-                      minHeight: 8,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: isMobile
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            height: 250,
+                            decoration: const BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage(
+                                  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                ),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
+                          _buildProgramCardContent(context, isMobile: true),
+                        ],
+                      )
+                    : IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const TextSpan(text: 'Terkumpul: '),
-                            TextSpan(
-                              text: 'Rp ${item.terkumpul}jt',
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              flex: 5,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(
+                                      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 7,
+                              child: _buildProgramCardContent(
+                                context,
+                                isMobile: false,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Text(
-                        'Target: Rp ${item.target}jt',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/donasi'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A1A1A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 25,
-                          vertical: 16,
-                        ),
-                        shape: const StadiumBorder(),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        "IKUT BERDONASI",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgramCardContent(
+    BuildContext context, {
+    required bool isMobile,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(isMobile ? 30 : 50),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.red.shade600,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              "Pendidikan & Karir",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Program Karir Kurikulum 10 Bulan VIP",
+            style: TextStyle(
+              fontSize: isMobile ? 24 : 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 15),
+          Text(
+            "Pelatihan intensif terpadu untuk membekali generasi muda kurang mampu dengan keterampilan praktis dan karakter profesional agar siap bersaing di dunia kerja.",
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade600,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: 0.45,
+              minHeight: 8,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  children: const [
+                    TextSpan(text: "Terkumpul: "),
+                    TextSpan(
+                      text: "Rp 135jt",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              Text(
+                "Target: Rp 300jt",
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 40),
+
+          SizedBox(
+            width: double.infinity,
+            height: 55,
+            child: ElevatedButton(
+              onPressed: () {
+                context.go('/login-donatur');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A1A),
+                foregroundColor: Colors.white,
+                shape: const StadiumBorder(),
+                elevation: 0,
+              ),
+              child: const Text(
+                "IKUT BERDONASI",
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
               ),
             ),
           ),
@@ -600,6 +565,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ==========================================
+  // WIDGET REQUIREMENT SECTION
+  // ==========================================
   Widget _buildRequirementSection(bool isMobile) {
     return Container(
       key: stepKey,
@@ -716,15 +684,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET FAQ (DIPERBARUI)
+  // WIDGET FAQ SECTION
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return ListenableBuilder(
       listenable: globalFaqStore,
       builder: (context, _) {
-        // 👇 PERUBAHAN: Panggil langsung dari faqList tunggal
         final List<Map<String, String>> allFaqs = globalFaqStore.faqList;
-        
         final List<Map<String, String>> previewFaqs = allFaqs.take(4).toList();
 
         Widget faqContent = Column(

@@ -25,7 +25,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _mobileMenuItem('Beranda', '/', currentPath),
         _mobileMenuItem('Tentang', '/tentang', currentPath),
         _mobileMenuItem('Program', '/program', currentPath),
-        _mobileMenuItem('Beasiswa', '/beasiswa', currentPath),
+        _mobileMenuItem('Media', '/media', currentPath),
         _mobileMenuItem('Fund Pool', '/fund-pool', currentPath),
         _mobileMenuItem('FAQ', '/faq', currentPath),
         _mobileMenuItem('Kontak', '/kontak', currentPath),
@@ -89,7 +89,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 30),
         _navbarItem(context, "Program", '/program', currentPath),
         const SizedBox(width: 30),
-        _navbarItem(context, "Beasiswa", '/beasiswa', currentPath),
+        _navbarItem(context, "Media", '/media', currentPath),
         const SizedBox(width: 30),
         _navbarItem(context, "Fund Pool", '/fund-pool', currentPath),
         const SizedBox(width: 30),
@@ -102,13 +102,13 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         // TOMBOL DONASI (OUTLINE DINAMIS)
         // ==========================================
         OutlinedButton(
-          onPressed: () => context.go('/donasi'),
+          onPressed: () => context.go('/login-donatur'),
           style: OutlinedButton.styleFrom(
             side: BorderSide(
               color: isDonasiActive
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.4),
-              width: isDonasiActive ? 2.0 : 1.2, 
+              width: isDonasiActive ? 2.0 : 1.2,
             ),
             backgroundColor: isDonasiActive
                 ? AppColors.primary.withValues(alpha: 0.05)
@@ -188,7 +188,8 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center, // Memastikan semua sejajar di tengah vertikal
+        crossAxisAlignment: CrossAxisAlignment
+            .center, // Memastikan semua sejajar di tengah vertikal
         children: [
           Row(
             children: [

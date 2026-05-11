@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../data/mock_database.dart'; // 👇 Import database
 
 class HomeDashboard extends StatelessWidget {
   const HomeDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ==========================================
+    // LOGIKA PENARIKAN DATA DINAMIS
+    // ==========================================
+    final allSiswa = MockDatabase.getAllRegisteredSiswaFullData();
+    
+    // Hitung statistik berdasarkan data asli
+    final int totalPendaftar = allSiswa.length;
+    final int menungguReview = allSiswa.where((s) => s['admin_status'] == 'Menunggu Review').length;
+    final int beasiswaAktif = allSiswa.where((s) => s['admin_status'] == 'Diterima').length;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -27,11 +38,11 @@ class HomeDashboard extends StatelessWidget {
               if (constraints.maxWidth < 800) {
                 return Column(
                   children: [
-                    _statBox("Total Pendaftar", "1,240", Colors.blue, Icons.people_alt_rounded),
+                    _statBox("Total Pendaftar", totalPendaftar.toString(), Colors.blue, Icons.people_alt_rounded),
                     const SizedBox(height: 15),
-                    _statBox("Menunggu Review", "85", Colors.orange, Icons.hourglass_empty_rounded),
+                    _statBox("Menunggu Review", menungguReview.toString(), Colors.orange, Icons.hourglass_empty_rounded),
                     const SizedBox(height: 15),
-                    _statBox("Beasiswa Aktif", "2", Colors.green, Icons.school_rounded),
+                    _statBox("Beasiswa Aktif", beasiswaAktif.toString(), Colors.green, Icons.school_rounded),
                   ],
                 );
               }
@@ -39,11 +50,11 @@ class HomeDashboard extends StatelessWidget {
               // Jika dibuka di Laptop (layar lebar), jejerkan kartunya menyamping
               return Row(
                 children: [
-                  Expanded(child: _statBox("Total Pendaftar", "1,240", Colors.blue, Icons.people_alt_rounded)),
+                  Expanded(child: _statBox("Total Pendaftar", totalPendaftar.toString(), Colors.blue, Icons.people_alt_rounded)),
                   const SizedBox(width: 20),
-                  Expanded(child: _statBox("Menunggu Review", "85", Colors.orange, Icons.hourglass_empty_rounded)),
+                  Expanded(child: _statBox("Menunggu Review", menungguReview.toString(), Colors.orange, Icons.hourglass_empty_rounded)),
                   const SizedBox(width: 20),
-                  Expanded(child: _statBox("Beasiswa Aktif", "2", Colors.green, Icons.school_rounded)),
+                  Expanded(child: _statBox("Beasiswa Aktif", beasiswaAktif.toString(), Colors.green, Icons.school_rounded)),
                 ],
               );
             },
