@@ -5,11 +5,12 @@ import '../../data/mock_database.dart';
 
 // Import halaman-halaman konten
 import 'home_dashboard.dart';
-import 'manajemen_pendaftar_admin.dart'; // 👇 Import halaman baru (Sesuaikan nama foldernya ya!)
-import 'faq_admin.dart';
-import 'jenis_beasiswa_admin.dart';
-import 'hero_banner_admin.dart';
-import 'footer_admin.dart';
+import 'manajemen_pendaftar_admin.dart'; 
+import 'cms/faq_admin.dart';
+import 'cms/jenis_beasiswa_admin.dart';
+import 'cms/hero_banner_admin.dart';
+import 'cms/footer_admin.dart';
+import 'cms/media_admin.dart'; 
 
 class LayoutDashboard extends StatefulWidget {
   const LayoutDashboard({super.key});
@@ -22,14 +23,15 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
   int _currentTabIndex = 0;
   bool _isCollapsed = false;
 
-  // 👇 PERUBAHAN: Index bergeser karena ada tambahan Manajemen Pendaftar
+  // 👇 PERUBAHAN: Index bergeser karena ada tambahan Kelola Media
   final List<Widget> _adminPages = [
-    const HomeDashboard(), // Index 0
-    const ManajemenPendaftarAdmin(), // Index 1 (Halaman Baru)
-    const JenisBeasiswaAdmin(), // Index 2
-    const KelolaFAQPage(), // Index 3
-    const HeroBannerAdmin(), // Index 4
-    const FooterAdmin(), // Index 5
+    const HomeDashboard(),             // Index 0
+    const ManajemenPendaftarAdmin(),   // Index 1
+    const JenisBeasiswaAdmin(),        // Index 2
+    const KelolaMediaAdmin(),          // Index 3 (HALAMAN BARU)
+    const KelolaFAQPage(),             // Index 4
+    const HeroBannerAdmin(),           // Index 5
+    const FooterAdmin(),               // Index 6
   ];
 
   @override
@@ -206,7 +208,6 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   isCollapsed,
                 ),
 
-                // 👇 PERUBAHAN: Menu Data Pendaftar dimasukkan ke kategori Admin (Index 1)
                 _sidebarMenu(
                   Icons.people_alt_rounded,
                   "Data Pendaftar",
@@ -234,7 +235,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   ),
                 if (isCollapsed) const SizedBox(height: 10),
 
-                // 👇 PERUBAHAN: Semua index CMS bergeser +1
+                // 👇 PERUBAHAN: Index disesuaikan dengan urutan _adminPages di atas
                 _sidebarMenu(
                   Icons.auto_awesome_motion_rounded,
                   "Kelola Program",
@@ -242,21 +243,27 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   isCollapsed,
                 ),
                 _sidebarMenu(
+                  Icons.article_rounded, 
+                  "Kelola Media", // 👇 MENU BARU DITAMBAHKAN
+                  3,
+                  isCollapsed,
+                ),
+                _sidebarMenu(
                   Icons.help_center_rounded,
                   "Kelola FAQ",
-                  3,
+                  4,
                   isCollapsed,
                 ),
                 _sidebarMenu(
                   Icons.image_rounded,
                   "Kelola Hero Banner",
-                  4,
+                  5,
                   isCollapsed,
                 ),
                 _sidebarMenu(
                   Icons.contact_mail_rounded,
                   "Kelola Footer",
-                  5,
+                  6,
                   isCollapsed,
                 ),
 
@@ -340,8 +347,8 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   color: isActive
                       ? activeColor
                       : (isWebLink
-                            ? Colors.green.withOpacity(0.7)
-                            : inactiveColor),
+                          ? Colors.green.withOpacity(0.7)
+                          : inactiveColor),
                   size: 24,
                 ),
                 if (!isCollapsed) ...[

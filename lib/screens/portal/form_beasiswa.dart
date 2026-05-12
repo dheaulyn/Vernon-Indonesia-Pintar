@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; 
-import 'package:file_picker/file_picker.dart'; // 👇 Tambahkan import ini
+import 'package:file_picker/file_picker.dart';
 import '../../core/app_colors.dart';
 import 'portal_layout.dart'; 
 import '../../data/mock_database.dart';
@@ -38,6 +38,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   String? _fileNameSktm;
   String? _fileNameFoto;
   String? _fileNameMotivasi;
+
+  // 👇 VARIABEL STATE BARU UNTUK VALIDASI DOKUMEN
+  bool _hasAttemptedSubmit = false;
 
   bool _isLoading = false;
 
@@ -84,7 +87,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     super.dispose();
   }
 
-  // 👇 FUNGSI UNTUK MEMILIH FILE DARI PERANGKAT
   Future<void> _pickFile(String type) async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
@@ -106,6 +108,10 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   }
 
   void _submitForm() async {
+    setState(() {
+      _hasAttemptedSubmit = true; // Tandai bahwa user sudah mencoba submit
+    });
+
     if (!_formKey.currentState!.validate() || 
         _selectedProvinsi == null ||
         _selectedKota == null ||
@@ -150,7 +156,6 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
       MockDatabase.currentUser!['asal_sekolah'] = _asalSekolahController.text;
       MockDatabase.currentUser!['tahun_lulus'] = _tahunLulusController.text;
       
-      // 👇 SIMPAN NAMA FILE KE DATABASE
       MockDatabase.currentUser!['file_ktp'] = _fileNameKtp;
       MockDatabase.currentUser!['file_rapor'] = _fileNameIjazah;
       MockDatabase.currentUser!['file_foto'] = _fileNameFoto;
@@ -387,31 +392,31 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       label: "Fotokopi KTP / Kartu Pelajar (Wajib)", 
                       hint: "Pilih file KTP...", 
                       fileName: _fileNameKtp, 
-                      onTap: () => _pickFile('ktp'), // 👇 Diubah ke _pickFile
+                      onTap: () => _pickFile('ktp'),
                     ),
                     _buildFileUploadField(
                       label: "Fotokopi Ijazah / SKL Terakhir (Wajib)", 
                       hint: "Pilih file Ijazah/SKL...", 
                       fileName: _fileNameIjazah, 
-                      onTap: () => _pickFile('ijazah'), // 👇 Diubah ke _pickFile
+                      onTap: () => _pickFile('ijazah'), 
                     ),
                     _buildFileUploadField(
                       label: "Pas Foto 3x4 Terbaru (Wajib)", 
                       hint: "Pilih file Pas Foto...", 
                       fileName: _fileNameFoto, 
-                      onTap: () => _pickFile('foto'), // 👇 Diubah ke _pickFile
+                      onTap: () => _pickFile('foto'), 
                     ),
                     _buildFileUploadField(
                       label: "Surat Motivasi Tulis Tangan (Wajib)", 
                       hint: "Pilih file Surat Motivasi...", 
                       fileName: _fileNameMotivasi, 
-                      onTap: () => _pickFile('motivasi'), // 👇 Diubah ke _pickFile
+                      onTap: () => _pickFile('motivasi'), 
                     ),
                     _buildFileUploadField(
                       label: "Surat Keterangan Tidak Mampu / SKTM (Wajib)", 
                       hint: "Pilih file SKTM...", 
                       fileName: _fileNameSktm, 
-                      onTap: () => _pickFile('sktm'), // 👇 Diubah ke _pickFile
+                      onTap: () => _pickFile('sktm'), 
                     ),
 
                     const SizedBox(height: 40),
@@ -495,6 +500,8 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: readOnly ? Colors.grey.shade300 : AppColors.primary, width: 1.5)),
+              errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+              focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
               filled: true,
               fillColor: readOnly ? Colors.grey.shade200 : Colors.grey.shade50,
             ),
@@ -529,6 +536,8 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+              errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+              focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
               filled: true, fillColor: items.isEmpty ? Colors.grey.shade100 : Colors.grey.shade50,
             ),
             hint: Text(hint, style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
@@ -560,6 +569,8 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+              errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+              focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
               filled: true, fillColor: Colors.grey.shade50,
             ),
             hint: const Text("-- Pilih Pendidikan --"),
@@ -576,12 +587,16 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
+  // 👇 PERBAIKAN WIDGET FILE UPLOAD DENGAN VALIDASI VISUAL
   Widget _buildFileUploadField({
     required String label, 
     required String hint, 
     required String? fileName, 
     required VoidCallback onTap
   }) {
+    // Cek apakah file kosong dan user sudah pernah klik "Kirim Pendaftaran"
+    bool hasError = _hasAttemptedSubmit && (fileName == null || fileName.isEmpty);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -595,9 +610,10 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: hasError ? Colors.red.shade50 : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300, width: 1.0),
+                // 👇 Border menjadi merah jika hasError true
+                border: Border.all(color: hasError ? Colors.redAccent : Colors.grey.shade300, width: hasError ? 1.5 : 1.0),
               ),
               child: Row(
                 children: [
@@ -626,6 +642,12 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               ),
             ),
           ),
+          // 👇 Munculkan pesan error (teks merah) di bawah box jika belum diisi
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 16),
+              child: Text("Dokumen ini wajib diunggah", style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+            )
         ],
       ),
     );

@@ -27,7 +27,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   bool _isSidebarCollapsed = false;
   bool _isAkunExpanded = false;
 
-  // 👇 WIDGET BARU: Kontroler untuk mendeteksi scroll layar
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
 
@@ -39,7 +38,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
         {'name': 'Dhea Aulyanti', 'email': 'dhea@mail.com'};
     _refreshData();
 
-    // 👇 WIDGET BARU: Memantau apakah layar sudah di-scroll ke bawah
     _scrollController.addListener(() {
       if (_scrollController.offset > 300 && !_showBackToTopButton) {
         setState(() => _showBackToTopButton = true);
@@ -51,7 +49,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose(); // Jangan lupa dibersihkan
+    _scrollController.dispose(); 
     super.dispose();
   }
 
@@ -65,9 +63,10 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
     });
   }
 
+  // 👇 PERBAIKAN DI SINI: Mengarahkan ke rute login khusus donatur
   void _handleLogout() {
     MockDatabase.logout();
-    context.go('/login');
+    context.go('/login-donatur'); 
   }
 
   @override
@@ -389,7 +388,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
             _scaffoldKey.currentState?.isDrawerOpen == true)
           Navigator.pop(context);
 
-        // Reset scroll saat pindah menu
         if (_scrollController.hasClients) _scrollController.jumpTo(0);
       },
       child: Container(
@@ -634,7 +632,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
           ),
         ),
 
-        // 👇 WIDGET BARU: Pembungkus untuk tombol Back to Top
         Expanded(
           child: PrimaryScrollController(
             controller: _scrollController,
@@ -642,7 +639,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
               children: [
                 contentView,
 
-                // Menampilkan tombol kotak biru panah atas jika sudah di-scroll
                 if (_showBackToTopButton)
                   Positioned(
                     bottom: 30,
@@ -652,7 +648,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
                       child: InkWell(
                         onTap: () {
                           _scrollController.animateTo(
-                            0, // Kembali ke posisi atas
+                            0, 
                             duration: const Duration(milliseconds: 500),
                             curve: Curves.easeInOut,
                           );
@@ -664,7 +660,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
                           decoration: BoxDecoration(
                             color: const Color(
                               0xFF435EFE,
-                            ), // Biru persis seperti di gambar
+                            ), 
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(

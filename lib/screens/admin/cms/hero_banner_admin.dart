@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_colors.dart';
-import '../../../../data/hero_banner_data.dart';
+import '../../../../../core/app_colors.dart';
+import '../../../../../data/hero_banner_data.dart';
 
 class HeroBannerAdmin extends StatefulWidget {
   const HeroBannerAdmin({super.key});
