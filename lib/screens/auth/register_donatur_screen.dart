@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
+import '../../data/mock_database.dart'; // 👇 Wajib di-import agar bisa memanggil fungsi register
 
 class RegisterDonaturScreen extends StatefulWidget {
   const RegisterDonaturScreen({super.key});
@@ -24,6 +25,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
   bool _isAgreed = false;
   String _errorMessage = '';
 
+  // 👇 FUNGSI YANG SUDAH DIPERBAIKI
   Future<void> _handleRegister() async {
     setState(() {
       _errorMessage = '';
@@ -43,8 +45,13 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _isLoading = true;
     });
 
-    // Simulasi proses registrasi ke server (delay 2 detik)
-    await Future.delayed(const Duration(seconds: 2));
+    // Panggil MockDatabase dan set role-nya sebagai 'donatur'
+    bool success = await MockDatabase.register(
+      _nameController.text,
+      _emailController.text,
+      _passwordController.text,
+      'donatur', // Pastikan role-nya 'donatur' agar bisa masuk portal donatur
+    );
 
     if (!mounted) return;
 
@@ -52,14 +59,21 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _isLoading = false;
     });
 
-    // Tampilkan pesan sukses dan arahkan ke login donatur
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registrasi berhasil! Silakan masuk dengan akun Anda.'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    context.go('/login-donatur');
+    // Cek apakah registrasi berhasil (email belum dipakai)
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registrasi berhasil! Silakan masuk dengan akun Anda.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      context.go('/login-donatur');
+    } else {
+      setState(() {
+        _errorMessage =
+            'Email ini sudah terdaftar. Silakan gunakan email lain.';
+      });
+    }
   }
 
   @override
@@ -75,7 +89,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFB), // Abu-abu sangat terang
+      backgroundColor: const Color(0xFFFBFBFB),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -85,8 +99,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Container(
-                    width:
-                        500, // Sedikit lebih lebar dari login karena formnya lebih banyak
+                    width: 500,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
                       vertical: 40,
@@ -179,7 +192,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Form Email & No HP (Sejajar)
+                          // Form Email & No HP
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -391,9 +404,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                                   width: double.infinity,
                                   height: 45,
                                   child: OutlinedButton(
-                                    onPressed: () => context.go(
-                                      '/register',
-                                    ), // Arahkan ke registrasi siswa
+                                    onPressed: () => context.go('/register'),
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(
                                         color: Colors.redAccent,
