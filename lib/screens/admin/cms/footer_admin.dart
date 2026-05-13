@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_colors.dart'; // Sesuaikan titiknya jika error
-import '../shared/custom_footer.dart'; // 👇 Import database bohongan dari file footer publik
+import '../../../../core/app_colors.dart'; // Sesuaikan titiknya jika error
+import '../../shared/custom_footer.dart'; // 👇 Import database bohongan dari file footer publik
 
 class FooterAdmin extends StatefulWidget {
   const FooterAdmin({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_colors.dart';
-import '../../../data/dummy_data.dart';
-import '../../../data/models/program_model.dart';
+import '../../../../core/app_colors.dart';
+import '../../../../data/dummy_data.dart';
+import '../../../../data/models/program_model.dart';
 
 class JenisBeasiswaAdmin extends StatefulWidget {
   const JenisBeasiswaAdmin({super.key});
