@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart'; // 👇 IMPORT BARU UNTUK SOSMED
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
@@ -100,10 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
             // 4. Program Unggulan
             _buildProgramUnggulan(context, isMobile),
 
-            // 5. Testimoni Penerima Beasiswa (SEKARANG SUDAH BERANIMASI!)
+            // 5. Testimoni Penerima Beasiswa
             _buildTestimonialSection(isMobile),
 
-            // 6. Our Partner / Didukung Oleh
+            // 6. Our Partner
             _buildPartnerSection(isMobile),
 
             // Anchor agar menu pendaftaran di navbar tidak error
@@ -112,10 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // 7. FAQ
             _buildFAQSection(context, isMobile),
 
-            // 8. Info Sosmed
-            _buildSocialMediaSection(isMobile),
-
-            // 9. Footer
+            // 8. Footer
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -588,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET TESTIMONIAL SECTION (Pemanggilan Widget Beranimasi)
+  // WIDGET TESTIMONIAL SECTION
   // ==========================================
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
@@ -624,7 +622,6 @@ class _HomeScreenState extends State<HomeScreen> {
             clipBehavior: Clip.none,
             child: Row(
               children: [
-                // 👇 Menggunakan Widget TestimonialCard yang sudah Stateful & Beranimasi
                 TestimonialCard(
                   name: "Andi Pratama",
                   role: "Alumni Batch 1 - Karyawan IT",
@@ -671,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           Text(
-            "DIDUKUNG DAN DIPERCAYA OLEH",
+            "Our Partners",
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey.shade500,
@@ -832,64 +829,103 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET SOCIAL MEDIA SECTION
+  // WIDGET SOCIAL MEDIA SECTION (Desain Ramping / Pre-Footer)
   // ==========================================
   Widget _buildSocialMediaSection(bool isMobile) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 24 : 80,
-        vertical: 40,
+        vertical: 30,
       ),
-      color: Colors.grey.shade50,
-      child: Column(
-        children: [
-          const Text(
-            "IKUTI PERJALANAN KAMI",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-              color: Colors.red,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade200,
+          ), // Garis pembatas halus di atas
+        ),
+      ),
+      child: isMobile
+          ? Column(
+              children: [
+                const Text(
+                  "IKUTI PERJALANAN KAMI",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _buildSocialIconsRow(),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment
+                  .spaceBetween, // Supaya menyebar elegan ke kiri & kanan di desktop
+              children: [
+                const Text(
+                  "IKUTI PERJALANAN KAMI",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    color: Colors.black87,
+                    fontSize: 16,
+                  ),
+                ),
+                _buildSocialIconsRow(),
+              ],
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildSocialIcon(Icons.camera_alt_outlined),
-              const SizedBox(width: 15),
-              _buildSocialIcon(Icons.work_outline_rounded),
-              const SizedBox(width: 15),
-              _buildSocialIcon(Icons.ondemand_video_rounded),
-              const SizedBox(width: 15),
-              _buildSocialIcon(Icons.email_outlined),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
-  Widget _buildSocialIcon(IconData icon) {
+  // Widget bantuan untuk menjejerkan tombol
+  Widget _buildSocialIconsRow() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildSocialIcon(
+          imageUrl: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
+          url:
+              'https://www.instagram.com/yayasanvip?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+        ),
+        const SizedBox(width: 15),
+        _buildSocialIcon(
+          imageUrl: 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png',
+          url: 'https://tiktok.com/@vernonpintar',
+        ),
+        const SizedBox(width: 15),
+        _buildSocialIcon(
+          imageUrl: 'https://cdn-icons-png.flaticon.com/512/733/733585.png',
+          url: 'https://wa.me/628885864995',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialIcon({required String imageUrl, required String url}) {
     return InkWell(
-      onTap: () {},
+      onTap: () async {
+        final Uri uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          debugPrint("Tidak bisa membuka $url");
+        }
+      },
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        width: 50,
-        height: 50,
+        width: 45, // Diperkecil sedikit agar tidak terlalu raksasa
+        height: 45,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: Colors.grey.shade200),
+          // Bayangan tebal dihapus agar desainnya lebih modern, flat, dan menyatu
         ),
-        child: Icon(icon, color: Colors.black87, size: 24),
+        child: Image.network(imageUrl, fit: BoxFit.contain),
       ),
     );
   }
@@ -993,7 +1029,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
 }
 
 // ==========================================
-// 👇 WIDGET BARU: TestimonialCard (STATEFUL & BERANIMASI)
+// TestimonialCard WIDGET (STATEFUL & BERANIMASI)
 // ==========================================
 class TestimonialCard extends StatefulWidget {
   final String name;
@@ -1014,63 +1050,51 @@ class TestimonialCard extends StatefulWidget {
 }
 
 class _TestimonialCardState extends State<TestimonialCard> {
-  // Variabel untuk melacak apakah kursor sedang berada di atas kartu
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    // MouseRegion digunakan untuk mendeteksi kursor masuk/keluar di Web/Desktop
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true), // Kursor masuk
-      onExit: (_) => setState(() => _isHovered = false), // Kursor keluar
-      cursor: SystemMouseCursors.click, // Ubah kursor menjadi pointer klik
-      // AnimatedContainer menangani transisi animasi yang halus
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300), // Durasi animasi 0.3 detik
-        curve: Curves.easeInOut, // Kurva animasi agar terasa natural
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
 
         width: widget.isMobile ? 300 : 400,
-        margin: const EdgeInsets.only(
-          right: 24,
-          bottom: 20,
-          top: 10,
-        ), // Jarak ekstra agar animasi Scale tidak terpotong
+        margin: const EdgeInsets.only(right: 24, bottom: 20, top: 10),
         padding: const EdgeInsets.all(30),
 
-        // 1. ANIMASI LIFTING (Scale Up) -> Membesar 3% saat di-hover
         transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
-        alignment: Alignment.center, // Skala membesar dari tengah
+        alignment: Alignment.center,
 
         decoration: BoxDecoration(
-          color: const Color(0xFF2B2B2B), // Latar gelap permanen
+          color: const Color(0xFF2B2B2B),
           borderRadius: BorderRadius.circular(20),
 
-          // 2. ANIMASI GLOWING BORDER -> Berubah menjadi merah saat di-hover
           border: Border.all(
             color: _isHovered ? Colors.red : Colors.white12,
-            width: _isHovered ? 1.5 : 1.0, // Sedikit ditebalkan
+            width: _isHovered ? 1.5 : 1.0,
           ),
 
-          // 3. ANIMASI SHADOW DROP -> Muncul bayangan merah tipis saat di-hover (efek terangkat)
           boxShadow: [
             if (_isHovered)
               BoxShadow(
                 color: Colors.red.withOpacity(0.15),
                 blurRadius: 20,
                 spreadRadius: 2,
-                offset: const Offset(0, 10), // Bayangan ke bawah
+                offset: const Offset(0, 10),
               )
             else
-              const BoxShadow(
-                color: Colors.transparent,
-              ), // Tidak ada bayangan saat normal
+              const BoxShadow(color: Colors.transparent),
           ],
         ),
 
-        // --- Konten di dalam Kartu (Tetap Sama) ---
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Agar tinggi menyesuaikan konten
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.format_quote_rounded, color: Colors.red, size: 40),
             const SizedBox(height: 16),

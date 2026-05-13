@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DummyFooterDB {
   static ValueNotifier<Map<String, String>> data = ValueNotifier({
     'deskripsi':
         'Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.',
     'whatsapp': 'WhatsApp: +62 812-3456-7890',
-    'email': 'Email: info@vip.or.id',
+    // 👇 UPDATE DATABASE: Email disesuaikan
+    'email': 'Email: vip@vernon.id',
     'alamat':
         'Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia',
   });
@@ -14,11 +16,20 @@ class DummyFooterDB {
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
 
+  // FUNGSI UNTUK MEMBUKA LINK (MAPS & SOSMED)
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      debugPrint("Tidak bisa membuka $url");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
-    // 👇 BUNGKUS DENGAN ValueListenableBuilder AGAR BISA "NGUPING" PERUBAHAN
     return ValueListenableBuilder<Map<String, String>>(
       valueListenable: DummyFooterDB.data,
       builder: (context, footerData, child) {
@@ -38,7 +49,6 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              // 👇 Mengambil teks dari database bohongan (footerData)
               footerData['deskripsi'] ?? '',
               textAlign: isMobile ? TextAlign.center : TextAlign.left,
               style: TextStyle(
@@ -62,10 +72,54 @@ class CustomFooter extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            // 👇 Mengambil teks dari database bohongan (footerData)
-            _footerLink(footerData['whatsapp'] ?? '', isMobile),
-            _footerLink(footerData['email'] ?? '', isMobile),
-            _footerLink(footerData['alamat'] ?? '', isMobile),
+
+            // ALAMAT YANG BISA DIKLIK MENGARAH KE MAPS
+            InkWell(
+              onTap: () => _launchURL(
+                "https://www.google.com/maps/search/?api=1&query=Jl.+Letjen+Sutoyo+No.102A,+Bunulrejo,+Malang",
+              ),
+              child: Text(
+                footerData['alamat'] ?? '',
+                textAlign: isMobile ? TextAlign.center : TextAlign.left,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 15,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white38,
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+
+            // BARISAN ICON SOSMED MENGGANTIKAN TEKS
+            Row(
+              mainAxisAlignment: isMobile
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              children: [
+                // Icon WhatsApp
+                _buildSocialIcon(
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/733/733585.png',
+                  url: 'https://wa.me/628885864995',
+                ),
+                const SizedBox(width: 15),
+                // Icon Instagram
+                _buildSocialIcon(
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/174/174855.png',
+                  url:
+                      'https://www.instagram.com/yayasanvip?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                ),
+                const SizedBox(width: 15),
+                // 👇 Icon Email (MENGGUNAKAN format mailto:vip@vernon.id)
+                _buildSocialIcon(
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/732/732200.png',
+                  url: 'mailto:vip@vernon.id',
+                ),
+              ],
+            ),
           ],
         );
 
@@ -111,19 +165,19 @@ class CustomFooter extends StatelessWidget {
     );
   }
 
-  Widget _footerLink(String title, bool isMobile) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {},
-        child: Text(
-          title,
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 15,
-          ),
+  Widget _buildSocialIcon({required String imageUrl, required String url}) {
+    return InkWell(
+      onTap: () => _launchURL(url),
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        width: 40,
+        height: 40,
+        padding: const EdgeInsets.all(8),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
         ),
+        child: Image.network(imageUrl, fit: BoxFit.contain),
       ),
     );
   }
