@@ -1,6 +1,5 @@
-// ==========================================
-// 1. MODEL DATA (Struktur data yang dibutuhkan)
-// ==========================================
+// import 'package:flutter/material.dart';
+
 
 class DonationHistory {
   final String id;
@@ -52,9 +51,6 @@ class SavedProgram {
   });
 }
 
-// ==========================================
-// 2. MOCK DATABASE (Simulasi Database)
-// ==========================================
 
 class MockDatabase {
   static final Map<String, Map<String, dynamic>> _users = {
@@ -68,6 +64,7 @@ class MockDatabase {
       'is_revisi': false,
       'catatan_revisi': '',
       'admin_status': 'Menunggu Review',
+      
       'telepon': '',
       'domisili': '',
       'pendidikan': '',
@@ -136,10 +133,6 @@ class MockDatabase {
     return true;
   }
 
-  // ==========================================
-  // FUNGSI UNTUK HALAMAN ADMIN & SISWA
-  // ==========================================
-
   static List<Map<String, dynamic>> getAllRegisteredSiswa() {
     List<Map<String, dynamic>> result = [];
     _users.forEach((email, data) {
@@ -190,10 +183,18 @@ class MockDatabase {
             _users[email]!['jadwal_wawancara'] = jadwalWawancara;
           }
         }
-
-        if (newStatus == 'Diterima') _users[email]!['current_step'] = 4;
-        if (newStatus == 'Pelatihan') _users[email]!['current_step'] = 5;
-        if (newStatus == 'Lulus') _users[email]!['current_step'] = 6;
+        
+        if (newStatus == 'Diterima') _users[email]!['current_step'] = 4; // Tahap 5
+        
+        // LOGIKA BARU UNTUK TAHAP PELATIHAN DAN KELULUSAN
+        if (newStatus == 'Pelatihan') _users[email]!['current_step'] = 5; // Tahap 6
+        if (newStatus == 'Lulus') _users[email]!['current_step'] = 6;     // Timeline full hijau (Selesai)
+        
+        // JIKA DITOLAK: Sengaja dibiarkan agar tidak mereset current_step kembali ke 0.
+        // Data tetap aman dan UI Ditolak akan muncul di Dashboard.
+        if (newStatus == 'Ditolak') {
+          // Tidak melakukan apa-apa pada current_step
+        }
       }
     }
   }
@@ -277,5 +278,96 @@ class MockDatabase {
         progress: 0.30,
       ),
     ];
+  }
+
+  // ==========================================
+  // DATA MEDIA (ARTIKEL & GALERI) UNTUK CMS
+  // ==========================================
+  static final List<Map<String, String>> _artikelList = [
+    {
+      "id": "A1",
+      "title": "Pelatihan Barista Angkatan 1 Vernon Edu Resmi Lulus",
+      "date": "10 Mei 2026",
+      "desc": "Sebanyak 50 peserta program beasiswa VIP berhasil menyelesaikan pelatihan barista intensif selama 10 bulan...",
+      // 👇 PERBAIKAN: Menambahkan 'content' (Isi Artikel Lengkap) ke data dummy
+      "content": "Malang — Suasana haru dan bangga menyelimuti gedung pelatihan Vernon Edu pada pagi hari ini. Sebanyak 50 peserta program beasiswa Vernon Indonesia Pintar (VIP) secara resmi dinyatakan lulus dari program Pelatihan Barista Intensif Angkatan 1.\n\nSelama 10 bulan penuh, para peserta yang mayoritas berasal dari keluarga pra-sejahtera ini tidak hanya dibekali keahlian meracik kopi (brewing, latte art, dan espresso espresso base), tetapi juga dibekali materi kewirausahaan, pelayanan pelanggan, hingga literasi keuangan dasar.\n\nBapak Budi Santoso, selaku Direktur Program VIP, menyampaikan apresiasinya. 'Mereka datang ke sini dengan semangat belajar yang luar biasa. Kini mereka siap untuk diterjunkan langsung ke industri Food & Beverage yang sedang berkembang pesat,' ujarnya.\n\nSebagai langkah konkret, pihak Yayasan juga telah menjalin kerja sama dengan lebih dari 20 kedai kopi dan restoran di wilayah Jawa Timur untuk menyalurkan lulusan terbaik langsung bekerja. Semoga langkah ini menjadi awal yang cerah bagi masa depan mereka.",
+      "kategori": "Berita"
+    },
+    {
+      "id": "A2",
+      "title": "VernonCorp Buka Pendaftaran Beasiswa VIP Gelombang 2",
+      "date": "02 Mei 2026",
+      "desc": "Program beasiswa Vernon Indonesia Pintar (VIP) kembali dibuka untuk siswa berprestasi yang kurang mampu di seluruh Indonesia.",
+      // 👇 PERBAIKAN: Menambahkan 'content'
+      "content": "Jakarta — Kabar gembira bagi para pemuda-pemudi inspiratif di seluruh Nusantara. Yayasan Vernon Indonesia Pintar dengan bangga mengumumkan pembukaan pendaftaran beasiswa penuh gelombang ke-2 untuk tahun ajaran 2026/2027.\n\nProgram ini secara khusus menargetkan siswa-siswi berprestasi tingkat SMA/SMK sederajat yang menghadapi kendala finansial untuk melanjutkan pendidikan atau mendapatkan keterampilan siap kerja.\n\nSyarat utama pendaftaran meliputi:\n1. Fotokopi KTP/Kartu Pelajar\n2. Surat Keterangan Tidak Mampu (SKTM) dari Kelurahan\n3. Ijazah atau SKL Terakhir\n4. Lulus seleksi administrasi dan wawancara.\n\n'Kami menargetkan menjangkau 200 anak muda pada gelombang kedua ini. Mari manfaatkan kesempatan ini sebaik-baiknya,' ungkap tim pendaftaran VIP. Pendaftaran sepenuhnya dilakukan secara online melalui portal resmi website Vernon.",
+      "kategori": "Pengumuman"
+    },
+    {
+      "id": "A3",
+      "title": "Kisah Sukses: Dari Siswa SMK Menjadi Digital Marketer",
+      "date": "25 April 2026",
+      "desc": "Mengenal Budi, alumni VIP yang kini sukses menjadi spesialis pemasaran digital di salah satu startup terkemuka di Jakarta.",
+      // 👇 PERBAIKAN: Menambahkan 'content'
+      "content": "Menjadi seorang spesialis pemasaran digital (Digital Marketer) di salah satu startup teknologi terbesar di Jakarta mungkin terdengar seperti mimpi yang mustahil bagi seorang pemuda dari desa kecil di pinggiran kota. Namun, hal itu berhasil diwujudkan oleh Budi Haryanto, salah satu alumni pertama program vokasi Vernon Indonesia Pintar (VIP).\n\nBudi, lulusan SMK jurusan Akuntansi, awalnya kesulitan mencari pekerjaan yang layak. Lewat informasi dari gurunya, ia mencoba mendaftar Beasiswa VIP dan mengambil peminatan Pemasaran Digital.\n\n'Di Vernon Edu, saya diajarkan dari nol. Mulai dari dasar-dasar SEO, cara beriklan di media sosial, hingga membaca analisis data. Mentor-mentornya sangat praktikal,' kenang Budi.\n\nHanya berselang dua bulan pasca kelulusannya, Budi berhasil direkrut berkat portofolio kampanye digital yang ia buat sebagai tugas akhir di VIP. Kisah Budi membuktikan bahwa dedikasi dipadu dengan akses pendidikan yang tepat dapat benar-benar mengubah garis takdir seseorang.",
+      "kategori": "Inspirasi"
+    },
+    {
+      "id": "A4",
+      "title": "Tips Lolos Wawancara Beasiswa Vernon Indonesia Pintar",
+      "date": "15 April 2026",
+      "desc": "Persiapkan diri Anda! Berikut adalah 5 tips jitu untuk menghadapi wawancara beasiswa dari tim HR VernonCorp.",
+      // 👇 PERBAIKAN: Menambahkan 'content'
+      "content": "Tahap wawancara sering kali menjadi batu sandungan bagi banyak pelamar beasiswa. Rasa gugup dan ketidaksiapan mental membuat pelamar tidak bisa menunjukkan potensi terbaiknya.\n\nAgar Anda bisa tampil maksimal, Tim HR VernonCorp membagikan 5 tips penting saat wawancara Beasiswa VIP:\n\n1. Kenali Dirimu Sendiri: Pewawancara akan banyak menggali tentang motivasi, kelebihan, dan kekurangan Anda. Jujurlah dalam menjawab dan jangan melebih-lebihkan.\n2. Pahami Visi Program VIP: Tunjukkan bahwa Anda tahu tujuan program ini dan bagaimana program ini sejalan dengan cita-cita masa depan Anda.\n3. Berpakaian Rapi dan Sopan: Kesan pertama sangat penting. Pakaian rapi mencerminkan keseriusan dan profesionalisme Anda.\n4. Datang Tepat Waktu: Disiplin waktu adalah nilai utama di VernonCorp. Pastikan Anda sudah siap 15 menit sebelum jadwal wawancara dimulai, baik daring maupun luring.\n5. Tunjukkan Semangat Belajar: Yang kami cari bukanlah orang yang sudah sempurna pintar, melainkan orang yang tangguh dan punya kemauan keras untuk dibentuk menjadi lebih baik.\n\nTetap tenang dan percaya diri. Semoga berhasil di tahap wawancara!",
+      "kategori": "Edukasi"
+    },
+  ];
+
+  static final List<Map<String, String>> _galeriList = [
+    {"id": "G1", "title": "Kegiatan Orientasi Beasiswa VIP 2026"},
+    {"id": "G2", "title": "Sesi Praktik Pelatihan Barista"},
+    {"id": "G3", "title": "Pemberian Sertifikat Kelulusan"},
+    {"id": "G4", "title": "Kunjungan Industri ke VernonCorp"},
+    {"id": "G5", "title": "Sesi Pelatihan Digital Marketing"},
+    {"id": "G6", "title": "Malam Keakraban Alumni VIP"},
+  ];
+
+  // --- Fungsi CMS Artikel ---
+  static List<Map<String, String>> getSemuaArtikel() => List.from(_artikelList);
+
+  static void tambahArtikel(Map<String, String> artikel) {
+    artikel['id'] = "A${DateTime.now().millisecondsSinceEpoch}";
+    _artikelList.insert(0, artikel); // Masukkan di urutan paling atas
+  }
+
+  static void editArtikel(String id, Map<String, String> dataBaru) {
+    int index = _artikelList.indexWhere((a) => a['id'] == id);
+    if (index != -1) {
+      _artikelList[index] = {..._artikelList[index], ...dataBaru};
+    }
+  }
+
+  static void hapusArtikel(String id) {
+    _artikelList.removeWhere((a) => a['id'] == id);
+  }
+
+  // --- Fungsi CMS Galeri ---
+  static List<Map<String, String>> getSemuaGaleri() => List.from(_galeriList);
+
+  static void tambahGaleri(String title) {
+    _galeriList.insert(0, {
+      "id": "G${DateTime.now().millisecondsSinceEpoch}",
+      "title": title,
+    });
+  }
+
+  static void editGaleri(String id, String titleBaru) {
+    int index = _galeriList.indexWhere((g) => g['id'] == id);
+    if (index != -1) {
+      _galeriList[index]['title'] = titleBaru;
+    }
+  }
+
+  static void hapusGaleri(String id) {
+    _galeriList.removeWhere((g) => g['id'] == id);
   }
 }

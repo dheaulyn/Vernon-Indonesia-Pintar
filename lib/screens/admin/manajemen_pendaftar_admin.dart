@@ -76,7 +76,6 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     return months[month - 1];
   }
 
-  // 👇 FUNGSI TAMBAHAN UNTUK PARSING BULAN KEMBALI KE ANGKA
   int _getMonthNumber(String monthName) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
     int index = months.indexOf(monthName);
@@ -84,7 +83,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
   }
 
   // ==========================================
-  // WIDGET BANTUAN UI 
+  // WIDGET BANTUAN UI
   // ==========================================
   Widget _buildStatusBadge(String status) {
     Color bgColor;
@@ -170,7 +169,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         ),
       ),
       subtitle: Text(
-        hasFile ? fileName! : "Belum diunggah oleh siswa",
+        hasFile ? fileName : "Belum diunggah oleh siswa",
         style: TextStyle(fontSize: 12, color: hasFile ? Colors.blue : Colors.grey),
       ),
       trailing: hasFile
@@ -206,23 +205,21 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     String selectedMetodeWawancara = 'Daring'; 
     DateTime? selectedDate;
     TimeOfDay? selectedTime;
+    
+    String errorPesanWawancara = '';
 
-    // 👇 LOGIKA UNTUK MEMECAH KEMBALI TEKS JADWAL DARI DATABASE KE DALAM FIELD
     String savedJadwal = detailSiswa['jadwal_wawancara'] ?? '';
     if (savedJadwal.isNotEmpty) {
       try {
-        // 1. Ekstrak Metode (Daring/Luring)
         if (savedJadwal.contains('(Daring)')) selectedMetodeWawancara = 'Daring';
         if (savedJadwal.contains('(Luring)')) selectedMetodeWawancara = 'Luring';
 
-        // 2. Ekstrak Tautan atau Lokasi
         if (savedJadwal.contains('\nLink: ')) {
           lokasiLinkController.text = savedJadwal.split('\nLink: ').last;
         } else if (savedJadwal.contains('\nLokasi: ')) {
           lokasiLinkController.text = savedJadwal.split('\nLokasi: ').last;
         }
 
-        // 3. Ekstrak Tanggal menggunakan Regex
         RegExp dateRegExp = RegExp(r'(\d{1,2})\s([a-zA-Z]+)\s(\d{4})');
         Match? dateMatch = dateRegExp.firstMatch(savedJadwal);
         if (dateMatch != null) {
@@ -232,7 +229,6 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
           selectedDate = DateTime(year, month, day);
         }
 
-        // 4. Ekstrak Jam menggunakan Regex
         RegExp timeRegExp = RegExp(r'Pukul\s(\d{2}):(\d{2})');
         Match? timeMatch = timeRegExp.firstMatch(savedJadwal);
         if (timeMatch != null) {
@@ -255,7 +251,6 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
 
-            // 👇 Fungsi ini wajib berada di dalam StatefulBuilder bagian atas
             void updateJadwalString() {
               if (selectedDate != null && selectedTime != null) {
                 String formattedDate = "${selectedDate!.day} ${_getMonthName(selectedDate!.month)} ${selectedDate!.year}";
@@ -276,7 +271,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                 lastDate: DateTime(2027),
               );
               if (picked != null) {
-                setStateDialog(() => selectedDate = picked);
+                setStateDialog(() {
+                  selectedDate = picked;
+                  errorPesanWawancara = '';
+                });
                 updateJadwalString();
               }
             }
@@ -293,7 +291,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                 },
               );
               if (picked != null) {
-                setStateDialog(() => selectedTime = picked);
+                setStateDialog(() {
+                  selectedTime = picked;
+                  errorPesanWawancara = ''; 
+                });
                 updateJadwalString();
               }
             }
@@ -316,239 +317,278 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                       Text("Review Pendaftar", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                     ],
                   ),
-                  Divider(height: 20, thickness: 1),
+                  Divider(height: 10, thickness: 1),
                 ],
               ),
+              // 👇 PERUBAHAN: Memisahkan Error agar Sticky di bagian atas Modal
               content: SizedBox(
                 width: 600,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.grey.shade200,
-                            child: const Icon(Icons.person, size: 40, color: Colors.grey),
-                          ),
-                          const SizedBox(width: 15),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(pendaftar.nama, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              Text(pendaftar.id, style: TextStyle(color: Colors.grey.shade600)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 25),
-
-                      const Text("Informasi Detail", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // Menyesuaikan tinggi
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 👇 WIDGET ERROR STICKY (Tidak ikut terscroll)
+                    if (errorPesanWawancara.isNotEmpty) ...[
                       Container(
-                        padding: const EdgeInsets.all(15),
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 15),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blueGrey.shade50,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.blueGrey.shade100),
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
                         ),
-                        child: Column(
+                        child: Row(
                           children: [
-                            _buildDetailRow("Waktu Daftar", pendaftar.tglDaftar),
-                            _buildDetailRow("NIK", detailSiswa['nik'] ?? '-'),
-                            _buildDetailRow("No. Telepon", detailSiswa['telepon'] ?? '-'),
-                            _buildDetailRow("Domisili", detailSiswa['domisili'] ?? '-'),
-                            _buildDetailRow("Pendidikan", detailSiswa['pendidikan'] ?? '-'),
-                            _buildDetailRow("Asal Sekolah", detailSiswa['asal_sekolah'] ?? '-'),
-                            _buildDetailRow("Tahun Lulus", detailSiswa['tahun_lulus'] ?? '-'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 25),
-
-                      const Text("Berkas Persyaratan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 10),
-                      Card(
-                        elevation: 0,
-                        color: Colors.grey.shade50,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildFileTile("Foto KTP / Kartu Pelajar", detailSiswa['file_ktp']),
-                            const Divider(height: 1),
-                            _buildFileTile("Scan Rapor / Ijazah Terakhir", detailSiswa['file_rapor']),
-                            const Divider(height: 1),
-                            _buildFileTile("Pas Foto 3x4", detailSiswa['file_foto']),
-                            const Divider(height: 1),
-                            _buildFileTile("Surat Motivasi", detailSiswa['file_motivasi']),
-                            const Divider(height: 1),
-                            _buildFileTile("Surat Keterangan Tidak Mampu", detailSiswa['file_sktm']),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 25),
-
-                      const Text("Update Status Pendaftaran", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 10),
-                      DropdownButtonFormField<String>(
-                        value: selectedStatus,
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        ),
-                        items: statusOptions.map((String status) {
-                          return DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontWeight: FontWeight.w600)));
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setStateDialog(() => selectedStatus = newValue);
-                          }
-                        },
-                      ),
-
-                      if (selectedStatus == 'Revisi') ...[
-                        const SizedBox(height: 15),
-                        TextFormField(
-                          controller: catatanController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: "Tuliskan alasan revisi...",
-                            filled: true,
-                            fillColor: Colors.red.shade50,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade200)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade200)),
-                          ),
-                        ),
-                      ],
-                      
-                      if (selectedStatus == 'Wawancara') ...[
-                        const SizedBox(height: 15),
-                        const Divider(color: Colors.black12),
-                        const SizedBox(height: 15),
-                        const Text("Pengaturan Jadwal Wawancara", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
-                        const SizedBox(height: 15),
-
-                        const Text("Metode Wawancara", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: selectedMetodeWawancara,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.blue.shade50,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          items: ['Daring', 'Luring'].map((String val) {
-                            return DropdownMenuItem(value: val, child: Text(val));
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setStateDialog(() {
-                                selectedMetodeWawancara = newValue;
-                                updateJadwalString(); 
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 15),
-                        
-                        Row(
-                          children: [
+                            Icon(Icons.warning_rounded, color: Colors.red.shade700, size: 20),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Pilih Tanggal", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: pickDate,
-                                    icon: const Icon(Icons.calendar_today, size: 18),
-                                    label: Text(selectedDate == null ? "Pilih Tanggal" : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}"),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size(double.infinity, 50),
-                                      backgroundColor: Colors.blue.shade50,
-                                      foregroundColor: Colors.blue.shade800,
-                                      elevation: 0,
-                                      side: BorderSide(color: Colors.blue.shade200),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Pilih Jam (24 Jam)", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton.icon(
-                                    onPressed: pickTime,
-                                    icon: const Icon(Icons.access_time, size: 18),
-                                    label: Text(timeButtonText),
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size(double.infinity, 50),
-                                      backgroundColor: Colors.blue.shade50,
-                                      foregroundColor: Colors.blue.shade800,
-                                      elevation: 0,
-                                      side: BorderSide(color: Colors.blue.shade200),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                errorPesanWawancara,
+                                style: TextStyle(color: Colors.red.shade800, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 15),
-                        
-                        Text(selectedMetodeWawancara == 'Daring' ? "Tautan Wawancara Daring" : "Alamat / Lokasi Wawancara", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: lokasiLinkController,
-                          onChanged: (value) => updateJadwalString(), 
-                          decoration: InputDecoration(
-                            hintText: selectedMetodeWawancara == 'Daring' 
-                                ? "Contoh: https://zoom.us/j/123456789" 
-                                : "Contoh: Kantor VernonCorp, Ruang Meeting 1",
-                            prefixIcon: Icon(
-                              selectedMetodeWawancara == 'Daring' ? Icons.link_rounded : Icons.location_on_rounded, 
-                              color: Colors.blue.shade700
-                            ),
-                            filled: true,
-                            fillColor: Colors.blue.shade50,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade700, width: 2)),
-                          ),
-                        ),
-
-                        if (selectedDate != null && selectedTime != null) ...[
-                          const SizedBox(height: 25),
-                          TextFormField(
-                            controller: jadwalDisplayController,
-                            maxLines: null, 
-                            readOnly: true,
-                            decoration: InputDecoration(
-                              labelText: "Pratinjau Pesan untuk Siswa",
-                              filled: true,
-                              fillColor: Colors.green.shade50,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.green.shade200)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.green.shade200)),
-                            ),
-                          ),
-                        ]
-                      ],
+                      ),
                     ],
-                  ),
+
+                    // 👇 AREA KONTEN YANG BISA DI-SCROLL
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.grey.shade200,
+                                  child: const Icon(Icons.person, size: 40, color: Colors.grey),
+                                ),
+                                const SizedBox(width: 15),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(pendaftar.nama, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                    Text(pendaftar.id, style: TextStyle(color: Colors.grey.shade600)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 25),
+
+                            const Text("Informasi Detail", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                color: Colors.blueGrey.shade50,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.blueGrey.shade100),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildDetailRow("Waktu Daftar", pendaftar.tglDaftar),
+                                  _buildDetailRow("NIK", detailSiswa['nik'] ?? '-'),
+                                  _buildDetailRow("No. Telepon", detailSiswa['telepon'] ?? '-'),
+                                  _buildDetailRow("Domisili", detailSiswa['domisili'] ?? '-'),
+                                  _buildDetailRow("Pendidikan", detailSiswa['pendidikan'] ?? '-'),
+                                  _buildDetailRow("Asal Sekolah", detailSiswa['asal_sekolah'] ?? '-'),
+                                  _buildDetailRow("Tahun Lulus", detailSiswa['tahun_lulus'] ?? '-'),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 25),
+
+                            const Text("Berkas Persyaratan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 10),
+                            Card(
+                              elevation: 0,
+                              color: Colors.grey.shade50,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildFileTile("Foto KTP / Kartu Pelajar", detailSiswa['file_ktp']),
+                                  const Divider(height: 1),
+                                  _buildFileTile("Scan Rapor / Ijazah Terakhir", detailSiswa['file_rapor']),
+                                  const Divider(height: 1),
+                                  _buildFileTile("Pas Foto 3x4", detailSiswa['file_foto']),
+                                  const Divider(height: 1),
+                                  _buildFileTile("Surat Motivasi", detailSiswa['file_motivasi']),
+                                  const Divider(height: 1),
+                                  _buildFileTile("Surat Keterangan Tidak Mampu", detailSiswa['file_sktm']),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 25),
+
+                            const Text("Update Status Pendaftaran", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 10),
+                            DropdownButtonFormField<String>(
+                              value: selectedStatus,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              items: statusOptions.map((String status) {
+                                return DropdownMenuItem(value: status, child: Text(status, style: const TextStyle(fontWeight: FontWeight.w600)));
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setStateDialog(() {
+                                    selectedStatus = newValue;
+                                    errorPesanWawancara = ''; // Hilangkan error jika ganti status lain
+                                  });
+                                }
+                              },
+                            ),
+
+                            if (selectedStatus == 'Revisi') ...[
+                              const SizedBox(height: 15),
+                              TextFormField(
+                                controller: catatanController,
+                                maxLines: 3,
+                                decoration: InputDecoration(
+                                  hintText: "Tuliskan alasan revisi...",
+                                  filled: true,
+                                  fillColor: Colors.red.shade50,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade200)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.red.shade200)),
+                                ),
+                              ),
+                            ],
+                            
+                            if (selectedStatus == 'Wawancara') ...[
+                              const SizedBox(height: 15),
+                              const Divider(color: Colors.black12),
+                              const SizedBox(height: 15),
+                              const Text("Pengaturan Jadwal Wawancara", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue)),
+                              const SizedBox(height: 15),
+
+                              const Text("Metode Wawancara", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<String>(
+                                value: selectedMetodeWawancara,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.blue.shade50,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                items: ['Daring', 'Luring'].map((String val) {
+                                  return DropdownMenuItem(value: val, child: Text(val));
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setStateDialog(() {
+                                      selectedMetodeWawancara = newValue;
+                                      updateJadwalString(); 
+                                    });
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 15),
+                              
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text("Pilih Tanggal", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                        const SizedBox(height: 8),
+                                        ElevatedButton.icon(
+                                          onPressed: pickDate,
+                                          icon: const Icon(Icons.calendar_today, size: 18),
+                                          label: Text(selectedDate == null ? "Pilih Tanggal" : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}"),
+                                          style: ElevatedButton.styleFrom(
+                                            minimumSize: const Size(double.infinity, 50),
+                                            backgroundColor: Colors.blue.shade50,
+                                            foregroundColor: Colors.blue.shade800,
+                                            elevation: 0,
+                                            side: BorderSide(color: Colors.blue.shade200),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text("Pilih Jam (24 Jam)", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                        const SizedBox(height: 8),
+                                        ElevatedButton.icon(
+                                          onPressed: pickTime,
+                                          icon: const Icon(Icons.access_time, size: 18),
+                                          label: Text(timeButtonText),
+                                          style: ElevatedButton.styleFrom(
+                                            minimumSize: const Size(double.infinity, 50),
+                                            backgroundColor: Colors.blue.shade50,
+                                            foregroundColor: Colors.blue.shade800,
+                                            elevation: 0,
+                                            side: BorderSide(color: Colors.blue.shade200),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
+                              
+                              Text(selectedMetodeWawancara == 'Daring' ? "Tautan Wawancara Daring" : "Alamat / Lokasi Wawancara", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: lokasiLinkController,
+                                onChanged: (value) => updateJadwalString(), 
+                                decoration: InputDecoration(
+                                  hintText: selectedMetodeWawancara == 'Daring' 
+                                      ? "Contoh: https://zoom.us/j/123456789" 
+                                      : "Contoh: Kantor VernonCorp, Ruang Meeting 1",
+                                  prefixIcon: Icon(
+                                    selectedMetodeWawancara == 'Daring' ? Icons.link_rounded : Icons.location_on_rounded, 
+                                    color: Colors.blue.shade700
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.blue.shade50,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
+                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade200)),
+                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.blue.shade700, width: 2)),
+                                ),
+                              ),
+
+                              if (selectedDate != null && selectedTime != null) ...[
+                                const SizedBox(height: 25),
+                                TextFormField(
+                                  controller: jadwalDisplayController,
+                                  maxLines: null, 
+                                  readOnly: true,
+                                  decoration: InputDecoration(
+                                    labelText: "Pratinjau Pesan untuk Siswa",
+                                    filled: true,
+                                    fillColor: Colors.green.shade50,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.green.shade200)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.green.shade200)),
+                                  ),
+                                ),
+                              ]
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               actionsPadding: const EdgeInsets.all(20),
@@ -559,11 +599,12 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (selectedStatus == 'Wawancara' && jadwalDisplayController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Mohon atur jadwal (Tanggal, Jam, dan Lokasi/Link) terlebih dahulu!")),
-                      );
-                      return;
+                    // 👇 CEK VALIDASI ERROR
+                    if (selectedStatus == 'Wawancara' && (selectedDate == null || selectedTime == null || lokasiLinkController.text.trim().isEmpty)) {
+                      setStateDialog(() {
+                        errorPesanWawancara = "Mohon lengkapi Tanggal, Jam, dan Tautan/Lokasi wawancara sebelum menyimpan!";
+                      });
+                      return; 
                     }
 
                     MockDatabase.updateStatusSiswa(
@@ -578,6 +619,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                     });
                     
                     Navigator.pop(context);
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Berhasil update status ke $selectedStatus"), backgroundColor: Colors.green),
                     );

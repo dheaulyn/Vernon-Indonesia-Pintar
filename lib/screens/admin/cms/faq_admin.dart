@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_colors.dart'; 
-import '../../../../data/faq_data.dart'; 
+import '../../../../../core/app_colors.dart'; 
+import '../../../../../data/faq_data.dart'; 
 
 class KelolaFAQPage extends StatefulWidget {
   const KelolaFAQPage({super.key});

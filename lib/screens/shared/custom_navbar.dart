@@ -31,7 +31,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _mobileMenuItem('Kontak', '/kontak', currentPath),
         const PopupMenuDivider(),
         PopupMenuItem<String>(
-          value: '/donasi',
+          value: '/login-donatur',
           child: Text(
             'Donasi',
             style: TextStyle(
