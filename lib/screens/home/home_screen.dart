@@ -4,7 +4,7 @@ import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
-import '../../data/hero_banner_data.dart';
+// import '../../data/hero_banner_data.dart';
 import '../../data/faq_data.dart';
 
 class HomeScreen extends StatefulWidget {

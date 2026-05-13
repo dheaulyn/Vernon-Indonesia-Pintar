@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
-// TAMBAHAN UNTUK FLUTTER QUILL
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
@@ -15,7 +15,7 @@ import 'screens/portal/status_beasiswa_screen.dart';
 import 'screens/program_detail_screen.dart';
 import 'screens/admin/auth/login_admin_screen.dart';
 import 'screens/admin/layout_dashboard.dart';
-import 'data/models/program_model.dart';
+// import 'data/models/program_model.dart';
 import 'screens/home/widgets/profil_yayasan.dart';
 import 'screens/portal/form_beasiswa.dart';
 import 'screens/home/fund_pool_screen.dart';

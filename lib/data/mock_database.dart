@@ -1,15 +1,12 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
 
-// ==========================================
-// 1. MODEL DATA (Struktur data yang dibutuhkan)
-// ==========================================
 
 class DonationHistory {
   final String id;
   final String programName;
   final int amount;
   final DateTime date;
-  final String status; // 'Sukses' atau 'Pending'
+  final String status; 
 
   DonationHistory({
     required this.id,
@@ -43,7 +40,7 @@ class SavedProgram {
   final String title;
   final String category;
   final String imageUrl;
-  final double progress; // Presentase dana terkumpul (0.0 - 1.0)
+  final double progress; 
 
   SavedProgram({
     required this.id,
@@ -54,9 +51,6 @@ class SavedProgram {
   });
 }
 
-// ==========================================
-// 2. MOCK DATABASE (Simulasi Database)
-// ==========================================
 
 class MockDatabase {
   static final Map<String, Map<String, dynamic>> _users = {
@@ -70,7 +64,7 @@ class MockDatabase {
       'is_revisi': false,
       'catatan_revisi': '',
       'admin_status': 'Menunggu Review',
-      // Field data tambahan
+      
       'telepon': '',
       'domisili': '',
       'pendidikan': '',
@@ -121,7 +115,6 @@ class MockDatabase {
       'is_revisi': false,
       'catatan_revisi': '',
       'admin_status': 'Menunggu Review',
-      // Field data tambahan untuk pendaftaran
       'telepon': '',
       'domisili': '',
       'pendidikan': '',
@@ -134,11 +127,6 @@ class MockDatabase {
     return true;
   }
 
-  // ==========================================
-  // FUNGSI UNTUK HALAMAN ADMIN & SISWA
-  // ==========================================
-
-  // 1. Mengambil data ringkas untuk tabel list admin
   static List<Map<String, dynamic>> getAllRegisteredSiswa() {
     List<Map<String, dynamic>> result = [];
     _users.forEach((email, data) {

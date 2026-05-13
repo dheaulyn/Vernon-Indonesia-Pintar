@@ -169,7 +169,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         ),
       ),
       subtitle: Text(
-        hasFile ? fileName! : "Belum diunggah oleh siswa",
+        hasFile ? fileName : "Belum diunggah oleh siswa",
         style: TextStyle(fontSize: 12, color: hasFile ? Colors.blue : Colors.grey),
       ),
       trailing: hasFile
