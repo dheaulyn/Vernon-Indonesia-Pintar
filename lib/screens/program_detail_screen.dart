@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; 
 import '../../core/app_colors.dart';
 import 'shared/custom_navbar.dart';
 import 'shared/custom_footer.dart';
@@ -12,12 +13,13 @@ class ProgramDetailScreen extends StatelessWidget {
     final bool isMobile = screenWidth < 850;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Abu-abu super muda
+      backgroundColor: const Color(0xFFF8F9FA), 
       appBar: const CustomNavbar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeroSection(isMobile),
+            
+            _buildHeroSection(context, isMobile),
             Container(
               width: isMobile ? double.infinity : 1000,
               padding: EdgeInsets.symmetric(
@@ -143,7 +145,8 @@ class ProgramDetailScreen extends StatelessWidget {
   // KUMPULAN WIDGET BANTUAN
   // =====================================
 
-  Widget _buildHeroSection(bool isMobile) {
+  // 👇 PERBAIKAN: Menambahkan BuildContext context sebagai parameter
+  Widget _buildHeroSection(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -214,7 +217,8 @@ class ProgramDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () {}, // Nanti arahkan ke form pendaftaran siswa
+                // 👇 PERBAIKAN: Mengarahkan langsung ke halaman register
+                onPressed: () => context.go('/register'), 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

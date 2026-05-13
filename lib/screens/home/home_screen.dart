@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isMobile = screenWidth < 768;
+    final bool isMobile = screenWidth < 900;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -684,7 +684,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET FAQ SECTION
+  // WIDGET FAQ SECTION (DENGAN GAMBAR RESPONSIF)
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return ListenableBuilder(
@@ -752,19 +752,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         );
 
-        Widget illustration = Container(
-          height: isMobile ? 250 : 500,
-          decoration: BoxDecoration(
-            image: const DecorationImage(
-              image: AssetImage('assets/faq_illustration.png'),
-              fit: BoxFit.contain,
-            ),
-            borderRadius: BorderRadius.circular(20),
+        Widget illustration = ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: isMobile ? 400 : 550, 
           ),
-          child: const Icon(
-            Icons.live_help_outlined,
-            size: 200,
-            color: Colors.black12,
+          child: ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black,
+                  Colors.black,
+                  Colors.transparent,
+                ],
+                // 👇 PERBAIKAN: Diubah dari 0.8 menjadi 0.6 agar pudar mulai lebih tinggi
+                stops: [0.0, 0.6, 1.0], 
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.dstIn,
+            child: Image.asset(
+              'assets/faq_illustration.png',
+              fit: BoxFit.contain, 
+              alignment: Alignment.bottomCenter, 
+            ),
           ),
         );
 
@@ -773,19 +784,19 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(
             vertical: isMobile ? 60 : 100,
-            horizontal: isMobile ? 20 : 80,
+            horizontal: isMobile ? 24 : 80, 
           ),
           color: Colors.white,
           child: isMobile
               ? Column(
                   children: [
                     illustration,
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30), 
                     faqContent,
                   ],
                 )
               : Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end, 
                   children: [
                     Expanded(flex: 5, child: faqContent),
                     const SizedBox(width: 80),
@@ -888,6 +899,129 @@ class _FAQAccordionState extends State<FAQAccordion> {
           ),
         );
       }),
+    );
+  }
+}
+
+// ==========================================
+// TESTIMONIAL CARD
+// ==========================================
+class TestimonialCard extends StatefulWidget {
+  final String name;
+  final String role;
+  final String quote;
+  final bool isMobile;
+
+  const TestimonialCard({
+    super.key,
+    required this.name,
+    required this.role,
+    required this.quote,
+    required this.isMobile,
+  });
+
+  @override
+  State<TestimonialCard> createState() => _TestimonialCardState();
+}
+
+class _TestimonialCardState extends State<TestimonialCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true), 
+      onExit: (_) => setState(() => _isHovered = false), 
+      cursor: SystemMouseCursors.click, 
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300), 
+        curve: Curves.easeInOut, 
+
+        width: widget.isMobile ? 300 : 400,
+        margin: const EdgeInsets.only(
+          right: 24,
+          bottom: 20,
+          top: 10,
+        ), 
+        padding: const EdgeInsets.all(30),
+
+        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+        alignment: Alignment.center, 
+
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2B2B), 
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _isHovered ? Colors.red : Colors.white12,
+            width: _isHovered ? 1.5 : 1.0, 
+          ),
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: Colors.red.withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 10), 
+              )
+            else
+              const BoxShadow(
+                color: Colors.transparent,
+              ), 
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            const Icon(Icons.format_quote_rounded, color: Colors.red, size: 40),
+            const SizedBox(height: 16),
+            Text(
+              '"${widget.quote}"',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+                height: 1.6,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.grey.shade700,
+                  radius: 24,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.role,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
