@@ -4,7 +4,6 @@ import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
-// import '../../data/hero_banner_data.dart';
 import '../../data/faq_data.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -88,12 +87,35 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Container(key: homeKey),
+
+            // 1. Hero Banner
             _buildNewHero(context, isMobile),
+
+            // 2. Dampak Nyata
             _buildImpactSection(isMobile),
+
+            // 3. Tentang VIP
             AboutSection(key: aboutKey),
+
+            // 4. Program Unggulan
             _buildProgramUnggulan(context, isMobile),
-            _buildRequirementSection(isMobile),
+
+            // 5. Testimoni Penerima Beasiswa (SEKARANG SUDAH BERANIMASI!)
+            _buildTestimonialSection(isMobile),
+
+            // 6. Our Partner / Didukung Oleh
+            _buildPartnerSection(isMobile),
+
+            // Anchor agar menu pendaftaran di navbar tidak error
+            Container(key: stepKey),
+
+            // 7. FAQ
             _buildFAQSection(context, isMobile),
+
+            // 8. Info Sosmed
+            _buildSocialMediaSection(isMobile),
+
+            // 9. Footer
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -243,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       color: const Color(0xFFFBFBFB),
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 80,
+        horizontal: isMobile ? 24 : 80,
         vertical: 80,
       ),
       child: Column(
@@ -354,7 +376,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET PROGRAM UNGGULAN (FIXED LAYOUT)
+  // WIDGET PROGRAM UNGGULAN
   // ==========================================
   Widget _buildProgramUnggulan(BuildContext context, bool isMobile) {
     return Container(
@@ -362,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       color: Colors.white,
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 80,
+        horizontal: isMobile ? 24 : 80,
         vertical: 80,
       ),
       child: Center(
@@ -566,118 +588,130 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET REQUIREMENT SECTION
+  // WIDGET TESTIMONIAL SECTION (Pemanggilan Widget Beranimasi)
   // ==========================================
-  Widget _buildRequirementSection(bool isMobile) {
+  Widget _buildTestimonialSection(bool isMobile) {
     return Container(
-      key: stepKey,
       width: double.infinity,
       padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100,
-        horizontal: isMobile ? 20 : 50,
+        horizontal: isMobile ? 24 : 80,
+        vertical: 80,
       ),
-      color: const Color(0xFFFBFBFB),
+      color: const Color(0xFF1A1A1A),
       child: Column(
         children: [
-          Text(
-            "Langkah Pendaftaran Beasiswa",
-            textAlign: TextAlign.center,
+          const Text(
+            "CERITA PERUBAHAN",
             style: TextStyle(
-              fontSize: isMobile ? 24 : 32,
+              color: Colors.red,
               fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
             ),
           ),
-          SizedBox(height: isMobile ? 40 : 60),
-          if (isMobile)
-            Column(
+          const SizedBox(height: 16),
+          const Text(
+            "Bukti Nyata Dampak VIP",
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: Row(
               children: [
-                _buildStepItem(
-                  Icons.edit_note_rounded,
-                  "Isi Formulir",
-                  "Lengkapi data diri dan berkas di Portal Siswa.",
+                // 👇 Menggunakan Widget TestimonialCard yang sudah Stateful & Beranimasi
+                TestimonialCard(
+                  name: "Andi Pratama",
+                  role: "Alumni Batch 1 - Karyawan IT",
+                  quote:
+                      "Awalnya saya hampir putus asa karena tidak ada biaya kuliah. Berkat beasiswa vokasi VIP, saya dibimbing dari nol hingga sekarang bisa bekerja sebagai Junior Programmer di Jakarta.",
+                  isMobile: isMobile,
                 ),
-                const SizedBox(height: 30),
-                _buildStepItem(
-                  Icons.assignment_ind_outlined,
-                  "Seleksi",
-                  "Verifikasi kelengkapan data oleh tim Vernon.",
+                TestimonialCard(
+                  name: "Siti Nurbaya",
+                  role: "Alumni Batch 2 - UI/UX Designer",
+                  quote:
+                      "Program 10 bulan ini sangat intensif dan daging semua. Fasilitas laptop gratis sangat membantu saya yang berasal dari desa. Terima kasih para donatur VIP!",
+                  isMobile: isMobile,
                 ),
-                const SizedBox(height: 30),
-                _buildStepItem(
-                  Icons.record_voice_over_outlined,
-                  "Wawancara",
-                  "Sesi tanya jawab untuk kandidat yang lolos tahap awal.",
-                ),
-                const SizedBox(height: 30),
-                _buildStepItem(
-                  Icons.verified_outlined,
-                  "Pengumuman",
-                  "Cek hasil akhir di dashboard portal.",
-                ),
-              ],
-            )
-          else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _buildStepItem(
-                    Icons.edit_note_rounded,
-                    "Isi Formulir",
-                    "Lengkapi data diri dan berkas di Portal Siswa.",
-                  ),
-                ),
-                Expanded(
-                  child: _buildStepItem(
-                    Icons.assignment_ind_outlined,
-                    "Seleksi",
-                    "Verifikasi kelengkapan data oleh tim Vernon.",
-                  ),
-                ),
-                Expanded(
-                  child: _buildStepItem(
-                    Icons.record_voice_over_outlined,
-                    "Wawancara",
-                    "Sesi tanya jawab untuk kandidat yang lolos tahap awal.",
-                  ),
-                ),
-                Expanded(
-                  child: _buildStepItem(
-                    Icons.verified_outlined,
-                    "Pengumuman",
-                    "Cek hasil akhir di dashboard portal.",
-                  ),
+                TestimonialCard(
+                  name: "Budi Santoso",
+                  role: "Alumni Batch 3 - Data Analyst",
+                  quote:
+                      "Mentoring karirnya luar biasa. Saya tidak hanya diajari coding, tapi juga cara membuat CV dan wawancara kerja. Kini saya bisa mengangkat derajat keluarga.",
+                  isMobile: isMobile,
                 ),
               ],
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStepItem(IconData icon, String title, String desc) {
-    return Column(
+  // ==========================================
+  // WIDGET OUR PARTNER SECTION
+  // ==========================================
+  Widget _buildPartnerSection(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 24 : 80,
+        vertical: 60,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            "DIDUKUNG DAN DIPERCAYA OLEH",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 40),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: isMobile ? 30 : 60,
+            runSpacing: 30,
+            children: [
+              _buildPartnerLogo(Icons.account_balance_rounded, "Bank Edukasi"),
+              _buildPartnerLogo(Icons.business_rounded, "TechCorp Inc."),
+              _buildPartnerLogo(Icons.language_rounded, "Global NGO"),
+              _buildPartnerLogo(Icons.computer_rounded, "IT Academy"),
+              _buildPartnerLogo(Icons.foundation_rounded, "Yayasan Peduli"),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPartnerLogo(IconData icon, String name) {
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.all(25),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
+        Icon(icon, color: Colors.grey.shade400, size: 36),
+        const SizedBox(width: 10),
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
-          child: Icon(icon, color: AppColors.primary, size: 40),
-        ),
-        const SizedBox(height: 25),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          desc,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
         ),
       ],
     );
@@ -796,8 +830,74 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
+  // ==========================================
+  // WIDGET SOCIAL MEDIA SECTION
+  // ==========================================
+  Widget _buildSocialMediaSection(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 24 : 80,
+        vertical: 40,
+      ),
+      color: Colors.grey.shade50,
+      child: Column(
+        children: [
+          const Text(
+            "IKUTI PERJALANAN KAMI",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildSocialIcon(Icons.camera_alt_outlined),
+              const SizedBox(width: 15),
+              _buildSocialIcon(Icons.work_outline_rounded),
+              const SizedBox(width: 15),
+              _buildSocialIcon(Icons.ondemand_video_rounded),
+              const SizedBox(width: 15),
+              _buildSocialIcon(Icons.email_outlined),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialIcon(IconData icon) {
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black87, size: 24),
+      ),
+    );
+  }
 }
 
+// ==========================================
+// FAQ ACCORDION WIDGET
+// ==========================================
 class FAQAccordion extends StatefulWidget {
   final List<Map<String, String>> faqs;
   const FAQAccordion({super.key, required this.faqs});
@@ -888,6 +988,139 @@ class _FAQAccordionState extends State<FAQAccordion> {
           ),
         );
       }),
+    );
+  }
+}
+
+// ==========================================
+// 👇 WIDGET BARU: TestimonialCard (STATEFUL & BERANIMASI)
+// ==========================================
+class TestimonialCard extends StatefulWidget {
+  final String name;
+  final String role;
+  final String quote;
+  final bool isMobile;
+
+  const TestimonialCard({
+    super.key,
+    required this.name,
+    required this.role,
+    required this.quote,
+    required this.isMobile,
+  });
+
+  @override
+  State<TestimonialCard> createState() => _TestimonialCardState();
+}
+
+class _TestimonialCardState extends State<TestimonialCard> {
+  // Variabel untuk melacak apakah kursor sedang berada di atas kartu
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // MouseRegion digunakan untuk mendeteksi kursor masuk/keluar di Web/Desktop
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true), // Kursor masuk
+      onExit: (_) => setState(() => _isHovered = false), // Kursor keluar
+      cursor: SystemMouseCursors.click, // Ubah kursor menjadi pointer klik
+      // AnimatedContainer menangani transisi animasi yang halus
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300), // Durasi animasi 0.3 detik
+        curve: Curves.easeInOut, // Kurva animasi agar terasa natural
+
+        width: widget.isMobile ? 300 : 400,
+        margin: const EdgeInsets.only(
+          right: 24,
+          bottom: 20,
+          top: 10,
+        ), // Jarak ekstra agar animasi Scale tidak terpotong
+        padding: const EdgeInsets.all(30),
+
+        // 1. ANIMASI LIFTING (Scale Up) -> Membesar 3% saat di-hover
+        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+        alignment: Alignment.center, // Skala membesar dari tengah
+
+        decoration: BoxDecoration(
+          color: const Color(0xFF2B2B2B), // Latar gelap permanen
+          borderRadius: BorderRadius.circular(20),
+
+          // 2. ANIMASI GLOWING BORDER -> Berubah menjadi merah saat di-hover
+          border: Border.all(
+            color: _isHovered ? Colors.red : Colors.white12,
+            width: _isHovered ? 1.5 : 1.0, // Sedikit ditebalkan
+          ),
+
+          // 3. ANIMASI SHADOW DROP -> Muncul bayangan merah tipis saat di-hover (efek terangkat)
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: Colors.red.withOpacity(0.15),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 10), // Bayangan ke bawah
+              )
+            else
+              const BoxShadow(
+                color: Colors.transparent,
+              ), // Tidak ada bayangan saat normal
+          ],
+        ),
+
+        // --- Konten di dalam Kartu (Tetap Sama) ---
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // Agar tinggi menyesuaikan konten
+          children: [
+            const Icon(Icons.format_quote_rounded, color: Colors.red, size: 40),
+            const SizedBox(height: 16),
+            Text(
+              '"${widget.quote}"',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+                height: 1.6,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.grey.shade700,
+                  radius: 24,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.role,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

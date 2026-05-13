@@ -71,7 +71,7 @@ class MockDatabase {
       'nik': '',
       'asal_sekolah': '',
       'tahun_lulus': '',
-      'tgl_daftar': '', 
+      'tgl_daftar': '',
       'jadwal_wawancara': '',
     },
     'admin@vip.com': {
@@ -101,7 +101,13 @@ class MockDatabase {
     return null;
   }
 
-  static Future<bool> register(String name, String email, String password) async {
+  // 👇 PERBAIKAN: Menambahkan parameter opsional [String role = 'siswa']
+  static Future<bool> register(
+    String name,
+    String email,
+    String password, [
+    String role = 'siswa',
+  ]) async {
     await Future.delayed(const Duration(milliseconds: 1500));
     if (_users.containsKey(email)) return false;
 
@@ -109,7 +115,7 @@ class MockDatabase {
       'name': name.toUpperCase(),
       'email': email,
       'password': password,
-      'role': 'siswa',
+      'role': role, // Menggunakan role yang dikirim (donatur/siswa)
       'is_registered': false,
       'current_step': 0,
       'is_revisi': false,
@@ -121,8 +127,8 @@ class MockDatabase {
       'nik': '',
       'asal_sekolah': '',
       'tahun_lulus': '',
-      'tgl_daftar': '', 
-      'jadwal_wawancara': '', 
+      'tgl_daftar': '',
+      'jadwal_wawancara': '',
     };
     return true;
   }
@@ -142,19 +148,22 @@ class MockDatabase {
     return result;
   }
 
-  // 2. Mengambil seluruh data (Full) untuk Dialog Review Admin
   static List<Map<String, dynamic>> getAllRegisteredSiswaFullData() {
     List<Map<String, dynamic>> result = [];
     _users.forEach((email, data) {
       if (data['role'] == 'siswa' && data['is_registered'] == true) {
-        result.add(data); // Mengirim map data asli secara utuh
+        result.add(data);
       }
     });
     return result;
   }
 
-  // 3. Menyimpan keputusan dari Admin dan menyinkronkan dengan Dashboard Siswa
-  static void updateStatusSiswa(String email, String newStatus, String catatan, {String? jadwalWawancara}) {
+  static void updateStatusSiswa(
+    String email,
+    String newStatus,
+    String catatan, {
+    String? jadwalWawancara,
+  }) {
     if (_users.containsKey(email)) {
       _users[email]!['admin_status'] = newStatus;
 
@@ -166,10 +175,8 @@ class MockDatabase {
         _users[email]!['is_revisi'] = false;
         _users[email]!['catatan_revisi'] = '';
 
-        // Sinkronisasi status admin dengan progress bar siswa
         if (newStatus == 'Menunggu Review') _users[email]!['current_step'] = 1;
-        
-        // Logika khusus untuk Wawancara
+
         if (newStatus == 'Wawancara') {
           _users[email]!['current_step'] = 2;
           if (jadwalWawancara != null && jadwalWawancara.isNotEmpty) {
@@ -192,18 +199,13 @@ class MockDatabase {
     }
   }
 
-  // 4. FUNGSI KHUSUS UNTUK SISWA SAAT MENGIRIM REVISI
   static void submitRevisiSiswa() {
     if (currentUser != null) {
       String email = currentUser!['email'];
-      
-      // Mengubah paksa data di tabel utama _users
       _users[email]!['is_revisi'] = false;
       _users[email]!['catatan_revisi'] = '';
       _users[email]!['admin_status'] = 'Menunggu Review';
       _users[email]!['current_step'] = 1;
-
-      // Sinkronkan kembali dengan sesi user saat ini
       currentUser = _users[email];
     }
   }
@@ -217,14 +219,13 @@ class MockDatabase {
   // ==========================================
 
   static List<DonationHistory> getDonationHistory(String email) {
-    // Mengambil dari list statis yang ada di atas
     return List.from(_donationHistory);
   }
 
   static void addDonation(String email, String programName, int amount) {
     _donationHistory.add(
       DonationHistory(
-        id: 'd${_donationHistory.length + 1}', // Otomatis generate ID (d4, d5, dst)
+        id: 'd${_donationHistory.length + 1}',
         programName: programName,
         date: DateTime.now(),
         amount: amount,
