@@ -1,11 +1,13 @@
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart'; // 👇 IMPORT BARU UNTUK SOSMED
+import 'package:url_launcher/url_launcher.dart'; 
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
 import '../../data/faq_data.dart';
+import '../../data/mock_database.dart'; 
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -23,9 +25,20 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey contactKey = GlobalKey();
   final GlobalKey stepKey = GlobalKey();
 
+  late Map<String, String> _heroData;
+  // 👇 VARIABEL BARU UNTUK MENAMPUNG LIST TESTIMONI
+  List<Map<String, String>> _testimonialData = [];
+
   @override
   void initState() {
     super.initState();
+    
+    // Mengambil data Hero Banner
+    _heroData = MockDatabase.getHomeHeroData();
+    
+    // 👇 MENGAMBIL DATA TESTIMONI DARI DATABASE
+    _testimonialData = MockDatabase.getSemuaTestimoni();
+
     if (widget.targetSection != null) {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _autoScrollToTarget();
@@ -76,6 +89,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  ImageProvider _getImageProvider(String imageSource) {
+    if (imageSource.isEmpty) {
+      return const NetworkImage('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop');
+    }
+    if (imageSource.startsWith('http')) {
+      return NetworkImage(imageSource);
+    }
+    return MemoryImage(base64Decode(imageSource));
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -88,32 +111,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Container(key: homeKey),
-
-            // 1. Hero Banner
             _buildNewHero(context, isMobile),
-
-            // 2. Dampak Nyata
             _buildImpactSection(isMobile),
-
-            // 3. Tentang VIP
             AboutSection(key: aboutKey),
-
-            // 4. Program Unggulan
             _buildProgramUnggulan(context, isMobile),
-
-            // 5. Testimoni Penerima Beasiswa
+            
+            // 👇 SECTION TESTIMONI (SUDAH DINAMIS)
             _buildTestimonialSection(isMobile),
 
-            // 6. Our Partner
             _buildPartnerSection(isMobile),
-
-            // Anchor agar menu pendaftaran di navbar tidak error
             Container(key: stepKey),
-
-            // 7. FAQ
             _buildFAQSection(context, isMobile),
-
-            // 8. Footer
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -128,11 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       height: isMobile ? 550 : 650,
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         image: DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop',
-          ),
+          image: _getImageProvider(_heroData['image'] ?? ''), 
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
         ),
@@ -163,9 +169,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 border: Border.all(color: Colors.red),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text(
-                "#EmpowerTomorrowsLeaders",
-                style: TextStyle(
+              child: Text(
+                _heroData['tagline'] ?? "#EmpowerTomorrowsLeaders", 
+                style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
@@ -174,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 25),
             Text(
-              "Your Support\nUnlocks\nEqual Futures",
+              _heroData['title']?.replaceAll('\\n', '\n') ?? "Your Support\nUnlocks\nEqual Futures", 
               style: TextStyle(
                 color: Colors.white,
                 fontSize: isMobile ? 40 : 65,
@@ -185,9 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
             SizedBox(
               width: isMobile ? double.infinity : 600,
-              child: const Text(
-                "Vernon Indonesia Pintar (VIP) memberdayakan generasi muda melalui beasiswa, pelatihan vokasi, dan penempatan kerja nyata.",
-                style: TextStyle(
+              child: Text(
+                _heroData['subtitle'] ?? "Vernon Indonesia Pintar (VIP) memberdayakan generasi muda melalui beasiswa, pelatihan vokasi, dan penempatan kerja nyata.", 
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
                   height: 1.5,
@@ -256,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET IMPACT SECTION
+  // WIDGET IMPACT SECTION (Data Statis/Placeholder)
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
@@ -586,7 +592,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET TESTIMONIAL SECTION
+  // WIDGET TESTIMONIAL SECTION (SUDAH DINAMIS)
   // ==========================================
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
@@ -617,33 +623,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 40),
 
+          // 👇 MENGGUNAKAN DATA DINAMIS DARI DATABASE
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             child: Row(
-              children: [
-                TestimonialCard(
-                  name: "Andi Pratama",
-                  role: "Alumni Batch 1 - Karyawan IT",
-                  quote:
-                      "Awalnya saya hampir putus asa karena tidak ada biaya kuliah. Berkat beasiswa vokasi VIP, saya dibimbing dari nol hingga sekarang bisa bekerja sebagai Junior Programmer di Jakarta.",
+              children: _testimonialData.isEmpty 
+              ? [const Center(child: Text("Belum ada testimoni.", style: TextStyle(color: Colors.white)))]
+              : _testimonialData.map((testimoni) {
+                return TestimonialCard(
+                  name: testimoni['name'] ?? '',
+                  role: testimoni['role'] ?? '',
+                  quote: testimoni['quote'] ?? '',
                   isMobile: isMobile,
-                ),
-                TestimonialCard(
-                  name: "Siti Nurbaya",
-                  role: "Alumni Batch 2 - UI/UX Designer",
-                  quote:
-                      "Program 10 bulan ini sangat intensif dan daging semua. Fasilitas laptop gratis sangat membantu saya yang berasal dari desa. Terima kasih para donatur VIP!",
-                  isMobile: isMobile,
-                ),
-                TestimonialCard(
-                  name: "Budi Santoso",
-                  role: "Alumni Batch 3 - Data Analyst",
-                  quote:
-                      "Mentoring karirnya luar biasa. Saya tidak hanya diajari coding, tapi juga cara membuat CV dan wawancara kerja. Kini saya bisa mengangkat derajat keluarga.",
-                  isMobile: isMobile,
-                ),
-              ],
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -797,7 +791,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Colors.black,
                   Colors.transparent,
                 ],
-                // 👇 PERBAIKAN: Diubah dari 0.8 menjadi 0.6 agar pudar mulai lebih tinggi
                 stops: [0.0, 0.6, 1.0], 
               ).createShader(bounds);
             },
@@ -854,7 +847,7 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border(
           top: BorderSide(
             color: Colors.grey.shade200,
-          ), // Garis pembatas halus di atas
+          ), 
         ),
       ),
       child: isMobile
@@ -873,8 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             )
           : Row(
-              mainAxisAlignment: MainAxisAlignment
-                  .spaceBetween, // Supaya menyebar elegan ke kiri & kanan di desktop
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, 
               children: [
                 const Text(
                   "IKUTI PERJALANAN KAMI",
@@ -891,7 +883,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget bantuan untuk menjejerkan tombol
   Widget _buildSocialIconsRow() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -927,14 +918,13 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       borderRadius: BorderRadius.circular(50),
       child: Container(
-        width: 45, // Diperkecil sedikit agar tidak terlalu raksasa
+        width: 45, 
         height: 45,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.grey.shade200),
-          // Bayangan tebal dihapus agar desainnya lebih modern, flat, dan menyatu
         ),
         child: Image.network(imageUrl, fit: BoxFit.contain),
       ),
@@ -998,7 +988,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
               initiallyExpanded: isExpanded,
               iconColor: AppColors.primary,
               collapsedIconColor: Colors.grey,
-              title: Text(
+              title: Text(  
                 faq["tanya"]!,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,

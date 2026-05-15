@@ -1,9 +1,43 @@
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // 👇 1. Tambahkan import go_router
+import 'package:go_router/go_router.dart';
 import '../../../core/app_colors.dart';
+import '/data/mock_database.dart'; 
 
-class AboutSection extends StatelessWidget {
+class AboutSection extends StatefulWidget {
   const AboutSection({super.key});
+
+  @override
+  State<AboutSection> createState() => _AboutSectionState();
+}
+
+class _AboutSectionState extends State<AboutSection> {
+  late Map<String, dynamic> _tentangKamiData;
+
+  @override
+  void initState() {
+    super.initState();
+    // Menarik data CMS "Tentang Kami" dari database
+    _tentangKamiData = MockDatabase.getAboutSectionData();
+  }
+
+  // Fungsi pintar untuk merender gambar (URL atau Base64)
+  Widget _buildImageDisplay(String imageSource, bool isMobile) {
+    final double? height = isMobile ? 250 : null;
+
+    if (imageSource.isEmpty) {
+      // Fallback ke gambar lokal jika kosong
+      return Image.asset('assets/tentang.png', fit: BoxFit.cover, width: double.infinity, height: height);
+    }
+    if (imageSource.startsWith('http')) {
+      return Image.network(imageSource, fit: BoxFit.cover, width: double.infinity, height: height);
+    }
+    try {
+      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover, width: double.infinity, height: height);
+    } catch (e) {
+      return Container(color: Colors.grey.shade300, width: double.infinity, height: height, child: const Icon(Icons.broken_image, color: Colors.red));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +52,8 @@ class AboutSection extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          "Membantu Anak Bangsa Meraih Mimpi",
+          // 👇 Menggunakan Judul Dinamis dari CMS
+          _tentangKamiData['title'] ?? "Membantu Anak Bangsa Meraih Mimpi",
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
           style: TextStyle(
             fontSize: isMobile ? 26 : 32, 
@@ -28,24 +63,15 @@ class AboutSection extends StatelessWidget {
         ),
         const SizedBox(height: 25),
         Text(
-          "Vernon Indonesia Pintar bukan sekadar yayasan beasiswa. Kami adalah inkubator karir bagi pemuda berpotensi dari keluarga tidak mampu.",
+          // 👇 Menggunakan Deskripsi Dinamis dari CMS
+          _tentangKamiData['description'] ?? "Vernon Indonesia Pintar bukan sekadar yayasan beasiswa. Kami adalah inkubator karir bagi pemuda berpotensi dari keluarga tidak mampu.",
           textAlign: isMobile ? TextAlign.center : TextAlign.left,
           style: TextStyle(fontSize: 16, color: Colors.grey[700], height: 1.6),
         ),
-        const SizedBox(height: 30),
         
-        Wrap(
-          spacing: 40,
-          runSpacing: 20,
-          alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
-          children: [
-            _buildStatItem("500+", "Penerima", isMobile),
-            _buildStatItem("20+", "Mitra Universitas", isMobile),
-          ],
-        ),
-        
-        // 👇 2. TAMBAHKAN TOMBOL SELENGKAPNYA DI SINI
+        // 👇 HAPUS BAGIAN STATISTIK PENERIMA & MITRA DI SINI
         const SizedBox(height: 40),
+        
         ElevatedButton(
           onPressed: () => context.go('/profil-yayasan'),
           style: ElevatedButton.styleFrom(
@@ -54,7 +80,7 @@ class AboutSection extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            elevation: 0, // Dibuat flat agar elegan
+            elevation: 0, 
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
@@ -73,12 +99,8 @@ class AboutSection extends StatelessWidget {
 
     Widget imageContent = ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: Image.asset(
-        'assets/tentang.png', 
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: isMobile ? 250 : null, 
-      ),
+      // 👇 Menggunakan Gambar Dinamis dari CMS
+      child: _buildImageDisplay(_tentangKamiData['image'] ?? '', isMobile),
     );
 
     return Container(
@@ -109,22 +131,6 @@ class AboutSection extends StatelessWidget {
                 ),
               ],
             ),
-    );
-  }
-
-  Widget _buildStatItem(String value, String label, bool isMobile) {
-    return Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        Text(
-          value, 
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.primary),
-        ),
-        Text(
-          label, 
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-      ],
     );
   }
 }

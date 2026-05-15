@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       
       if (userRole == 'admin') {
-        context.go('/admin'); // Masuk ke dashboard Admin
+        context.go('/admin-dashboard'); // Masuk ke dashboard Admin
       } else {
         context.go('/portal'); // Masuk ke dashboard Siswa
       }

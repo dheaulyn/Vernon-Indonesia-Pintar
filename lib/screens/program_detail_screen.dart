@@ -1,16 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; 
 import '../../core/app_colors.dart';
+import '../../data/mock_database.dart'; // 👇 IMPORT DATABASE
 import 'shared/custom_navbar.dart';
 import 'shared/custom_footer.dart';
 
-class ProgramDetailScreen extends StatelessWidget {
+class ProgramDetailScreen extends StatefulWidget {
   const ProgramDetailScreen({super.key});
+
+  @override
+  State<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
+}
+
+class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
+  late Map<String, dynamic> _detailData;
+
+  @override
+  void initState() {
+    super.initState();
+    // 👇 Ambil data dinamis saat halaman dimuat
+    _detailData = MockDatabase.getProgramDetailData();
+  }
+
+  // Fungsi bantuan untuk rotasi ikon otomatis berdasarkan index
+  IconData _getIconForIndex(int index) {
+    const icons = [
+      Icons.person_outline,
+      Icons.school_outlined,
+      Icons.favorite_border_rounded,
+      Icons.folder_open_rounded,
+      Icons.assignment_turned_in_outlined,
+      Icons.verified_user_outlined
+    ];
+    return icons[index % icons.length];
+  }
 
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 850;
+
+    // Ambil data array dari database
+    final List<dynamic> requirements = _detailData['requirements'] ?? [];
+    final List<dynamic> timeline = _detailData['timeline'] ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), 
@@ -35,59 +67,24 @@ class ProgramDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  // GRID KARTU PERSYARATAN
-                  Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    children: [
-                      _buildRequirementCard(
-                        isMobile,
-                        "Syarat Umum",
-                        Icons.person_outline,
-                        [
-                          "Warga Negara Indonesia berusia minimal 18 tahun.",
-                          "Usia maksimal 25 tahun saat mendaftar.",
-                          "Berasal dari keluarga kurang mampu (PKH / KKS / SKTM).",
-                          "Belum bekerja atau belum memiliki penghasilan tetap.",
-                          "Bersedia mengikuti seluruh rangkaian program selama ±14 bulan.",
-                        ],
-                      ),
-                      _buildRequirementCard(
-                        isMobile,
-                        "Pendidikan",
-                        Icons.school_outlined,
-                        [
-                          "Terbuka untuk semua jenjang pendidikan (SD / SMP / SMA / SMK sederajat).",
-                          "Memiliki ijazah atau Surat Keterangan Lulus (SKL).",
-                          "Tidak sedang menempuh pendidikan formal.",
-                        ],
-                      ),
-                      _buildRequirementCard(
-                        isMobile,
-                        "Karakter & Motivasi",
-                        Icons.favorite_border_rounded,
-                        [
-                          "Memiliki semangat belajar yang tinggi dan tekad kuat.",
-                          "Bersikap jujur, disiplin, dan bertanggung jawab.",
-                          "Bersedia menerima arahan dan mentoring dari instruktur.",
-                          "Tidak sedang menerima beasiswa lain yang serupa.",
-                        ],
-                      ),
-                      _buildRequirementCard(
-                        isMobile,
-                        "Dokumen yang Diperlukan",
-                        Icons.folder_open_rounded,
-                        [
-                          "Fotokopi KTP.",
-                          "Fotokopi ijazah / SKL terakhir.",
-                          "Surat Keterangan Tidak Mampu (SKTM).",
-                          "Pas foto 3×4 terbaru (2 lembar).",
-                          "Surat motivasi tulis tangan (1 halaman).",
-                          "Nomor HP aktif & akun WhatsApp.",
-                        ],
-                      ),
-                    ],
-                  ),
+                  // 👇 LOOP DATA SYARAT SECARA DINAMIS
+                  if (requirements.isEmpty)
+                    const Text("Belum ada data persyaratan.")
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: List.generate(requirements.length, (index) {
+                        final req = requirements[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: _buildRequirementCard(
+                            req['title'] ?? '',
+                            _getIconForIndex(index),
+                            List<String>.from(req['points'] ?? []),
+                          ),
+                        );
+                      }),
+                    ),
 
                   const SizedBox(height: 80),
 
@@ -97,43 +94,25 @@ class ProgramDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 40),
 
-                  // TIMELINE ALUR PENDAFTARAN
-                  _buildTimelineStep(
-                    1,
-                    "Pengisian formulir pendaftaran online",
-                    "Isi data diri lengkap melalui website VIP. Lampirkan foto dokumen persyaratan.",
-                  ),
-                  _buildTimelineStep(
-                    2,
-                    "Verifikasi dokumen & kelayakan administrasi",
-                    "Tim VIP memverifikasi kelengkapan dokumen dan kesesuaian kriteria usia serta ekonomi.",
-                  ),
-                  _buildTimelineStep(
-                    3,
-                    "Wawancara langsung dengan tim yayasan",
-                    "Tahap penentu kelulusan seleksi. Tim yayasan menilai secara langsung kemampuan, karakter, dan kesungguhan calon penerima.",
-                  ),
-                  _buildTimelineStep(
-                    4,
-                    "Pengumuman hasil seleksi",
-                    "Hasil seleksi diumumkan melalui website VIP. Calon penerima yang lolos menerima Surat Penetapan Beasiswa resmi.",
-                  ),
-                  _buildTimelineStep(
-                    5,
-                    "Orientasi & penandatanganan perjanjian",
-                    "Penerima beasiswa menghadiri sesi orientasi dan menandatangani surat komitmen mengikuti pelatihan hingga penempatan kerja.",
-                  ),
-                  _buildTimelineStep(
-                    6,
-                    "Mulai pelatihan vokasi di Vernon Edu",
-                    "Program resmi dimulai. Pelatihan intensif 10 bulan mencakup keterampilan barista, digital marketing, administrasi, atau bidang lain sesuai minat & kebutuhan industri.",
-                    isLast: true,
-                  ),
+                  // 👇 LOOP DATA TIMELINE ALUR SECARA DINAMIS
+                  if (timeline.isEmpty)
+                    const Text("Belum ada data alur pendaftaran.")
+                  else
+                    Column(
+                      children: List.generate(timeline.length, (index) {
+                        final step = timeline[index];
+                        return _buildTimelineStep(
+                          index + 1,
+                          step['title'] ?? '',
+                          step['description'] ?? '',
+                          isLast: index == timeline.length - 1,
+                        );
+                      }),
+                    ),
                 ],
               ),
             ),
 
-            // 3. FOOTER
             const CustomFooter(),
           ],
         ),
@@ -145,7 +124,6 @@ class ProgramDetailScreen extends StatelessWidget {
   // KUMPULAN WIDGET BANTUAN
   // =====================================
 
-  // 👇 PERBAIKAN: Menambahkan BuildContext context sebagai parameter
   Widget _buildHeroSection(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
@@ -154,9 +132,8 @@ class ProgramDetailScreen extends StatelessWidget {
         vertical: isMobile ? 60 : 100,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E2329), // Warna gelap khas VIP
+        color: Color(0xFF1E2329), 
         image: DecorationImage(
-          // Opsional: Kalau punya gambar pattern atau foto kelas yang digelapkan, pasang di sini
           image: NetworkImage(
             'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2000&auto=format&fit=crop',
           ),
@@ -217,7 +194,6 @@ class ProgramDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                // 👇 PERBAIKAN: Mengarahkan langsung ke halaman register
                 onPressed: () => context.go('/register'), 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -269,13 +245,12 @@ class ProgramDetailScreen extends StatelessWidget {
   }
 
   Widget _buildRequirementCard(
-    bool isMobile,
     String title,
     IconData icon,
     List<String> points,
   ) {
     return Container(
-      width: isMobile ? double.infinity : 480, // Dibagi 2 kolom jika di desktop
+      width: double.infinity, 
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -303,12 +278,14 @@ class ProgramDetailScreen extends StatelessWidget {
                 child: Icon(icon, color: AppColors.primary, size: 24),
               ),
               const SizedBox(width: 16),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ],
@@ -395,7 +372,7 @@ class ProgramDetailScreen extends StatelessWidget {
           // Konten Teks
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 40), // Jarak antar step
+              padding: const EdgeInsets.only(bottom: 40), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

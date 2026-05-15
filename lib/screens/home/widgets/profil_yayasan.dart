@@ -1,9 +1,42 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../shared/custom_navbar.dart';
-import '/core/app_colors.dart'; // 👇 Import path sudah diperbaiki
+import '../../shared/custom_footer.dart';
+import '/core/app_colors.dart'; 
+import '/data/mock_database.dart'; 
 
-class ProfilYayasanScreen extends StatelessWidget {
+class ProfilYayasanScreen extends StatefulWidget {
   const ProfilYayasanScreen({super.key});
+
+  @override
+  State<ProfilYayasanScreen> createState() => _ProfilYayasanScreenState();
+}
+
+class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
+  late Map<String, dynamic> _dataProfil;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mengambil data dari MockDatabase saat halaman dimuat
+    _dataProfil = MockDatabase.getProfilYayasanData();
+  }
+
+  Widget _buildImageDisplay(String imageSource, bool isMobile) {
+    final double height = isMobile ? 300 : 400;
+
+    if (imageSource.isEmpty) {
+      return Image.asset('assets/tentang.png', fit: BoxFit.cover, width: double.infinity, height: height);
+    }
+    if (imageSource.startsWith('http')) {
+      return Image.network(imageSource, fit: BoxFit.cover, width: double.infinity, height: height);
+    }
+    try {
+      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover, width: double.infinity, height: height);
+    } catch (e) {
+      return Container(color: Colors.grey.shade300, width: double.infinity, height: height, child: const Icon(Icons.broken_image, color: Colors.red));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,26 +56,56 @@ class ProfilYayasanScreen extends StatelessWidget {
                 vertical: isMobile ? 50 : 80,
                 horizontal: isMobile ? 20 : 80,
               ),
-              child: isMobile
-                  ? Column(
-                      children: [
-                        _buildImageSection(isMobile),
-                        const SizedBox(height: 40),
-                        _buildTextContent(isMobile),
-                      ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(flex: 5, child: _buildTextContent(isMobile)),
-                        const SizedBox(width: 60),
-                        Expanded(flex: 5, child: _buildImageSection(isMobile)),
-                      ],
-                    ),
+              child: Column(
+                children: [
+                  // ==========================================
+                  // SECTION 1: TENTANG KAMI & GAMBAR
+                  // ==========================================
+                  isMobile
+                      ? Column(
+                          children: [
+                            _buildImageSection(isMobile),
+                            const SizedBox(height: 40),
+                            _buildAboutText(isMobile),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.center, 
+                          children: [
+                            Expanded(flex: 5, child: _buildAboutText(isMobile)),
+                            const SizedBox(width: 60),
+                            Expanded(flex: 4, child: _buildImageSection(isMobile)), 
+                          ],
+                        ),
+
+                  const SizedBox(height: 80),
+
+                  // ==========================================
+                  // SECTION 2: VISION & MISSION
+                  // ==========================================
+                  isMobile
+                      ? Column(
+                          children: [
+                            _buildVisionCard(),
+                            const SizedBox(height: 30),
+                            _buildMissionCard(),
+                          ],
+                        )
+                      : IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(child: _buildVisionCard()),
+                              const SizedBox(width: 40),
+                              Expanded(child: _buildMissionCard()),
+                            ],
+                          ),
+                        ),
+                ],
+              ),
             ),
 
-            // FOOTER LENGKAP
-            _buildFooter(isMobile),
+            const CustomFooter(),
           ],
         ),
       ),
@@ -59,7 +122,7 @@ class ProfilYayasanScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
+          const Text(
             "TENTANG KAMI",
             style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 2),
           ),
@@ -74,133 +137,121 @@ class ProfilYayasanScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextContent(bool isMobile) {
+  // 👇 Data Teks Dinamis
+  Widget _buildAboutText(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?",
+          _dataProfil['title'] ?? "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?",
           style: TextStyle(fontSize: isMobile ? 24 : 32, fontWeight: FontWeight.bold, height: 1.3),
         ),
         const SizedBox(height: 20),
         Text(
-          "Kami yayasan pendidikan yang berdedikasi memberdayakan generasi muda Indonesia melalui:",
+          _dataProfil['description'] ?? "Deskripsi tentang Yayasan...",
           style: TextStyle(fontSize: 16, color: Colors.grey[800], height: 1.6),
-        ),
-        const SizedBox(height: 25),
-        
-        _buildCheckItem("Akses setara ke pendidikan berkualitas"),
-        _buildCheckItem("Pelatihan vokasi profesional"),
-        _buildCheckItem("Peluang karier relevan dengan industri"),
-        
-        const SizedBox(height: 40),
-
-        Container(
-          padding: const EdgeInsets.all(25),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border(left: BorderSide(color: AppColors.primary, width: 5)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 15, offset: const Offset(0, 5)),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.flag_rounded, color: AppColors.primary),
-                  const SizedBox(width: 10),
-                  const Text("Misi Kami", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                ],
-              ),
-              const SizedBox(height: 15),
-              Text(
-                "Setiap potensi anak muda harus diberdayakan tanpa hambatan ekonomi atau sosial.",
-                style: TextStyle(fontSize: 16, color: Colors.grey[700], fontStyle: FontStyle.italic, height: 1.5),
-              ),
-            ],
-          ),
         ),
       ],
     );
   }
 
-  Widget _buildCheckItem(String text) {
+  // 👇 Data Gambar Dinamis
+  Widget _buildImageSection(bool isMobile) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: _buildImageDisplay(_dataProfil['image'] ?? '', isMobile),
+    );
+  }
+
+  // 👇 Data Visi Dinamis
+  Widget _buildVisionCard() {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(left: BorderSide(color: Colors.amber, width: 6)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text("✨", style: TextStyle(fontSize: 28)),
+              SizedBox(width: 12),
+              Text("VISION", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Colors.amber, letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            _dataProfil['vision_text'] ?? "Teks Visi...",
+            style: TextStyle(fontSize: 16, color: Colors.grey[800], height: 1.6, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 👇 Data Misi Dinamis dari Array
+  Widget _buildMissionCard() {
+    List<dynamic> missions = _dataProfil['mission_points'] ?? [];
+
+    return Container(
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(left: BorderSide(color: AppColors.primary, width: 6)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Text("🚀", style: TextStyle(fontSize: 28)),
+              SizedBox(width: 12),
+              Text("MISSION", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: AppColors.primary, letterSpacing: 1.5)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          
+          // Loop data poin misi dari database
+          ...missions.map((missionText) => _buildMissionItem(missionText.toString())),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMissionItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-            child: const Icon(Icons.check, color: Colors.white, size: 16),
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1), 
+              shape: BoxShape.circle
+            ),
+            child: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 10),
           ),
           const SizedBox(width: 15),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            child: Text(
+              text, 
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade700, height: 1.4),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildImageSection(bool isMobile) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Image.asset(
-        'assets/tentang.png', 
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: isMobile ? 250 : 500,
-      ),
-    );
-  }
-
-  // ==========================================
-  // WIDGET: FOOTER LENGKAP (SERAGAM)
-  // ==========================================
-  Widget _buildFooter(bool isMobile) {
-    Widget aboutFooter = Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        const Text("VERNON INDONESIA PINTAR", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 15),
-        Text("Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.", textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14)),
-      ],
-    );
-
-    Widget contactFooter = Column(
-      crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        const Text("HUBUNGI KAMI", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 15),
-        _footerLink("WhatsApp: +62 812-3456-7890", isMobile),
-        _footerLink("Email: info@vip.or.id", isMobile),
-        _footerLink("Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia", isMobile),
-      ],
-    );
-
-    return Container(
-      width: double.infinity, color: const Color(0xFF1A1A1A),
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60, horizontal: isMobile ? 30 : 50),
-      child: Column(
-        children: [
-          if (isMobile) Column(children: [aboutFooter, const SizedBox(height: 40), contactFooter])
-          else Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 2, child: aboutFooter), const SizedBox(width: 50), Expanded(child: contactFooter)]),
-          SizedBox(height: isMobile ? 30 : 50),
-          Text("© 2026 Vernon Indonesia Pintar. All Rights Reserved.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _footerLink(String title, bool isMobile) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(onTap: () {}, child: Text(title, textAlign: isMobile ? TextAlign.center : TextAlign.left, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15))),
     );
   }
 }

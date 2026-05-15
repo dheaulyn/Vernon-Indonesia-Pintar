@@ -2,24 +2,23 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../../../core/app_colors.dart';
+import '../../../../core/app_colors.dart'; 
 import '../../../../data/mock_database.dart'; 
 
-class HeroBannerAdmin extends StatefulWidget {
-  const HeroBannerAdmin({super.key});
+class AboutSectionAdmin extends StatefulWidget {
+  const AboutSectionAdmin({super.key});
 
   @override
-  State<HeroBannerAdmin> createState() => _HeroBannerAdminState();
+  State<AboutSectionAdmin> createState() => _AboutSectionAdminState();
 }
 
-class _HeroBannerAdminState extends State<HeroBannerAdmin> {
+class _AboutSectionAdminState extends State<AboutSectionAdmin> {
   // 👇 Kunci form untuk validasi
   final _formKey = GlobalKey<FormState>();
 
-  final _taglineController = TextEditingController();
   final _titleController = TextEditingController();
-  final _subtitleController = TextEditingController();
-  String _heroImageBase64 = '';
+  final _descController = TextEditingController();
+  String _imageBase64 = '';
 
   @override
   void initState() {
@@ -28,24 +27,22 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
   }
 
   void _loadData() {
-    final heroData = MockDatabase.getHomeHeroData();
+    final data = MockDatabase.getAboutSectionData();
     setState(() {
-      _taglineController.text = heroData['tagline'] ?? '';
-      _titleController.text = heroData['title'] ?? '';
-      _subtitleController.text = heroData['subtitle'] ?? '';
-      _heroImageBase64 = heroData['image'] ?? '';
+      _titleController.text = data['title'] ?? '';
+      _descController.text = data['description'] ?? '';
+      _imageBase64 = data['image'] ?? '';
     });
   }
 
   @override
   void dispose() {
-    _taglineController.dispose();
     _titleController.dispose();
-    _subtitleController.dispose();
+    _descController.dispose();
     super.dispose();
   }
 
-  // 👇 FUNGSI MENAMPIL PESAN BERHASIL (WARNA HIJAU & ROUNDED)
+  // 👇 FUNGSI MENAMPILKAN PESAN BERHASIL (WARNA HIJAU & ROUNDED)
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -79,7 +76,6 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
     );
   }
 
-  // Menampilkan gambar (Bisa baca URL dummy atau Base64 hasil upload lokal)
   Widget _buildImageDisplay(String imageSource) {
     if (imageSource.isEmpty) return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
     if (imageSource.startsWith('http')) return Image.network(imageSource, fit: BoxFit.cover);
@@ -90,7 +86,7 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
     }
   }
 
-  Future<void> _pickImage(Function(String) onImagePicked) async {
+  Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
       withData: true, 
@@ -98,21 +94,22 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
 
     if (result != null && result.files.first.bytes != null) {
       final bytes = result.files.first.bytes!;
-      final base64String = base64Encode(bytes);
-      onImagePicked(base64String);
+      setState(() {
+        _imageBase64 = base64Encode(bytes);
+      });
     }
   }
 
-  void _saveHeroBanner() {
+  void _saveData() {
     // 👇 Cek validasi sebelum menyimpan
     if (_formKey.currentState!.validate()) {
-      MockDatabase.updateHomeHeroData({
-        'tagline': _taglineController.text.trim(),
+      MockDatabase.updateAboutSectionData({
         'title': _titleController.text.trim(),
-        'subtitle': _subtitleController.text.trim(),
-        'image': _heroImageBase64,
+        'description': _descController.text.trim(),
+        'image': _imageBase64,
       });
-      _showSuccessMessage('Hero Banner berhasil diperbarui!');
+
+      _showSuccessMessage('About Section Beranda berhasil diperbarui!');
     } else {
       _showWarningMessage('Penyimpanan gagal. Masih ada form yang kosong!');
     }
@@ -127,83 +124,85 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Kelola Hero Banner', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text('Kelola Tentang Kami', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
+            
             Card(
               color: Colors.white,
-              elevation: 2, // 👇 Menambah sedikit bayangan agar seragam
+              elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: Padding(
-                padding: const EdgeInsets.all(25),
+                padding: const EdgeInsets.all(30),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Teks Kecil (Tagline)", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _taglineController, 
-                      decoration: const InputDecoration(border: OutlineInputBorder()),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Tagline tidak boleh kosong' : null,
-                    ),
-                    const SizedBox(height: 20),
-
-                    const Text("Judul Utama (Gunakan \\n untuk baris baru)", style: TextStyle(fontWeight: FontWeight.bold)),
+                    // ==========================================
+                    // 1. TEKS UTAMA
+                    // ==========================================
+                    const Text("Judul Utama", style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _titleController, 
-                      maxLines: 3, 
-                      decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Your Support\\nUnlocks\\nEqual Futures"),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Judul Utama tidak boleh kosong' : null,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: "Contoh: Membantu Anak Bangsa Meraih Mimpi"
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty ? 'Judul tidak boleh kosong' : null,
                     ),
                     const SizedBox(height: 20),
 
-                    const Text("Sub-judul (Teks Panjang)", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text("Deskripsi", style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     TextFormField(
-                      controller: _subtitleController, 
-                      maxLines: 3, 
-                      decoration: const InputDecoration(border: OutlineInputBorder()),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Sub-judul tidak boleh kosong' : null,
+                      controller: _descController, 
+                      maxLines: 4, 
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: "Contoh: Vernon Indonesia Pintar bukan sekadar yayasan..."
+                      ),
+                      validator: (value) => value == null || value.trim().isEmpty ? 'Deskripsi tidak boleh kosong' : null,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
 
-                    const Text("Gambar Latar Belakang", style: TextStyle(fontWeight: FontWeight.bold)),
+                    // ==========================================
+                    // 2. UPLOAD GAMBAR
+                    // ==========================================
+                    const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     InkWell(
-                      onTap: () {
-                        _pickImage((base64Image) {
-                          setState(() => _heroImageBase64 = base64Image);
-                        });
-                      },
+                      onTap: _pickImage,
                       child: Container(
-                        height: 200, width: 400,
+                        height: 250, width: 400,
                         decoration: BoxDecoration(color: Colors.grey.shade100, border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
                         clipBehavior: Clip.antiAlias,
-                        child: _heroImageBase64.isEmpty
+                        child: _imageBase64.isEmpty
                             ? const Center(child: Text("Klik untuk Unggah Gambar"))
                             : Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  _buildImageDisplay(_heroImageBase64),
+                                  _buildImageDisplay(_imageBase64),
                                   Positioned(
                                     top: 10, right: 10,
                                     child: CircleAvatar(
                                       backgroundColor: Colors.black54,
-                                      child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => setState(() => _heroImageBase64 = '')),
+                                      child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => setState(() => _imageBase64 = '')),
                                     ),
                                   )
                                 ],
                               ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 40),
 
+                    // ==========================================
+                    // TOMBOL SIMPAN
+                    // ==========================================
                     SizedBox(
-                      width: double.infinity, height: 50,
+                      width: double.infinity, height: 55,
                       child: ElevatedButton(
-                        onPressed: _saveHeroBanner,
+                        onPressed: _saveData,
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: const Text("SIMPAN PERUBAHAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: const Text("SIMPAN PERUBAHAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       ),
                     )
                   ],

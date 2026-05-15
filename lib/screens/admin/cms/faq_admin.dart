@@ -10,11 +10,10 @@ class KelolaFAQPage extends StatefulWidget {
 }
 
 class _KelolaFAQPageState extends State<KelolaFAQPage> {
-  // 👇 PERUBAHAN: selectedTabIndex dihapus
   final TextEditingController _tanyaController = TextEditingController();
   final TextEditingController _jawabController = TextEditingController();
 
-  // FUNGSI POP-UP FORM
+  // FUNGSI POP-UP FORM (TAMBAH / EDIT)
   void _showFormDialog({int? indexToEdit}) {
     List<Map<String, String>> currentList = globalFaqStore.faqList;
 
@@ -30,8 +29,13 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Text(indexToEdit != null ? "Edit FAQ" : "Tambah FAQ Baru"),
+          title: Text(
+            indexToEdit != null ? "Edit FAQ" : "Tambah FAQ Baru",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: SizedBox(
             width: 500, 
             child: Column(
@@ -53,20 +57,26 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context), 
-              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+              child: const Text("Batal", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               onPressed: () {
-                // 👇 PERUBAHAN: Fungsi Add/Edit tidak lagi membutuhkan selectedTabIndex
+                // Cegah simpan jika kosong
+                if (_tanyaController.text.trim().isEmpty || _jawabController.text.trim().isEmpty) {
+                  return;
+                }
+
                 if (indexToEdit != null) {
                   globalFaqStore.editFaq(indexToEdit, _tanyaController.text, _jawabController.text);
+                  _showSuccessMessage("FAQ berhasil diperbarui!");
                 } else {
                   globalFaqStore.addFaq(_tanyaController.text, _jawabController.text);
+                  _showSuccessMessage("FAQ baru berhasil ditambahkan!");
                 }
                 Navigator.pop(context); 
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text("Simpan", style: TextStyle(color: Colors.white)),
+              child: const Text("Simpan", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -74,10 +84,42 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
     );
   }
 
-  // FUNGSI HAPUS
+  // FUNGSI HAPUS (DENGAN KONFIRMASI)
   void _hapusFaq(int index) {
-    // 👇 PERUBAHAN: Hapus index tab
-    globalFaqStore.removeFaq(index);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Hapus FAQ?', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Apakah Anda yakin ingin menghapus pertanyaan ini dari daftar FAQ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              globalFaqStore.removeFaq(index);
+              Navigator.pop(context);
+              _showSuccessMessage("FAQ berhasil dihapus!");
+            },
+            child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // FUNGSI MENAMPILKAN PESAN BERHASIL (WARNA HIJAU)
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating, // Membuat snackbar mengambang
+      ),
+    );
   }
 
   @override
@@ -86,7 +128,6 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
       listenable: globalFaqStore,
       builder: (context, child) {
         
-        // 👇 Panggil data terbaru dari satu list saja
         List<Map<String, String>> currentList = globalFaqStore.faqList;
 
         return Padding(
@@ -104,12 +145,13 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _showFormDialog(), 
-                    icon: const Icon(Icons.add),
-                    label: const Text("Tambah FAQ"),
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text("Tambah FAQ", style: TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      shape: const StadiumBorder(),
                     ),
                   ),
                 ],
@@ -140,7 +182,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.orange),
+                                    icon: const Icon(Icons.edit, color: Colors.blue),
                                     tooltip: "Edit",
                                     onPressed: () => _showFormDialog(indexToEdit: index),
                                   ),

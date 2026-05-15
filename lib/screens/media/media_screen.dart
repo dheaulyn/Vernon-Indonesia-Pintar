@@ -1,3 +1,4 @@
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
@@ -38,6 +39,21 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  // 👇 FUNGSI PINTAR: Untuk merender gambar URL maupun Base64
+  Widget _buildImageDisplay(String imageSource, {BoxFit fit = BoxFit.cover}) {
+    if (imageSource.isEmpty) {
+      return const Center(child: Icon(Icons.image_rounded, size: 50, color: Colors.black12));
+    }
+    if (imageSource.startsWith('http')) {
+      return Image.network(imageSource, fit: fit);
+    } 
+    try {
+      return Image.memory(base64Decode(imageSource), fit: fit);
+    } catch (e) {
+      return const Center(child: Icon(Icons.broken_image, color: Colors.red));
+    }
   }
 
   @override
@@ -158,7 +174,6 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
-                // Mengirim data artikel ke halaman detail
                 context.go('/media/artikel', extra: artikel);
               },
               child: Column(
@@ -169,7 +184,8 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                     child: Container(
                       width: double.infinity,
                       color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_rounded, size: 50, color: Colors.black12),
+                      // 👇 MENAMPILKAN GAMBAR ARTIKEL
+                      child: _buildImageDisplay(artikel['image'] ?? ''),
                     ),
                   ),
                   Expanded(
@@ -190,7 +206,7 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                                 ),
                                 child: Text(
                                   artikel['kategori'] ?? 'Berita',
-                                  style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
                                 ),
                               ),
                               Text(
@@ -217,9 +233,9 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                           ),
                           const SizedBox(height: 10),
                           Row(
-                            children: [
+                            children: const [
                               Text("Baca Selengkapnya", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                              const SizedBox(width: 5),
+                              SizedBox(width: 5),
                               Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 16),
                             ],
                           )
@@ -260,7 +276,9 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
         ),
         itemCount: _galeriList.length,
         itemBuilder: (context, index) {
-          final judulFoto = _galeriList[index]['title'] ?? '';
+          final g = _galeriList[index];
+          final judulFoto = g['title'] ?? '';
+          final imageSource = g['image'] ?? '';
           
           return Card(
             elevation: 2,
@@ -296,8 +314,9 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                                       color: Colors.grey.shade200,
                                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                                     ),
-                                    // Placeholder gambar (Ganti dengan Image.network jika pakai data asli)
-                                    child: const Icon(Icons.photo_camera_back_rounded, size: 80, color: Colors.black12),
+                                    clipBehavior: Clip.antiAlias, // Wajib agar ujung gambar ikut melengkung
+                                    // 👇 MENAMPILKAN GAMBAR ASLI DI POPUP
+                                    child: _buildImageDisplay(imageSource),
                                   ),
                                 ),
                                 // AREA TEKS DESKRIPSI DI BAWAH GAMBAR
@@ -349,7 +368,8 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                 children: [
                   Container(
                     color: Colors.grey.shade200,
-                    child: const Icon(Icons.photo_camera_back_rounded, size: 40, color: Colors.black12),
+                    // 👇 MENAMPILKAN THUMBNAIL FOTO GALERI
+                    child: _buildImageDisplay(imageSource),
                   ),
                   Positioned(
                     bottom: 0, left: 0, right: 0,

@@ -1,17 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-class DummyFooterDB {
-  static ValueNotifier<Map<String, String>> data = ValueNotifier({
-    'deskripsi':
-        'Membangun generasi emas Indonesia melalui akses pendidikan yang merata dan berkualitas.',
-    'whatsapp': 'WhatsApp: +62 812-3456-7890',
-    // 👇 UPDATE DATABASE: Email disesuaikan
-    'email': 'Email: vip@vernon.id',
-    'alamat':
-        'Alamat: Jl. Letjen Sutoyo No.102A, Bunulrejo, Kec. Blimbing, Kota Malang, Jawa Timur, Indonesia',
-  });
-}
+import '../../data/mock_database.dart'; 
 
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
@@ -30,8 +19,9 @@ class CustomFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
+    // 👇 MENGGUNAKAN DATA DARI MOCK DATABASE
     return ValueListenableBuilder<Map<String, String>>(
-      valueListenable: DummyFooterDB.data,
+      valueListenable: MockDatabase.footerData,
       builder: (context, footerData, child) {
         Widget aboutFooter = Column(
           crossAxisAlignment: isMobile
@@ -91,7 +81,7 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // BARISAN ICON SOSMED MENGGANTIKAN TEKS
+            // BARISAN ICON SOSMED
             Row(
               mainAxisAlignment: isMobile
                   ? MainAxisAlignment.center
@@ -99,24 +89,20 @@ class CustomFooter extends StatelessWidget {
               children: [
                 // Icon WhatsApp
                 _buildSocialIcon(
-                  imageUrl:
-                      'https://cdn-icons-png.flaticon.com/512/733/733585.png',
-                  url: 'https://wa.me/628885864995',
+                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/733/733585.png',
+                  url: footerData['whatsapp'] ?? 'https://wa.me/628885864995',
                 ),
                 const SizedBox(width: 15),
-                // Icon Instagram
+                // 👇 Icon Instagram 
                 _buildSocialIcon(
-                  imageUrl:
-                      'https://cdn-icons-png.flaticon.com/512/174/174855.png',
-                  url:
-                      'https://www.instagram.com/yayasanvip?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
+                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
+                  url: footerData['instagram'] ?? 'https://www.instagram.com/yayasanvip',
                 ),
                 const SizedBox(width: 15),
-                // 👇 Icon Email (MENGGUNAKAN format mailto:vip@vernon.id)
+                // 👇 Icon Email (Otomatis Tambah Mailto:)
                 _buildSocialIcon(
-                  imageUrl:
-                      'https://cdn-icons-png.flaticon.com/512/732/732200.png',
-                  url: 'mailto:vip@vernon.id',
+                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/732/732200.png',
+                  url: 'mailto:${footerData['email'] ?? 'vernonindonesiapintar@gmail.com'}',
                 ),
               ],
             ),

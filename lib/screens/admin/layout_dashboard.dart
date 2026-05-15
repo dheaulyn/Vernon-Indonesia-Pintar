@@ -3,36 +3,20 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../data/mock_database.dart';
 
-// Import halaman-halaman konten
-import 'home_dashboard.dart';
-import 'manajemen_pendaftar_admin.dart'; 
-import 'cms/faq_admin.dart';
-import 'cms/jenis_beasiswa_admin.dart';
-import 'cms/hero_banner_admin.dart';
-import 'cms/footer_admin.dart';
-import 'cms/media_admin.dart'; 
+// Catatan: Anda TIDAK perlu lagi mengimpor halaman-halaman (HomeDashboard, dll) di file ini, 
+// karena halaman-halaman tersebut akan dipanggil di file konfigurasi router Anda.
 
 class LayoutDashboard extends StatefulWidget {
-  const LayoutDashboard({super.key});
+  final Widget child; // 👇 Menampung halaman konten yang disuntikkan oleh router
+
+  const LayoutDashboard({super.key, required this.child});
 
   @override
   State<LayoutDashboard> createState() => _LayoutDashboardState();
 }
 
 class _LayoutDashboardState extends State<LayoutDashboard> {
-  int _currentTabIndex = 0;
   bool _isCollapsed = false;
-
-  // 👇 PERUBAHAN: Index bergeser karena ada tambahan Kelola Media
-  final List<Widget> _adminPages = [
-    const HomeDashboard(),             // Index 0
-    const ManajemenPendaftarAdmin(),   // Index 1
-    const JenisBeasiswaAdmin(),        // Index 2
-    const KelolaMediaAdmin(),          // Index 3 (HALAMAN BARU)
-    const KelolaFAQPage(),             // Index 4
-    const HeroBannerAdmin(),           // Index 5
-    const FooterAdmin(),               // Index 6
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +27,12 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: _buildTopNavbar(),
       body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch, 
         children: [
           _buildSidebar(isSidebarCollapsed),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _adminPages[_currentTabIndex],
-            ),
+            // 👇 Menampilkan halaman berdasarkan route URL saat ini
+            child: widget.child, 
           ),
         ],
       ),
@@ -171,124 +153,152 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: isCollapsed ? 70 : 260,
+      height: MediaQuery.of(context).size.height, 
       color: const Color(0xFF2B3240),
       child: ClipRect(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(), 
           child: SizedBox(
             width: 260,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
 
-                // ==========================================
-                // KATEGORI 1: MENU ADMIN
-                // ==========================================
-                if (!isCollapsed)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 10),
-                    child: Text(
-                      'MENU ADMIN',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                  // ==========================================
+                  // KATEGORI 1: MENU ADMIN
+                  // ==========================================
+                  if (!isCollapsed)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 23, bottom: 10),
+                      child: Text(
+                        'MENU ADMIN',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
+                  if (isCollapsed) const SizedBox(height: 25),
+
+                  _sidebarMenu(
+                    Icons.grid_view_rounded,
+                    "Home Dashboard",
+                    "/admin-dashboard", // 👇 Ganti index dengan URL Route
+                    isCollapsed,
                   ),
-                if (isCollapsed) const SizedBox(height: 25),
 
-                _sidebarMenu(
-                  Icons.grid_view_rounded,
-                  "Home Dashboard",
-                  0,
-                  isCollapsed,
-                ),
+                  _sidebarMenu(
+                    Icons.people_alt_rounded,
+                    "Data Pendaftar",
+                    "/admin-pendaftar",
+                    isCollapsed,
+                  ),
 
-                _sidebarMenu(
-                  Icons.people_alt_rounded,
-                  "Data Pendaftar",
-                  1,
-                  isCollapsed,
-                ),
+                  const SizedBox(height: 15),
 
-                const SizedBox(height: 15),
-
-                // ==========================================
-                // KATEGORI 2: MENU CMS
-                // ==========================================
-                if (!isCollapsed)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 23, bottom: 10),
-                    child: Text(
-                      'KONTEN WEBSITE (CMS)',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                  // ==========================================
+                  // KATEGORI 2: MENU CMS
+                  // ==========================================
+                  if (!isCollapsed)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 23, bottom: 10),
+                      child: Text(
+                        'KONTEN WEBSITE (CMS)',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
+                  if (isCollapsed) const SizedBox(height: 10),
+
+                  _sidebarMenu(
+                    Icons.image_rounded,
+                    "Kelola Hero Banner",
+                    "/cms-hero-banner",
+                    isCollapsed,
                   ),
-                if (isCollapsed) const SizedBox(height: 10),
+                  _sidebarMenu(
+                    Icons.info_outline_rounded,
+                    "Kelola Tentang Kami",
+                    "/cms-about",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.account_balance_rounded,
+                    "Kelola Profil Yayasan",
+                    "/cms-profil",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.format_list_numbered_rtl_rounded, 
+                    "Kelola Detail Program", 
+                    "/cms-program",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.article_rounded, 
+                    "Kelola Media",
+                    "/cms-media",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.handshake_rounded,
+                    "Kelola Partner",
+                    "/cms-partners",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.format_quote_rounded,
+                    "Kelola Testimoni",
+                    "/cms-testimoni",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.help_center_rounded,
+                    "Kelola FAQ",
+                    "/cms-faq",
+                    isCollapsed,
+                  ),
+                  _sidebarMenu(
+                    Icons.contact_mail_rounded,
+                    "Kelola Footer",
+                    "/cms-footer",
+                    isCollapsed,
+                  ),
 
-                // 👇 PERUBAHAN: Index disesuaikan dengan urutan _adminPages di atas
-                _sidebarMenu(
-                  Icons.auto_awesome_motion_rounded,
-                  "Kelola Program",
-                  2,
-                  isCollapsed,
-                ),
-                _sidebarMenu(
-                  Icons.article_rounded, 
-                  "Kelola Media", // 👇 MENU BARU DITAMBAHKAN
-                  3,
-                  isCollapsed,
-                ),
-                _sidebarMenu(
-                  Icons.help_center_rounded,
-                  "Kelola FAQ",
-                  4,
-                  isCollapsed,
-                ),
-                _sidebarMenu(
-                  Icons.image_rounded,
-                  "Kelola Hero Banner",
-                  5,
-                  isCollapsed,
-                ),
-                _sidebarMenu(
-                  Icons.contact_mail_rounded,
-                  "Kelola Footer",
-                  6,
-                  isCollapsed,
-                ),
+                  const SizedBox(height: 40), 
+                  const Divider(color: Colors.white24),
 
-                const Spacer(),
-                const Divider(color: Colors.white24),
-
-                // ==========================================
-                // SISTEM & KELUAR
-                // ==========================================
-                _sidebarMenu(
-                  Icons.public,
-                  "Lihat Web Publik",
-                  -2,
-                  isCollapsed,
-                  isWebLink: true,
-                ),
-                _sidebarMenu(
-                  Icons.power_settings_new_rounded,
-                  "Keluar",
-                  -1,
-                  isCollapsed,
-                  isLogout: true,
-                ),
-                const SizedBox(height: 20),
-              ],
+                  // ==========================================
+                  // SISTEM & KELUAR
+                  // ==========================================
+                  _sidebarMenu(
+                    Icons.public,
+                    "Lihat Web Publik",
+                    "/",
+                    isCollapsed,
+                    isWebLink: true,
+                  ),
+                  _sidebarMenu(
+                    Icons.power_settings_new_rounded,
+                    "Keluar",
+                    "/login",
+                    isCollapsed,
+                    isLogout: true,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
@@ -299,12 +309,15 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
   Widget _sidebarMenu(
     IconData icon,
     String title,
-    int index,
+    String routePath, // 👇 Ubah dari int index menjadi String routePath
     bool isCollapsed, {
     bool isLogout = false,
     bool isWebLink = false,
   }) {
-    final bool isActive = _currentTabIndex == index;
+    // 👇 Deteksi URL aktif menggunakan GoRouterState
+    final currentRoute = GoRouterState.of(context).uri.toString();
+    final bool isActive = currentRoute == routePath && !isLogout && !isWebLink;
+
     final Color activeColor = isLogout
         ? Colors.redAccent
         : (isWebLink ? Colors.green : AppColors.primary);
@@ -323,7 +336,8 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
             } else if (isWebLink) {
               context.go('/');
             } else {
-              setState(() => _currentTabIndex = index);
+              // 👇 Lakukan perpindahan rute URL
+              context.go(routePath);
             }
           },
           child: Container(

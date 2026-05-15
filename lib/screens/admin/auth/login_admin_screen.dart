@@ -44,7 +44,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
     // Validasi ekstra ketat: HANYA BOLEH ADMIN
     if (userRole == 'admin') {
       if (!mounted) return;
-      context.go('/admin'); // Masuk ke dashboard Admin
+      context.go('/admin-dashboard'); // Masuk ke dashboard Admin
     } else if (userRole != null) {
       // Jika siswa/donatur nyasar ke sini, tendang keluar
       setState(() {
