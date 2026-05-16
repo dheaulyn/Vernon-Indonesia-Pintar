@@ -12,8 +12,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   // MENU HP (MOBILE)
   // ==========================================
   Widget _buildMobileMenu(BuildContext context, String currentPath) {
-    final bool isDonasiActive = currentPath == '/donasi';
-
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu, color: Colors.black87, size: 30),
       offset: const Offset(0, 45),
@@ -30,19 +28,17 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _mobileMenuItem('FAQ', '/faq', currentPath),
         _mobileMenuItem('Kontak', '/kontak', currentPath),
         const PopupMenuDivider(),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '/login-donatur',
           child: Text(
             'Donasi',
             style: TextStyle(
-              color: isDonasiActive
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.5),
+              color: AppColors.primary, // 👇 Sekarang merah solid
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: '/login',
           child: Text(
             'Login',
@@ -99,16 +95,14 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 40),
 
         // ==========================================
-        // TOMBOL DONASI (OUTLINE DINAMIS)
+        // TOMBOL DONASI (OUTLINE MERAH SOLID)
         // ==========================================
         OutlinedButton(
           onPressed: () => context.go('/login-donatur'),
           style: OutlinedButton.styleFrom(
             side: BorderSide(
-              color: isDonasiActive
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.4),
-              width: isDonasiActive ? 2.0 : 1.2,
+              color: AppColors.primary, // 👇 Sekarang merah solid
+              width: isDonasiActive ? 2.0 : 1.5,
             ),
             backgroundColor: isDonasiActive
                 ? AppColors.primary.withValues(alpha: 0.05)
@@ -118,12 +112,10 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: Text(
+          child: const Text(
             "Donasi",
             style: TextStyle(
-              color: isDonasiActive
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.6),
+              color: AppColors.primary, // 👇 Sekarang merah solid
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -150,7 +142,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // 👇 DIBERSIHKAN: Column dan efek Underline dihapus agar teks center-aligned
   Widget _navbarItem(
     BuildContext context,
     String title,
@@ -188,8 +179,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment
-            .center, // Memastikan semua sejajar di tengah vertikal
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             children: [

@@ -92,29 +92,42 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                   ),
                   const SizedBox(height: 30),
                   
-                  // WIDGET TAB BAR (DI TENGAH)
+                  // ==========================================
+                  // PERBAIKAN WIDGET TAB BAR (DI TENGAH)
+                  // ==========================================
                   Container(
                     width: isMobile ? double.infinity : 500,
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: Colors.white, // Gunakan putih agar bayangan lebih terlihat lembut
                       borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.grey.shade600,
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: "Artikel Terbaru"),
-                        Tab(text: "Galeri Kegiatan"),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05), // Bayangan halus
+                          blurRadius: 10,
+                          offset: const Offset(0, 4), // Bayangan jatuh ke bawah
+                        ),
                       ],
+                    ),
+                    child: ClipRRect(
+                      // 👇 PENTING: Memastikan efek klik (splash) tidak berbentuk kotak di pojok
+                      borderRadius: BorderRadius.circular(30),
+                      child: TabBar(
+                        controller: _tabController,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.grey.shade600,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        dividerColor: Colors.transparent,
+                        tabs: const [
+                          Tab(text: "Artikel Terbaru"),
+                          Tab(text: "Galeri Kegiatan"),
+                        ],
+                      ),
                     ),
                   ),
                 ],

@@ -167,8 +167,25 @@ class _HeroBannerAdminState extends State<HeroBannerAdmin> {
                     ),
                     const SizedBox(height: 20),
 
-                    const Text("Gambar Latar Belakang", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
+                    Row(
+                      children: [
+                        const Text("Gambar Latar Belakang", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: "Gambar akan ditampilkan penuh (full-width) di beranda.",
+                          child: Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Rekomendasi ukuran: 1920 x 1080 piksel (Landscape) agar tidak pecah di layar Desktop.",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                    ),
+                    const SizedBox(height: 10),
+                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
+
                     InkWell(
                       onTap: () {
                         _pickImage((base64Image) {

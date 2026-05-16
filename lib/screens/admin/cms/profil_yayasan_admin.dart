@@ -75,7 +75,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     );
   }
 
-  // 👇 FUNGSI MENAMPILKAN PESAN PERINGATAN/GAGAL (WARNA MERAH)
+  // FUNGSI MENAMPILKAN PESAN PERINGATAN/GAGAL (WARNA MERAH)
   void _showWarningMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -144,7 +144,6 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
   }
 
   void _saveData() {
-    // 👇 Cek validasi form
     if (_formKey.currentState!.validate()) {
       List<String> updatedMissions = _missionControllers
           .map((controller) => controller.text.trim())
@@ -161,7 +160,6 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
 
       _showSuccessMessage('Profil Yayasan berhasil diperbarui!');
     } else {
-      // 👇 Tampilkan SnackBar Peringatan jika ada field yang kosong
       _showWarningMessage('Penyimpanan gagal. Masih ada form yang kosong!');
     }
   }
@@ -171,7 +169,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Form(
-        key: _formKey, // Daftarkan form key
+        key: _formKey, 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -209,8 +207,25 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                     ),
                     const SizedBox(height: 30),
 
-                    const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
+                    Row(
+                      children: [
+                        const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: "Gambar akan ditampilkan di sebelah deskripsi pada layar Desktop.",
+                          child: Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Rekomendasi ukuran: 800 x 600 piksel (Landscape 4:3) agar proporsional dan tidak terpotong.",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                    ),
+                    const SizedBox(height: 10),
+                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
+
                     InkWell(
                       onTap: _pickImage,
                       child: Container(

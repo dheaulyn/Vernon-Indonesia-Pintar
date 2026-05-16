@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 // ==========================================
@@ -544,11 +545,31 @@ class MockDatabase {
   // DATA CMS OUR PARTNERS
   // ==========================================
   static final List<Map<String, dynamic>> _partnerList = [
-    {"id": "P1", "name": "Bank Edukasi", "icon": Icons.account_balance_rounded.codePoint},
-    {"id": "P2", "name": "TechCorp Inc.", "icon": Icons.business_rounded.codePoint},
-    {"id": "P3", "name": "Global NGO", "icon": Icons.language_rounded.codePoint},
-    {"id": "P4", "name": "IT Academy", "icon": Icons.computer_rounded.codePoint},
-    {"id": "P5", "name": "Yayasan Peduli", "icon": Icons.foundation_rounded.codePoint},
+    {
+      "id": "P1", 
+      "name": "Bank Edukasi", 
+      "image": "https://cdn-icons-png.flaticon.com/512/2830/2830284.png" 
+    },
+    {
+      "id": "P2", 
+      "name": "TechCorp Inc.", 
+      "image": "https://cdn-icons-png.flaticon.com/512/3536/3536505.png"
+    },
+    {
+      "id": "P3", 
+      "name": "Global NGO", 
+      "image": "https://cdn-icons-png.flaticon.com/512/2038/2038472.png"
+    },
+    {
+      "id": "P4", 
+      "name": "IT Academy", 
+      "image": "https://cdn-icons-png.flaticon.com/512/2721/2721620.png"
+    },
+    {
+      "id": "P5", 
+      "name": "Yayasan Peduli", 
+      "image": "https://cdn-icons-png.flaticon.com/512/3362/3362145.png"
+    },
   ];
 
   static List<Map<String, dynamic>> getSemuaPartner() => List.from(_partnerList);

@@ -167,8 +167,25 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     // ==========================================
                     // 2. UPLOAD GAMBAR
                     // ==========================================
-                    const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                    // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
+                    Row(
+                      children: [
+                        const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: "Gambar ini akan ditampilkan di sebelah teks 'Tentang Kami' pada layar Desktop.",
+                          child: Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Rekomendasi ukuran: 1000 x 750 piksel (Landscape) agar proporsional dan tidak pecah.",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                    ),
+                    const SizedBox(height: 10),
+                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
+
                     InkWell(
                       onTap: _pickImage,
                       child: Container(

@@ -97,7 +97,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     String selectedImage = artikelLama?['image'] ?? ''; 
 
     const List<String> kategoriOptions = ['Berita', 'Pengumuman', 'Inspirasi', 'Edukasi'];
-    final formKey = GlobalKey<FormState>(); // 👇 Kunci form untuk validasi
+    final formKey = GlobalKey<FormState>(); // Kunci form untuk validasi
 
     late quill.QuillController quillController;
     try {
@@ -136,7 +136,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
               content: SizedBox(
                 width: 900,
                 child: SingleChildScrollView(
-                  child: Form( // 👇 Bungkus dengan Form
+                  child: Form( // Bungkus dengan Form
                     key: formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -167,47 +167,58 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                             
                             Expanded(
                               flex: 2,
-                              child: InkWell(
-                                onTap: () {
-                                  _pickImage((base64Image) {
-                                    setStateDialog(() {
-                                      selectedImage = base64Image;
-                                    });
-                                  });
-                                },
-                                child: Container(
-                                  height: 55,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
-                                    borderRadius: BorderRadius.circular(4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // 👇 PANDUAN UKURAN GAMBAR ARTIKEL
+                                  Text(
+                                    "Rekomendasi ukuran sampul: 1280 x 720 piksel (Rasio 16:9)",
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 55,
-                                        height: 55,
-                                        color: Colors.grey.shade300,
-                                        child: _buildImageDisplay(selectedImage),
+                                  const SizedBox(height: 4),
+                                  InkWell(
+                                    onTap: () {
+                                      _pickImage((base64Image) {
+                                        setStateDialog(() {
+                                          selectedImage = base64Image;
+                                        });
+                                      });
+                                    },
+                                    child: Container(
+                                      height: 55,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
-                                      const SizedBox(width: 15),
-                                      Expanded(
-                                        child: Text(
-                                          selectedImage.isEmpty ? "Klik untuk Upload Foto Sampul (Opsional)" : "Foto Sampul Berhasil Terpilih",
-                                          style: TextStyle(
-                                            color: selectedImage.isEmpty ? Colors.grey.shade600 : AppColors.primary,
-                                            fontWeight: selectedImage.isEmpty ? FontWeight.normal : FontWeight.bold,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 55,
+                                            height: 55,
+                                            color: Colors.grey.shade300,
+                                            child: _buildImageDisplay(selectedImage),
                                           ),
-                                        ),
+                                          const SizedBox(width: 15),
+                                          Expanded(
+                                            child: Text(
+                                              selectedImage.isEmpty ? "Klik untuk Upload Foto Sampul" : "Foto Sampul Berhasil Terpilih",
+                                              style: TextStyle(
+                                                color: selectedImage.isEmpty ? Colors.grey.shade600 : AppColors.primary,
+                                                fontWeight: selectedImage.isEmpty ? FontWeight.normal : FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          if (selectedImage.isNotEmpty)
+                                            IconButton(
+                                              icon: const Icon(Icons.close, color: Colors.red),
+                                              onPressed: () => setStateDialog(() => selectedImage = ''),
+                                            )
+                                        ],
                                       ),
-                                      if (selectedImage.isNotEmpty)
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.red),
-                                          onPressed: () => setStateDialog(() => selectedImage = ''),
-                                        )
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
                           ],
@@ -273,7 +284,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
                   onPressed: () {
-                    // 👇 Validasi Form
+                    // Validasi Form
                     if (formKey.currentState!.validate()) {
                       final contentJson = jsonEncode(quillController.document.toDelta().toJson());
 
@@ -357,10 +368,11 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
               title: Text(galeriLama == null ? 'Tambah Foto Galeri' : 'Edit Foto Galeri', style: const TextStyle(fontWeight: FontWeight.bold)),
               content: SizedBox(
                 width: 400,
-                child: Form( // 👇 Bungkus dengan Form
+                child: Form( // Bungkus dengan Form
                   key: formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start, // 👇 Ubah agar teks rata kiri
                     children: [
                       TextFormField(
                         controller: titleController,
@@ -369,6 +381,13 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                       ),
                       const SizedBox(height: 20),
                       
+                      // 👇 PANDUAN UKURAN GAMBAR GALERI
+                      Text(
+                        "Rekomendasi ukuran foto: 1080 x 1080 piksel (Square) atau 1200 x 800 piksel agar tampil rapi dalam grid.",
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                      ),
+                      const SizedBox(height: 6),
+
                       InkWell(
                         onTap: () {
                           _pickImage((base64Image) {

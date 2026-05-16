@@ -1,7 +1,6 @@
 import 'dart:convert'; 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart'; 
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
@@ -26,24 +25,33 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey stepKey = GlobalKey();
 
   late Map<String, String> _heroData;
-  // 👇 VARIABEL BARU UNTUK MENAMPUNG LIST TESTIMONI
   List<Map<String, String>> _testimonialData = [];
+  List<Map<String, dynamic>> _partnerData = [];
 
   @override
   void initState() {
     super.initState();
-    
-    // Mengambil data Hero Banner
-    _heroData = MockDatabase.getHomeHeroData();
-    
-    // 👇 MENGAMBIL DATA TESTIMONI DARI DATABASE
-    _testimonialData = MockDatabase.getSemuaTestimoni();
+    _refreshAllData();
 
     if (widget.targetSection != null) {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) _autoScrollToTarget();
       });
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshAllData();
+  }
+
+  void _refreshAllData() {
+    setState(() {
+      _heroData = MockDatabase.getHomeHeroData();
+      _testimonialData = MockDatabase.getSemuaTestimoni();
+      _partnerData = MockDatabase.getSemuaPartner();
+    });
   }
 
   @override
@@ -116,12 +124,12 @@ class _HomeScreenState extends State<HomeScreen> {
             AboutSection(key: aboutKey),
             _buildProgramUnggulan(context, isMobile),
             
-            // 👇 SECTION TESTIMONI (SUDAH DINAMIS)
             _buildTestimonialSection(isMobile),
-
             _buildPartnerSection(isMobile),
+
             Container(key: stepKey),
             _buildFAQSection(context, isMobile),
+            
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -262,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET IMPACT SECTION (Data Statis/Placeholder)
+  // WIDGET IMPACT SECTION 
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
@@ -592,7 +600,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET TESTIMONIAL SECTION (SUDAH DINAMIS)
+  // WIDGET TESTIMONIAL SECTION 
   // ==========================================
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
@@ -623,7 +631,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 40),
 
-          // 👇 MENGGUNAKAN DATA DINAMIS DARI DATABASE
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -672,44 +679,57 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 40),
+          
           Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: isMobile ? 30 : 60,
             runSpacing: 30,
-            children: [
-              _buildPartnerLogo(Icons.account_balance_rounded, "Bank Edukasi"),
-              _buildPartnerLogo(Icons.business_rounded, "TechCorp Inc."),
-              _buildPartnerLogo(Icons.language_rounded, "Global NGO"),
-              _buildPartnerLogo(Icons.computer_rounded, "IT Academy"),
-              _buildPartnerLogo(Icons.foundation_rounded, "Yayasan Peduli"),
-            ],
+            children: _partnerData.isEmpty 
+              ? [Text("Belum ada partner.", style: TextStyle(color: Colors.grey.shade400))]
+              : _partnerData.map((p) {
+                  return _buildPartnerLogo(
+                    p['image'] ?? '', 
+                    p['name'] ?? ''
+                  );
+                }).toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPartnerLogo(IconData icon, String name) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.grey.shade400, size: 36),
-        const SizedBox(width: 10),
-        Text(
-          name,
-          style: TextStyle(
-            color: Colors.grey.shade400,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ],
+  Widget _buildPartnerLogo(String imageSource, String name) {
+    Widget imageWidget;
+    final double logoHeight = 60.0; 
+    
+    if (imageSource.isEmpty) {
+      imageWidget = Icon(Icons.business, color: Colors.grey.shade400, size: logoHeight);
+    } else if (imageSource.startsWith('http')) {
+      imageWidget = Image.network(
+        imageSource, 
+        height: logoHeight, 
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.broken_image, color: Colors.grey.shade400, size: logoHeight);
+        },
+      );
+    } else {
+      try {
+        imageWidget = Image.memory(base64Decode(imageSource), height: logoHeight, fit: BoxFit.contain);
+      } catch (e) {
+        imageWidget = Icon(Icons.broken_image, color: Colors.grey.shade400, size: logoHeight);
+      }
+    }
+
+    return Tooltip(
+      message: name, 
+      child: imageWidget,
     );
   }
 
   // ==========================================
-  // WIDGET FAQ SECTION (DENGAN GAMBAR RESPONSIF)
+  // WIDGET FAQ SECTION 
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return ListenableBuilder(
@@ -831,105 +851,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
-  // ==========================================
-  // WIDGET SOCIAL MEDIA SECTION (Desain Ramping / Pre-Footer)
-  // ==========================================
-  Widget _buildSocialMediaSection(bool isMobile) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 24 : 80,
-        vertical: 30,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.shade200,
-          ), 
-        ),
-      ),
-      child: isMobile
-          ? Column(
-              children: [
-                const Text(
-                  "IKUTI PERJALANAN KAMI",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _buildSocialIconsRow(),
-              ],
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-              children: [
-                const Text(
-                  "IKUTI PERJALANAN KAMI",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
-                ),
-                _buildSocialIconsRow(),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildSocialIconsRow() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildSocialIcon(
-          imageUrl: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
-          url:
-              'https://www.instagram.com/yayasanvip?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
-        ),
-        const SizedBox(width: 15),
-        _buildSocialIcon(
-          imageUrl: 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png',
-          url: 'https://tiktok.com/@vernonpintar',
-        ),
-        const SizedBox(width: 15),
-        _buildSocialIcon(
-          imageUrl: 'https://cdn-icons-png.flaticon.com/512/733/733585.png',
-          url: 'https://wa.me/628885864995',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialIcon({required String imageUrl, required String url}) {
-    return InkWell(
-      onTap: () async {
-        final Uri uri = Uri.parse(url);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          debugPrint("Tidak bisa membuka $url");
-        }
-      },
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        width: 45, 
-        height: 45,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Image.network(imageUrl, fit: BoxFit.contain),
-      ),
-    );
-  }
 }
 
 // ==========================================
@@ -1030,7 +951,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
 }
 
 // ==========================================
-// TestimonialCard WIDGET (STATEFUL & BERANIMASI)
+// TestimonialCard WIDGET
 // ==========================================
 class TestimonialCard extends StatefulWidget {
   final String name;
