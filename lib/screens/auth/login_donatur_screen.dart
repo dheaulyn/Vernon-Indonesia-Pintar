@@ -46,13 +46,12 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
     if (userRole != null) {
       if (!mounted) return;
 
-      // 👇 PERBAIKAN 1: Logika arah rute disempurnakan
       if (userRole == 'donatur') {
-        context.go('/dashboard-donatur'); // Masuk ke dashboard Donatur
+        context.go('/dashboard-donatur'); 
       } else if (userRole == 'admin') {
-        context.go('/admin'); // Jika ternyata admin
+        context.go('/admin'); 
       } else {
-        context.go('/portal'); // Jika ternyata siswa
+        context.go('/portal'); 
       }
     } else {
       setState(() {
@@ -73,7 +72,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
     return Scaffold(
       backgroundColor: const Color(
         0xFFFBFBFB,
-      ), // Background layar abu-abu sangat terang
+      ), 
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -109,17 +108,21 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.black87,
+                            // 👇 PERBAIKAN: Membungkus tombol dengan Transform
+                            // agar posisi tombol bergeser sedikit ke kiri, 
+                            // namun efek bulatannya (hover) tetap presisi mengikuti panah.
+                            Transform.translate(
+                              offset: const Offset(-12, 0),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.black87,
+                                ),
+                                onPressed: () {
+                                  context.go('/');
+                                },
+                                tooltip: 'Kembali ke Beranda',
                               ),
-                              onPressed: () {
-                                context.go('/');
-                              },
-                              tooltip: 'Kembali ke Beranda',
-                              padding: EdgeInsets.zero,
-                              alignment: Alignment.centerLeft,
                             ),
                             Image.asset('assets/logo.png', height: 40),
                           ],
@@ -343,7 +346,6 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         const Divider(color: Colors.black12),
                         const SizedBox(height: 15),
 
-                        // 👇 PERBAIKAN 2: Pintu Khusus Pindah ke Login Siswa
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
@@ -369,7 +371,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                                 child: OutlinedButton(
                                   onPressed: () => context.go(
                                     '/login',
-                                  ), // 👈 Kembali ke login siswa
+                                  ),
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(
                                       color: Colors.redAccent,
@@ -381,7 +383,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                                     backgroundColor: Colors.white,
                                   ),
                                   child: const Text(
-                                    "Masuk sebagai Siswa", // 👈 Teks diubah
+                                    "Masuk sebagai Siswa", 
                                     style: TextStyle(
                                       color: Colors.redAccent,
                                       fontWeight: FontWeight.bold,

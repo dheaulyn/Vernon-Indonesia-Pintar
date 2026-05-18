@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 class DonationHistory {
   final String id;
+  final String email;
   final String programName;
   final int amount;
   final DateTime date;
@@ -14,6 +15,7 @@ class DonationHistory {
 
   DonationHistory({
     required this.id,
+    required this.email,
     required this.programName,
     required this.amount,
     required this.date,
@@ -71,7 +73,6 @@ class MockDatabase {
       'is_revisi': false,
       'catatan_revisi': '',
       'admin_status': 'Menunggu Review',
-      
       'telepon': '',
       'domisili': '',
       'pendidikan': '',
@@ -97,7 +98,24 @@ class MockDatabase {
 
   static Map<String, dynamic>? currentUser;
 
-  static final List<DonationHistory> _donationHistory = [];
+  static final List<DonationHistory> _donationHistory = [
+    DonationHistory(
+      id: 'd1',
+      email: 'donatur@mail.com',
+      programName: 'Beasiswa Vokasi 10 Bulan',
+      amount: 25000000,
+      date: DateTime.now().subtract(const Duration(days: 3)),
+      status: 'Sukses',
+    ),
+    DonationHistory(
+      id: 'd2',
+      email: 'donatur_lain@mail.com', 
+      programName: 'Bantuan Alat Belajar',
+      amount: 10500000,
+      date: DateTime.now().subtract(const Duration(days: 1)),
+      status: 'Sukses',
+    ),
+  ];
 
   static Future<String?> loginRole(String email, String password) async {
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -164,15 +182,9 @@ class MockDatabase {
     return result;
   }
 
-  static void updateStatusSiswa(
-    String email,
-    String newStatus,
-    String catatan, {
-    String? jadwalWawancara,
-  }) {
+  static void updateStatusSiswa(String email, String newStatus, String catatan, {String? jadwalWawancara}) {
     if (_users.containsKey(email)) {
       _users[email]!['admin_status'] = newStatus;
-
       if (newStatus == 'Revisi') {
         _users[email]!['is_revisi'] = true;
         _users[email]!['catatan_revisi'] = catatan;
@@ -180,24 +192,16 @@ class MockDatabase {
       } else {
         _users[email]!['is_revisi'] = false;
         _users[email]!['catatan_revisi'] = '';
-
         if (newStatus == 'Menunggu Review') _users[email]!['current_step'] = 1;
-
         if (newStatus == 'Wawancara') {
           _users[email]!['current_step'] = 2;
           if (jadwalWawancara != null && jadwalWawancara.isNotEmpty) {
             _users[email]!['jadwal_wawancara'] = jadwalWawancara;
           }
         }
-        
         if (newStatus == 'Diterima') _users[email]!['current_step'] = 4; 
-        
         if (newStatus == 'Pelatihan') _users[email]!['current_step'] = 5; 
         if (newStatus == 'Lulus') _users[email]!['current_step'] = 6;     
-        
-        if (newStatus == 'Ditolak') {
-          // Tidak melakukan apa-apa pada current_step
-        }
       }
     }
   }
@@ -220,15 +224,21 @@ class MockDatabase {
   // ==========================================
   // FITUR DATA PORTAL DONATUR
   // ==========================================
+  static int getTotalDonasi() {
+    return _donationHistory
+        .where((d) => d.status == 'Sukses')
+        .fold(0, (sum, item) => sum + item.amount);
+  }
 
   static List<DonationHistory> getDonationHistory(String email) {
-    return List.from(_donationHistory);
+    return _donationHistory.where((d) => d.email == email).toList();
   }
 
   static void addDonation(String email, String programName, int amount) {
     _donationHistory.add(
       DonationHistory(
         id: 'd${_donationHistory.length + 1}',
+        email: email,
         programName: programName,
         date: DateTime.now(),
         amount: amount,
@@ -244,20 +254,16 @@ class MockDatabase {
         programName: 'Beasiswa Vokasi 10 Bulan',
         date: DateTime.now().subtract(const Duration(days: 2)),
         title: 'Penyaluran Laptop untuk Batch 1 💻',
-        content:
-            'Berkat donasi Anda, 10 siswa vokasi kini memiliki laptop baru untuk belajar pemrograman. Mereka sangat antusias memulai kelas minggu depan!',
-        imageUrl:
-            'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop',
+        content: 'Berkat donasi Anda, 10 siswa vokasi kini memiliki laptop baru untuk belajar pemrograman. Mereka sangat antusias memulai kelas minggu depan!',
+        imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop',
       ),
       ImpactUpdate(
         id: 'i2',
         programName: 'Bantuan Alat Belajar',
         date: DateTime.now().subtract(const Duration(days: 15)),
         title: 'Buku & Seragam Telah Diterima! 🎒',
-        content:
-            'Bantuan alat tulis, buku, dan seragam telah berhasil disalurkan ke 50 anak di daerah Malang. Senyum mereka adalah bukti kebaikanmu!',
-        imageUrl:
-            'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=600&auto=format&fit=crop',
+        content: 'Bantuan alat tulis, buku, dan seragam telah berhasil disalurkan ke 50 anak di daerah Malang. Senyum mereka adalah bukti kebaikanmu!',
+        imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=600&auto=format&fit=crop',
       ),
     ];
   }
@@ -268,16 +274,14 @@ class MockDatabase {
         id: 'p1',
         title: 'Beasiswa Penuh Sarjana (S1) Angkatan 2026',
         category: 'Pendidikan',
-        imageUrl:
-            'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop',
+        imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop',
         progress: 0.75,
       ),
       SavedProgram(
         id: 'p2',
         title: 'Bantuan Seragam Sekolah Anak Pelosok',
         category: 'Bantuan Sosial',
-        imageUrl:
-            'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=600&auto=format&fit=crop',
+        imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=600&auto=format&fit=crop',
         progress: 0.30,
       ),
     ];
@@ -314,15 +318,6 @@ class MockDatabase {
       "kategori": "Inspirasi",
       "image": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop"
     },
-    {
-      "id": "A4",
-      "title": "Tips Lolos Wawancara Beasiswa Vernon Indonesia Pintar",
-      "date": "15 April 2026",
-      "desc": "Persiapkan diri Anda! Berikut adalah 5 tips jitu untuk menghadapi wawancara beasiswa dari tim HR VernonCorp.",
-      "content": "Tahap wawancara sering kali menjadi batu sandungan bagi banyak pelamar beasiswa. Rasa gugup dan ketidaksiapan mental membuat pelamar tidak bisa menunjukkan potensi terbaiknya.\n\nAgar Anda bisa tampil maksimal, Tim HR VernonCorp membagikan 5 tips penting saat wawancara Beasiswa VIP:\n\n1. Kenali Dirimu Sendiri: Pewawancara akan banyak menggali tentang motivasi, kelebihan, dan kekurangan Anda. Jujurlah dalam menjawab dan jangan melebih-lebihkan.\n2. Pahami Visi Program VIP: Tunjukkan bahwa Anda tahu tujuan program ini dan bagaimana program ini sejalan dengan cita-cita masa depan Anda.\n3. Berpakaian Rapi dan Sopan: Kesan pertama sangat penting. Pakaian rapi mencerminkan keseriusan dan profesionalisme Anda.\n4. Datang Tepat Waktu: Disiplin waktu adalah nilai utama di VernonCorp. Pastikan Anda sudah siap 15 menit sebelum jadwal wawancara dimulai, baik daring maupun luring.\n5. Tunjukkan Semangat Belajar: Yang kami cari bukanlah orang yang sudah sempurna pintar, melainkan orang yang tangguh dan punya kemauan keras untuk dibentuk menjadi lebih baik.\n\nTetap tenang dan percaya diri. Semoga berhasil di tahap wawancara!",
-      "kategori": "Edukasi",
-      "image": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop"
-    },
   ];
 
   static final List<Map<String, String>> _galeriList = [
@@ -330,8 +325,6 @@ class MockDatabase {
     {"id": "G2", "title": "Sesi Praktik Pelatihan Barista", "image": "https://images.unsplash.com/photo-1511920170033-f8396924c648?q=80&w=800&auto=format&fit=crop"},
     {"id": "G3", "title": "Pemberian Sertifikat Kelulusan", "image": "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=800&auto=format&fit=crop"},
     {"id": "G4", "title": "Kunjungan Industri ke VernonCorp", "image": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800&auto=format&fit=crop"},
-    {"id": "G5", "title": "Sesi Pelatihan Digital Marketing", "image": "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=800&auto=format&fit=crop"},
-    {"id": "G6", "title": "Malam Keakraban Alumni VIP", "image": "https://images.unsplash.com/photo-1523580494112-071fdc587693?q=80&w=800&auto=format&fit=crop"},
   ];
 
   static List<Map<String, String>> getSemuaArtikel() => List.from(_artikelList);
@@ -373,7 +366,6 @@ class MockDatabase {
   // ==========================================
   // DATA CMS BERANDA (HOME SCREEN)
   // ==========================================
-  
   static Map<String, String> _homeHeroData = {
     "tagline": "#EmpowerTomorrowsLeaders",
     "title": "Your Support\nUnlocks\nEqual Futures",
@@ -585,6 +577,60 @@ class MockDatabase {
   }
 
   static void hapusPartner(String id) => _partnerList.removeWhere((p) => p['id'] == id);
+
+  // ==========================================
+  // DATA CMS FAQ
+  // ==========================================
+  static final List<Map<String, String>> _faqList = [
+    {
+      "id": "F1",
+      "tanya": "Apa itu Yayasan Vernon Indonesia Pintar (VIP)?",
+      "jawab": "Kami adalah yayasan pendidikan yang berdedikasi memberdayakan generasi muda Indonesia melalui akses setara ke pendidikan berkualitas, pelatihan vokasi, dan peluang karier."
+    },
+    {
+      "id": "F2",
+      "tanya": "Apa itu Program Beasiswa VIP?",
+      "jawab": "Program Beasiswa Vernon Indonesia Pintar (VIP) memberikan beasiswa penuh bagi anak-anak yang memenuhi kriteria agar mendapatkan pelatihan dan bantuan yang tepat."
+    },
+    {
+      "id": "F3",
+      "tanya": "Berapa lama durasi program beasiswa ini berlangsung?",
+      "jawab": "Program ini dirancang secara terstruktur dengan durasi:\n• Beasiswa Vokasi: 10 Bulan\n• Magang Industri: 4 Bulan"
+    },
+    {
+      "id": "F4",
+      "tanya": "Fasilitas apa saja yang didapatkan oleh penerima beasiswa?",
+      "jawab": "Penerima beasiswa mendapatkan dukungan penuh melalui:\n• Tanggungan Biaya Pelatihan\n• Laptop & Alat Belajar\n• Uang Saku Bulanan\n• Akomodasi (Mess)\n• Sertifikasi Industri"
+    },
+    {
+      "id": "F5",
+      "tanya": "Apakah program beasiswa ini dipungut biaya?",
+      "jawab": "Tidak. Program Beasiswa VIP memberikan beasiswa penuh (100% gratis) bagi mereka yang memenuhi kriteria, mulai dari awal pelatihan hingga magang."
+    },
+    {
+      "id": "F6",
+      "tanya": "Bagaimana cara menghubungi pihak Yayasan VIP?",
+      "jawab": "Anda dapat menghubungi kami melalui email di vernonindonesiapintar@gmail.com atau mengunjungi website resmi di yayasan.vip."
+    },
+  ];
+
+  static List<Map<String, String>> getSemuaFaq() => List.from(_faqList);
+
+  static void tambahFaq(Map<String, String> data) {
+    data['id'] = "F${DateTime.now().millisecondsSinceEpoch}";
+    _faqList.add(data);
+  }
+
+  static void editFaq(String id, Map<String, String> dataBaru) {
+    int index = _faqList.indexWhere((f) => f['id'] == id);
+    if (index != -1) {
+      _faqList[index] = {..._faqList[index], ...dataBaru};
+    }
+  }
+
+  static void hapusFaq(String id) {
+    _faqList.removeWhere((f) => f['id'] == id);
+  }
 
   // ==========================================
   // DATA CMS FOOTER & KONTAK (REAL-TIME)

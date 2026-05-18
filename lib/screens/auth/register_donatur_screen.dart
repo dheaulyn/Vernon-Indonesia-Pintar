@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart'; // 👇 Wajib di-import agar bisa memanggil fungsi register
+import '../../data/mock_database.dart';
 
 class RegisterDonaturScreen extends StatefulWidget {
   const RegisterDonaturScreen({super.key});
@@ -127,14 +127,17 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_back,
-                                  color: Colors.black87,
+                              // 👇 PERBAIKAN: Posisi tombol arrow_back
+                              Transform.translate(
+                                offset: const Offset(-12, 0),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.black87,
+                                  ),
+                                  onPressed: () => context.go('/login-donatur'),
+                                  tooltip: 'Kembali',
                                 ),
-                                onPressed: () => context.go('/login-donatur'),
-                                padding: EdgeInsets.zero,
-                                alignment: Alignment.centerLeft,
                               ),
                               Image.asset('assets/logo.png', height: 40),
                             ],
@@ -206,10 +209,12 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                                       hint: 'contoh@mail.com',
                                       keyboardType: TextInputType.emailAddress,
                                       validator: (val) {
-                                        if (val!.isEmpty)
+                                        if (val!.isEmpty) {
                                           return 'Email wajib diisi';
-                                        if (!val.contains('@'))
+                                        }
+                                        if (!val.contains('@')) {
                                           return 'Format email salah';
+                                        }
                                         return null;
                                       },
                                     ),
@@ -264,8 +269,9 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                             ),
                             validator: (val) {
                               if (val!.isEmpty) return 'Wajib diisi';
-                              if (val != _passwordController.text)
+                              if (val != _passwordController.text) {
                                 return 'Password tidak cocok';
+                              }
                               return null;
                             },
                           ),

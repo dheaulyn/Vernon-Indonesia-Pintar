@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/app_colors.dart'; 
-import '../../../../../data/faq_data.dart'; 
+import '../../../../../data/mock_database.dart'; // 👇 Menggunakan MockDatabase terpusat
 
 class KelolaFAQPage extends StatefulWidget {
   const KelolaFAQPage({super.key});
@@ -13,13 +13,26 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
   final TextEditingController _tanyaController = TextEditingController();
   final TextEditingController _jawabController = TextEditingController();
 
-  // FUNGSI POP-UP FORM (TAMBAH / EDIT)
-  void _showFormDialog({int? indexToEdit}) {
-    List<Map<String, String>> currentList = globalFaqStore.faqList;
+  List<Map<String, String>> _faqList = [];
 
-    if (indexToEdit != null) {
-      _tanyaController.text = currentList[indexToEdit]["tanya"]!;
-      _jawabController.text = currentList[indexToEdit]["jawab"]!;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // 👇 FUNGSI UNTUK MENARIK DATA DARI DATABASE
+  void _loadData() {
+    setState(() {
+      _faqList = MockDatabase.getSemuaFaq();
+    });
+  }
+
+  // FUNGSI POP-UP FORM (TAMBAH / EDIT)
+  void _showFormDialog({Map<String, String>? faqToEdit}) {
+    if (faqToEdit != null) {
+      _tanyaController.text = faqToEdit["tanya"]!;
+      _jawabController.text = faqToEdit["jawab"]!;
     } else {
       _tanyaController.clear();
       _jawabController.clear();
@@ -33,7 +46,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Text(
-            indexToEdit != null ? "Edit FAQ" : "Tambah FAQ Baru",
+            faqToEdit != null ? "Edit FAQ" : "Tambah FAQ Baru",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
@@ -66,13 +79,20 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                   return;
                 }
 
-                if (indexToEdit != null) {
-                  globalFaqStore.editFaq(indexToEdit, _tanyaController.text, _jawabController.text);
+                final newData = {
+                  "tanya": _tanyaController.text.trim(),
+                  "jawab": _jawabController.text.trim(),
+                };
+
+                if (faqToEdit != null) {
+                  MockDatabase.editFaq(faqToEdit['id']!, newData);
                   _showSuccessMessage("FAQ berhasil diperbarui!");
                 } else {
-                  globalFaqStore.addFaq(_tanyaController.text, _jawabController.text);
+                  MockDatabase.tambahFaq(newData);
                   _showSuccessMessage("FAQ baru berhasil ditambahkan!");
                 }
+
+                _loadData(); // 👇 Refresh data di layar
                 Navigator.pop(context); 
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
@@ -85,7 +105,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
   }
 
   // FUNGSI HAPUS (DENGAN KONFIRMASI)
-  void _hapusFaq(int index) {
+  void _hapusFaq(String id) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -100,7 +120,8 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              globalFaqStore.removeFaq(index);
+              MockDatabase.hapusFaq(id);
+              _loadData(); // 👇 Refresh data di layar
               Navigator.pop(context);
               _showSuccessMessage("FAQ berhasil dihapus!");
             },
@@ -124,84 +145,76 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: globalFaqStore,
-      builder: (context, child) {
-        
-        List<Map<String, String>> currentList = globalFaqStore.faqList;
-
-        return Padding(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // HEADER
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // HEADER
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Manajemen Konten FAQ",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _showFormDialog(), 
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text("Tambah FAQ", style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      shape: const StadiumBorder(),
-                    ),
-                  ),
-                ],
+              const Text(
+                "Manajemen Konten FAQ",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 30),
-
-              // LIST FAQ
-              Expanded(
-                child: currentList.isEmpty
-                    ? const Center(child: Text("Belum ada data FAQ. Silakan tambah baru."))
-                    : ListView.builder(
-                        itemCount: currentList.length,
-                        itemBuilder: (context, index) {
-                          final item = currentList[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 15),
-                            color: Colors.white,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(20),
-                              title: Text(item["tanya"]!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Text(item["jawab"]!, style: TextStyle(color: Colors.grey[700], height: 1.5)),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, color: Colors.blue),
-                                    tooltip: "Edit",
-                                    onPressed: () => _showFormDialog(indexToEdit: index),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    tooltip: "Hapus",
-                                    onPressed: () => _hapusFaq(index),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+              ElevatedButton.icon(
+                onPressed: () => _showFormDialog(), 
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text("Tambah FAQ", style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  shape: const StadiumBorder(),
+                ),
               ),
             ],
           ),
-        );
-      }
+          const SizedBox(height: 30),
+
+          // LIST FAQ
+          Expanded(
+            child: _faqList.isEmpty
+                ? const Center(child: Text("Belum ada data FAQ. Silakan tambah baru."))
+                : ListView.builder(
+                    itemCount: _faqList.length,
+                    itemBuilder: (context, index) {
+                      final item = _faqList[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 15),
+                        color: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(20),
+                          title: Text(item["tanya"]!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Text(item["jawab"]!, style: TextStyle(color: Colors.grey[700], height: 1.5)),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                tooltip: "Edit",
+                                onPressed: () => _showFormDialog(faqToEdit: item), // Lempar objek data, bukan index
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                tooltip: "Hapus",
+                                onPressed: () => _hapusFaq(item["id"]!), // Gunakan ID
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
