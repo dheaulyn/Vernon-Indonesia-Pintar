@@ -216,12 +216,21 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                                   const Duration(seconds: 2),
                                 );
 
-                                // Simpan data ke Mock Database
-                                MockDatabase.addDonation(
-                                  widget.user['email'] ?? 'test@mail.com',
-                                  "Program Karir Kurikulum 10 Bulan VIP",
-                                  nominal,
-                                );
+                                // 👇 INI DIA KABEL BARUNYA YANG KITA SAMBUNGKAN KE SISTEM REAL-TIME
+                                MockDatabase.tambahDonasiInstan({
+                                  'id':
+                                      'tr${DateTime.now().millisecondsSinceEpoch}',
+                                  'nama': _isAnonymous
+                                      ? 'Hamba Allah'
+                                      : (widget.user['name'] ?? 'Donatur VIP'),
+                                  'nominal': nominal,
+                                  'program':
+                                      'Program Karir Kurikulum 10 Bulan VIP',
+                                  'tgl': DateFormat(
+                                    'yyyy-MM-dd',
+                                  ).format(DateTime.now()),
+                                  'bukti': 'Sistem Otomatis',
+                                });
 
                                 if (context.mounted) {
                                   Navigator.pop(dialogContext); // Tutup dialog
@@ -323,7 +332,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                       fontSize: 15,
@@ -530,20 +539,24 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                 CurrencyFormat(),
               ],
               onTap: () {
-                if (_selectedNominal != null)
+                if (_selectedNominal != null) {
                   setState(() => _selectedNominal = null);
+                }
               },
               onChanged: (value) {
-                if (_selectedNominal != null)
+                if (_selectedNominal != null) {
                   setState(() => _selectedNominal = null);
+                }
               },
               validator: (value) {
                 if (_selectedNominal == null) {
-                  if (value == null || value.trim().isEmpty)
+                  if (value == null || value.trim().isEmpty) {
                     return 'Nominal wajib diisi';
+                  }
                   String rawNumeric = value.replaceAll(RegExp(r'[^0-9]'), '');
-                  if (rawNumeric.isEmpty || int.parse(rawNumeric) < 10000)
+                  if (rawNumeric.isEmpty || int.parse(rawNumeric) < 10000) {
                     return 'Minimal donasi Rp 10.000';
+                  }
                 }
                 return null;
               },

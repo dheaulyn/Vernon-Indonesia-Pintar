@@ -3,11 +3,12 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../data/mock_database.dart';
 
-// Catatan: Anda TIDAK perlu lagi mengimpor halaman-halaman (HomeDashboard, dll) di file ini, 
+// Catatan: Anda TIDAK perlu lagi mengimpor halaman-halaman (HomeDashboard, dll) di file ini,
 // karena halaman-halaman tersebut akan dipanggil di file konfigurasi router Anda.
 
 class LayoutDashboard extends StatefulWidget {
-  final Widget child; // 👇 Menampung halaman konten yang disuntikkan oleh router
+  final Widget
+  child; // 👇 Menampung halaman konten yang disuntikkan oleh router
 
   const LayoutDashboard({super.key, required this.child});
 
@@ -17,6 +18,8 @@ class LayoutDashboard extends StatefulWidget {
 
 class _LayoutDashboardState extends State<LayoutDashboard> {
   bool _isCollapsed = false;
+  // 👇 STATE BARU: Mengatur status buka/tutup dropdown Manajemen Donasi
+  bool _isDonasiExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +30,12 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: _buildTopNavbar(),
       body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch, 
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildSidebar(isSidebarCollapsed),
           Expanded(
             // 👇 Menampilkan halaman berdasarkan route URL saat ini
-            child: widget.child, 
+            child: widget.child,
           ),
         ],
       ),
@@ -153,12 +156,12 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       width: isCollapsed ? 70 : 260,
-      height: MediaQuery.of(context).size.height, 
+      height: MediaQuery.of(context).size.height,
       color: const Color(0xFF2B3240),
       child: ClipRect(
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const NeverScrollableScrollPhysics(), 
+          physics: const NeverScrollableScrollPhysics(),
           child: SizedBox(
             width: 260,
             child: SingleChildScrollView(
@@ -190,7 +193,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   _sidebarMenu(
                     Icons.grid_view_rounded,
                     "Home Dashboard",
-                    "/admin-dashboard", // 👇 Ganti index dengan URL Route
+                    "/admin-dashboard",
                     isCollapsed,
                   ),
 
@@ -200,6 +203,9 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                     "/admin-pendaftar",
                     isCollapsed,
                   ),
+
+                  // 👇 REVISI: SEKARANG BERBENTUK DROPDOWN MENU KELOLA DONASI
+                  _buildDropdownDonasi(isCollapsed),
 
                   const SizedBox(height: 15),
 
@@ -240,13 +246,13 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                     isCollapsed,
                   ),
                   _sidebarMenu(
-                    Icons.format_list_numbered_rtl_rounded, 
-                    "Kelola Detail Program", 
+                    Icons.format_list_numbered_rtl_rounded,
+                    "Kelola Detail Program",
                     "/cms-program",
                     isCollapsed,
                   ),
                   _sidebarMenu(
-                    Icons.article_rounded, 
+                    Icons.article_rounded,
                     "Kelola Media",
                     "/cms-media",
                     isCollapsed,
@@ -276,7 +282,7 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                     isCollapsed,
                   ),
 
-                  const SizedBox(height: 40), 
+                  const SizedBox(height: 40),
                   const Divider(color: Colors.white24),
 
                   // ==========================================
@@ -306,15 +312,138 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
     );
   }
 
+  // ==========================================
+  // FUNGSI KHUSUS: MEMBUAT MENU DROPDOWN SUB-MENU
+  // ==========================================
+  Widget _buildDropdownDonasi(bool isCollapsed) {
+    final currentRoute = GoRouterState.of(context).uri.toString();
+    // Cek apakah salah satu sub-menu donasi sedang aktif saat ini
+    bool isSubMenuKeyActive = currentRoute.startsWith('/admin-donasi-');
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (isCollapsed) {
+                // Kalau menu mengecil, langsung lempar ke sub-menu utama
+                context.go('/admin-donasi-masuk');
+              } else {
+                setState(() {
+                  _isDonasiExpanded = !_isDonasiExpanded;
+                });
+              }
+            },
+            child: Container(
+              width: 260,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                color: isSubMenuKeyActive && !_isDonasiExpanded
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.transparent,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.volunteer_activism_rounded,
+                    color: isSubMenuKeyActive
+                        ? AppColors.primary
+                        : Colors.white54,
+                    size: 24,
+                  ),
+                  if (!isCollapsed) ...[
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Text(
+                        "Manajemen Donasi",
+                        style: TextStyle(
+                          color: isSubMenuKeyActive
+                              ? Colors.white
+                              : Colors.white70,
+                          fontWeight: isSubMenuKeyActive
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _isDonasiExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white54,
+                      size: 20,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Rincian sub-menu anak, hanya muncul jika dropdown dibuka dan sidebar sedang lebar
+        if (_isDonasiExpanded && !isCollapsed) ...[
+          _buildSubMenuListItem("Riwayat Dana Masuk", "/admin-donasi-masuk"),
+          _buildSubMenuListItem("Riwayat Dana Keluar", "/admin-donasi-keluar"),
+          _buildSubMenuListItem("Penyaluran Dana", "/admin-donasi-salurkan"),
+        ],
+      ],
+    );
+  }
+
+  // Widget Pembuat Item Anak Sub-Menu
+  Widget _buildSubMenuListItem(String title, String routePath) {
+    final currentRoute = GoRouterState.of(context).uri.toString();
+    final bool isActive = currentRoute == routePath;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(routePath),
+        child: Container(
+          width: 260,
+          padding: const EdgeInsets.only(
+            left: 59,
+            right: 20,
+            top: 12,
+            bottom: 12,
+          ),
+          decoration: BoxDecoration(
+            color: isActive
+                ? AppColors.primary.withOpacity(0.15)
+                : Colors.transparent,
+            border: Border(
+              left: BorderSide(
+                color: isActive ? AppColors.primary : Colors.transparent,
+                width: 4,
+              ),
+            ),
+          ),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.white54,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget Pembuat Menu Utama (Sidebar Standar)
   Widget _sidebarMenu(
     IconData icon,
     String title,
-    String routePath, // 👇 Ubah dari int index menjadi String routePath
+    String routePath,
     bool isCollapsed, {
     bool isLogout = false,
     bool isWebLink = false,
   }) {
-    // 👇 Deteksi URL aktif menggunakan GoRouterState
     final currentRoute = GoRouterState.of(context).uri.toString();
     final bool isActive = currentRoute == routePath && !isLogout && !isWebLink;
 
@@ -336,7 +465,6 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
             } else if (isWebLink) {
               context.go('/');
             } else {
-              // 👇 Lakukan perpindahan rute URL
               context.go(routePath);
             }
           },
@@ -361,8 +489,8 @@ class _LayoutDashboardState extends State<LayoutDashboard> {
                   color: isActive
                       ? activeColor
                       : (isWebLink
-                          ? Colors.green.withOpacity(0.7)
-                          : inactiveColor),
+                            ? Colors.green.withOpacity(0.7)
+                            : inactiveColor),
                   size: 24,
                 ),
                 if (!isCollapsed) ...[

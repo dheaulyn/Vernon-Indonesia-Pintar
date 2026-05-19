@@ -27,6 +27,9 @@ import 'screens/admin/auth/login_admin_screen.dart';
 import 'screens/admin/layout_dashboard.dart';
 import 'screens/admin/home_dashboard.dart';
 import 'screens/admin/manajemen_pendaftar_admin.dart';
+// 👇 INI IMPORT BARUNYA
+import 'screens/admin/manajemen_donasi.dart';
+
 import 'screens/admin/cms/hero_banner_admin.dart';
 import 'screens/admin/cms/about_section_admin.dart';
 import 'screens/admin/cms/profil_yayasan_admin.dart';
@@ -52,26 +55,71 @@ final GoRouter _router = GoRouter(
     // 1. RUTE PUBLIK (USER/GUEST)
     // --------------------------------------------------
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
-    GoRoute(path: '/pusat-bantuan', builder: (context, state) => const FAQScreen()),
+    GoRoute(
+      path: '/pusat-bantuan',
+      builder: (context, state) => const FAQScreen(),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-    GoRoute(path: '/portal', builder: (context, state) => const DashboardScreen()),
-    GoRoute(path: '/login-donatur', builder: (context, state) => const LoginDonaturScreen()),
-    GoRoute(path: '/register-donatur', builder: (context, state) => const RegisterDonaturScreen()),
-    GoRoute(path: '/dashboard-donatur', builder: (context, state) => const DonaturDashboardScreen()),
-    GoRoute(path: '/admin-login', builder: (context, state) => const LoginAdminScreen()),
-    GoRoute(path: '/profil-yayasan', builder: (context, state) => const ProfilYayasanScreen()),
-    GoRoute(path: '/form-beasiswa', builder: (context, state) => const FormBeasiswaScreen()),
-    GoRoute(path: '/status-beasiswa', builder: (context, state) => const StatusBeasiswaScreen()),
-    GoRoute(path: '/fund-pool', builder: (context, state) => const FundPoolScreen()),
-    GoRoute(path: '/donasi', builder: (context, state) => const DonaturDashboardScreen()),
-    GoRoute(path: '/program', builder: (context, state) => const ProgramDetailScreen()),
-    GoRoute(path: '/media', name: 'media', builder: (context, state) => const MediaScreen()),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/portal',
+      builder: (context, state) => const DashboardScreen(),
+    ),
+    GoRoute(
+      path: '/login-donatur',
+      builder: (context, state) => const LoginDonaturScreen(),
+    ),
+    GoRoute(
+      path: '/register-donatur',
+      builder: (context, state) => const RegisterDonaturScreen(),
+    ),
+    GoRoute(
+      path: '/dashboard-donatur',
+      builder: (context, state) => const DonaturDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/admin-login',
+      builder: (context, state) => const LoginAdminScreen(),
+    ),
+    GoRoute(
+      path: '/profil-yayasan',
+      builder: (context, state) => const ProfilYayasanScreen(),
+    ),
+    GoRoute(
+      path: '/form-beasiswa',
+      builder: (context, state) => const FormBeasiswaScreen(),
+    ),
+    GoRoute(
+      path: '/status-beasiswa',
+      builder: (context, state) => const StatusBeasiswaScreen(),
+    ),
+    GoRoute(
+      path: '/fund-pool',
+      builder: (context, state) => const FundPoolScreen(),
+    ),
+    GoRoute(
+      path: '/donasi',
+      builder: (context, state) => const DonaturDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/program',
+      builder: (context, state) => const ProgramDetailScreen(),
+    ),
+    GoRoute(
+      path: '/media',
+      name: 'media',
+      builder: (context, state) => const MediaScreen(),
+    ),
     GoRoute(
       path: '/media/artikel',
       builder: (context, state) {
         final artikelData = state.extra as Map<String, String>?;
-        return artikelData != null ? ArtikelDetailScreen(artikel: artikelData) : const MediaScreen();
+        return artikelData != null
+            ? ArtikelDetailScreen(artikel: artikelData)
+            : const MediaScreen();
       },
     ),
 
@@ -85,17 +133,62 @@ final GoRouter _router = GoRouter(
         return LayoutDashboard(child: child);
       },
       routes: [
-        GoRoute(path: '/admin-dashboard', builder: (context, state) => const HomeDashboard()),
-        GoRoute(path: '/admin-pendaftar', builder: (context, state) => const ManajemenPendaftarAdmin()),
-        GoRoute(path: '/cms-hero-banner', builder: (context, state) => const HeroBannerAdmin()),
-        GoRoute(path: '/cms-about', builder: (context, state) => const AboutSectionAdmin()),
-        GoRoute(path: '/cms-profil', builder: (context, state) => const ProfilYayasanAdmin()),
-        GoRoute(path: '/cms-program', builder: (context, state) => const ProgramDetailAdmin()),
-        GoRoute(path: '/cms-media', builder: (context, state) => const KelolaMediaAdmin()),
-        GoRoute(path: '/cms-testimoni', builder: (context, state) => const TestimoniAdmin()),
-        GoRoute(path: '/cms-faq', builder: (context, state) => const KelolaFAQPage()),
-        GoRoute(path: '/cms-footer', builder: (context, state) => const FooterAdmin()),
-        GoRoute(path: '/cms-partners', builder: (context, state) => const PartnersAdmin()),
+        GoRoute(
+          path: '/admin-dashboard',
+          builder: (context, state) => const HomeDashboard(),
+        ),
+        GoRoute(
+          path: '/admin-pendaftar',
+          builder: (context, state) => const ManajemenPendaftarAdmin(),
+        ),
+        GoRoute(
+          path: '/admin-donasi-masuk',
+          builder: (context, state) => const RiwayatDanaMasukView(),
+        ),
+        GoRoute(
+          path: '/admin-donasi-keluar',
+          builder: (context, state) => const RiwayatDanaKeluarView(),
+        ),
+        GoRoute(
+          path: '/admin-donasi-salurkan',
+          builder: (context, state) => const PenyaluranDanaView(),
+        ),
+        GoRoute(
+          path: '/cms-hero-banner',
+          builder: (context, state) => const HeroBannerAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-about',
+          builder: (context, state) => const AboutSectionAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-profil',
+          builder: (context, state) => const ProfilYayasanAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-program',
+          builder: (context, state) => const ProgramDetailAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-media',
+          builder: (context, state) => const KelolaMediaAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-testimoni',
+          builder: (context, state) => const TestimoniAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-faq',
+          builder: (context, state) => const KelolaFAQPage(),
+        ),
+        GoRoute(
+          path: '/cms-footer',
+          builder: (context, state) => const FooterAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-partners',
+          builder: (context, state) => const PartnersAdmin(),
+        ),
       ],
     ),
 
@@ -131,10 +224,7 @@ class YayasanApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('id'),
-      ],
+      supportedLocales: const [Locale('en'), Locale('id')],
       locale: const Locale('id'),
 
       theme: ThemeData(

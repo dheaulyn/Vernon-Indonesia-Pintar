@@ -10,6 +10,11 @@ class LaporanView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final impactUpdates = MockDatabase.getImpactUpdates();
+    final currencyFormat = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
@@ -19,78 +24,109 @@ class LaporanView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ==========================================
-          // 1. KARTU ALOKASI DANA
-          // ==========================================
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Alokasi Penggunaan Dana",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Total dana terkumpul saat ini adalah Rp 135.000.000. Berikut adalah persentase rincian penggunaannya dalam membiayai Program Karir Kurikulum 10 Bulan VIP.",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 35),
+          // ========================================================
+          // 1. KARTU ALOKASI DANA REVISI (SINKRON DESIMAL REAL-TIME)
+          // ========================================================
+          ValueListenableBuilder(
+            valueListenable: MockDatabase.riwayatPenyaluran,
+            builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
+              return ValueListenableBuilder(
+                valueListenable: MockDatabase.totalDonasiTerkumpul,
+                builder: (context, int totalDonasi, _) {
+                  int totalPendidikan = 0;
+                  int totalUangSaku = 0;
+                  int totalOperasional = 0;
 
-                _buildDetailedAllocationBar(
-                  "Biaya Instruktur & Modul Pelatihan",
-                  0.40,
-                  Colors.blue,
-                  "40%",
-                  "Estimasi: Rp 54.000.000",
-                ),
-                const SizedBox(height: 25),
-                _buildDetailedAllocationBar(
-                  "Alat Praktik & Fasilitas Belajar",
-                  0.30,
-                  Colors.green,
-                  "30%",
-                  "Estimasi: Rp 40.500.000",
-                ),
-                const SizedBox(height: 25),
-                _buildDetailedAllocationBar(
-                  "Uang Saku & Akomodasi Siswa",
-                  0.20,
-                  Colors.orange,
-                  "20%",
-                  "Estimasi: Rp 27.000.000",
-                ),
-                const SizedBox(height: 25),
-                _buildDetailedAllocationBar(
-                  "Operasional Yayasan & Penyaluran",
-                  0.10,
-                  Colors.red,
-                  "10%",
-                  "Estimasi: Rp 13.500.000",
-                ),
-              ],
-            ),
+                  for (var item in pengeluaran) {
+                    int nom = item['nominal'] as int? ?? 0;
+                    String ket = item['keterangan']?.toString() ?? '';
+                    if (ket == "Pendidikan & Vokasi") totalPendidikan += nom;
+                    if (ket == "Uang Saku Siswa") totalUangSaku += nom;
+                    if (ket == "Operasional Yayasan") totalOperasional += nom;
+                  }
+
+                  double progressPendidikan = totalDonasi > 0
+                      ? (totalPendidikan / totalDonasi)
+                      : 0.0;
+                  double progressUangSaku = totalDonasi > 0
+                      ? (totalUangSaku / totalDonasi)
+                      : 0.0;
+                  double progressOperasional = totalDonasi > 0
+                      ? (totalOperasional / totalDonasi)
+                      : 0.0;
+
+                  String formatPersenDinamis(double progress) {
+                    double hasil = progress * 100;
+                    if (hasil == 0) return "0%";
+                    if (hasil < 1) return "${hasil.toStringAsFixed(2)}%";
+                    return "${hasil.toStringAsFixed(1)}%";
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Alokasi Penggunaan Dana",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Pantau persentase penyerapan dana program nyata secara real-time dari panel pusat yayasan VIP.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 35),
+
+                        _buildDetailedAllocationBar(
+                          "Pendidikan & Vokasi",
+                          progressPendidikan.clamp(0.0, 1.0),
+                          Colors.red,
+                          formatPersenDinamis(progressPendidikan),
+                          "Terpakai: ${currencyFormat.format(totalPendidikan)}",
+                        ),
+                        const SizedBox(height: 25),
+                        _buildDetailedAllocationBar(
+                          "Uang Saku Siswa",
+                          progressUangSaku.clamp(0.0, 1.0),
+                          Colors.orange,
+                          formatPersenDinamis(progressUangSaku),
+                          "Terpakai: ${currencyFormat.format(totalUangSaku)}",
+                        ),
+                        const SizedBox(height: 25),
+                        _buildDetailedAllocationBar(
+                          "Operasional Yayasan",
+                          progressOperasional.clamp(0.0, 1.0),
+                          Colors.grey,
+                          formatPersenDinamis(progressOperasional),
+                          "Terpakai: ${currencyFormat.format(totalOperasional)}",
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           ),
 
           const SizedBox(height: 40),
@@ -148,7 +184,6 @@ class LaporanView extends StatelessWidget {
     );
   }
 
-  // Widget Bantuan untuk Grafik Alokasi
   Widget _buildDetailedAllocationBar(
     String title,
     double percentage,
@@ -199,7 +234,6 @@ class LaporanView extends StatelessWidget {
     );
   }
 
-  // Widget Bantuan untuk Kartu Update Dampak
   Widget _buildImpactCard(ImpactUpdate update, bool isMobile) {
     final dateFormat = DateFormat('dd MMM yyyy');
 

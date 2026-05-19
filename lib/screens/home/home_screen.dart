@@ -1,12 +1,13 @@
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
 import '../../data/faq_data.dart';
-import '../../data/mock_database.dart'; 
+import '../../data/mock_database.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -99,7 +100,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   ImageProvider _getImageProvider(String imageSource) {
     if (imageSource.isEmpty) {
-      return const NetworkImage('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop');
+      return const NetworkImage(
+        'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=1200&auto=format&fit=crop',
+      );
     }
     if (imageSource.startsWith('http')) {
       return NetworkImage(imageSource);
@@ -123,13 +126,13 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildImpactSection(isMobile),
             AboutSection(key: aboutKey),
             _buildProgramUnggulan(context, isMobile),
-            
+
             _buildTestimonialSection(isMobile),
             _buildPartnerSection(isMobile),
 
             Container(key: stepKey),
             _buildFAQSection(context, isMobile),
-            
+
             Container(key: contactKey, child: const CustomFooter()),
           ],
         ),
@@ -146,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: _getImageProvider(_heroData['image'] ?? ''), 
+          image: _getImageProvider(_heroData['image'] ?? ''),
           fit: BoxFit.cover,
           alignment: Alignment.topCenter,
         ),
@@ -178,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                _heroData['tagline'] ?? "#EmpowerTomorrowsLeaders", 
+                _heroData['tagline'] ?? "#EmpowerTomorrowsLeaders",
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -188,7 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 25),
             Text(
-              _heroData['title']?.replaceAll('\\n', '\n') ?? "Your Support\nUnlocks\nEqual Futures", 
+              _heroData['title']?.replaceAll('\\n', '\n') ??
+                  "Your Support\nUnlocks\nEqual Futures",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: isMobile ? 40 : 65,
@@ -200,7 +204,8 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               width: isMobile ? double.infinity : 600,
               child: Text(
-                _heroData['subtitle'] ?? "Vernon Indonesia Pintar (VIP) memberdayakan generasi muda melalui beasiswa, pelatihan vokasi, dan penempatan kerja nyata.", 
+                _heroData['subtitle'] ??
+                    "Vernon Indonesia Pintar (VIP) memberdayakan generasi muda melalui beasiswa, pelatihan vokasi, dan penempatan kerja nyata.",
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
@@ -270,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET IMPACT SECTION 
+  // WIDGET IMPACT SECTION (SUDAH FIX FORMAT RUPIAH & ANTI-PECAH)
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
@@ -318,7 +323,20 @@ class _HomeScreenState extends State<HomeScreen> {
           if (isMobile)
             Column(
               children: [
-                _buildStatCard("Rp 0", "Total Donasi Terkumpul"),
+                ValueListenableBuilder<int>(
+                  valueListenable: MockDatabase.totalDonasiTerkumpul,
+                  builder: (context, total, _) {
+                    final formatRp = NumberFormat.currency(
+                      locale: 'id_ID',
+                      symbol: 'Rp ',
+                      decimalDigits: 0,
+                    );
+                    return _buildStatCard(
+                      formatRp.format(total),
+                      "Total Donasi Terkumpul",
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Penerima Beasiswa"),
                 const SizedBox(height: 20),
@@ -331,7 +349,20 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard("Rp 0", "Total Donasi Terkumpul"),
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: MockDatabase.totalDonasiTerkumpul,
+                    builder: (context, total, _) {
+                      final formatRp = NumberFormat.currency(
+                        locale: 'id_ID',
+                        symbol: 'Rp ',
+                        decimalDigits: 0,
+                      );
+                      return _buildStatCard(
+                        formatRp.format(total),
+                        "Total Donasi Terkumpul",
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
@@ -364,12 +395,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 42,
-              fontWeight: FontWeight.w900,
-              color: Colors.red,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+                color: Colors.red,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -537,40 +571,61 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 40),
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: 0.45,
-              minHeight: 8,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
-            ),
-          ),
-          const SizedBox(height: 12),
+          ValueListenableBuilder<int>(
+            valueListenable: MockDatabase.totalDonasiTerkumpul,
+            builder: (context, int total, _) {
+              double progressValue = total / 300000000;
+              String displayTotal = (total / 1000000).toStringAsFixed(
+                total % 1000000 == 0 ? 0 : 1,
+              );
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                  children: const [
-                    TextSpan(text: "Terkumpul: "),
-                    TextSpan(
-                      text: "Rp 135jt",
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
+              return Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: progressValue,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.red,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Text(
-                "Target: Rp 300jt",
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-              ),
-            ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 14,
+                          ),
+                          children: [
+                            const TextSpan(text: "Terkumpul: "),
+                            TextSpan(
+                              text: "Rp ${displayTotal}jt",
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        "Target: Rp 300jt",
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
 
           const SizedBox(height: 40),
@@ -600,7 +655,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET TESTIMONIAL SECTION 
+  // WIDGET TESTIMONIAL SECTION
   // ==========================================
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
@@ -635,16 +690,23 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             child: Row(
-              children: _testimonialData.isEmpty 
-              ? [const Center(child: Text("Belum ada testimoni.", style: TextStyle(color: Colors.white)))]
-              : _testimonialData.map((testimoni) {
-                return TestimonialCard(
-                  name: testimoni['name'] ?? '',
-                  role: testimoni['role'] ?? '',
-                  quote: testimoni['quote'] ?? '',
-                  isMobile: isMobile,
-                );
-              }).toList(),
+              children: _testimonialData.isEmpty
+                  ? [
+                      const Center(
+                        child: Text(
+                          "Belum ada testimoni.",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ]
+                  : _testimonialData.map((testimoni) {
+                      return TestimonialCard(
+                        name: testimoni['name'] ?? '',
+                        role: testimoni['role'] ?? '',
+                        quote: testimoni['quote'] ?? '',
+                        isMobile: isMobile,
+                      );
+                    }).toList(),
             ),
           ),
         ],
@@ -679,20 +741,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          
+
           Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: isMobile ? 30 : 60,
             runSpacing: 30,
-            children: _partnerData.isEmpty 
-              ? [Text("Belum ada partner.", style: TextStyle(color: Colors.grey.shade400))]
-              : _partnerData.map((p) {
-                  return _buildPartnerLogo(
-                    p['image'] ?? '', 
-                    p['name'] ?? ''
-                  );
-                }).toList(),
+            children: _partnerData.isEmpty
+                ? [
+                    Text(
+                      "Belum ada partner.",
+                      style: TextStyle(color: Colors.grey.shade400),
+                    ),
+                  ]
+                : _partnerData.map((p) {
+                    return _buildPartnerLogo(p['image'] ?? '', p['name'] ?? '');
+                  }).toList(),
           ),
         ],
       ),
@@ -701,35 +765,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPartnerLogo(String imageSource, String name) {
     Widget imageWidget;
-    final double logoHeight = 60.0; 
-    
+    final double logoHeight = 60.0;
+
     if (imageSource.isEmpty) {
-      imageWidget = Icon(Icons.business, color: Colors.grey.shade400, size: logoHeight);
+      imageWidget = Icon(
+        Icons.business,
+        color: Colors.grey.shade400,
+        size: logoHeight,
+      );
     } else if (imageSource.startsWith('http')) {
       imageWidget = Image.network(
-        imageSource, 
-        height: logoHeight, 
+        imageSource,
+        height: logoHeight,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.broken_image, color: Colors.grey.shade400, size: logoHeight);
+          return Icon(
+            Icons.broken_image,
+            color: Colors.grey.shade400,
+            size: logoHeight,
+          );
         },
       );
     } else {
       try {
-        imageWidget = Image.memory(base64Decode(imageSource), height: logoHeight, fit: BoxFit.contain);
+        imageWidget = Image.memory(
+          base64Decode(imageSource),
+          height: logoHeight,
+          fit: BoxFit.contain,
+        );
       } catch (e) {
-        imageWidget = Icon(Icons.broken_image, color: Colors.grey.shade400, size: logoHeight);
+        imageWidget = Icon(
+          Icons.broken_image,
+          color: Colors.grey.shade400,
+          size: logoHeight,
+        );
       }
     }
 
-    return Tooltip(
-      message: name, 
-      child: imageWidget,
-    );
+    return Tooltip(message: name, child: imageWidget);
   }
 
   // ==========================================
-  // WIDGET FAQ SECTION 
+  // WIDGET FAQ SECTION
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return ListenableBuilder(
@@ -798,27 +875,21 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
         Widget illustration = ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: isMobile ? 400 : 550, 
-          ),
+          constraints: BoxConstraints(maxHeight: isMobile ? 400 : 550),
           child: ShaderMask(
             shaderCallback: (Rect bounds) {
               return const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black,
-                  Colors.black,
-                  Colors.transparent,
-                ],
-                stops: [0.0, 0.6, 1.0], 
+                colors: [Colors.black, Colors.black, Colors.transparent],
+                stops: [0.0, 0.6, 1.0],
               ).createShader(bounds);
             },
             blendMode: BlendMode.dstIn,
             child: Image.asset(
               'assets/faq_illustration.png',
-              fit: BoxFit.contain, 
-              alignment: Alignment.bottomCenter, 
+              fit: BoxFit.contain,
+              alignment: Alignment.bottomCenter,
             ),
           ),
         );
@@ -828,19 +899,19 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           padding: EdgeInsets.symmetric(
             vertical: isMobile ? 60 : 100,
-            horizontal: isMobile ? 24 : 80, 
+            horizontal: isMobile ? 24 : 80,
           ),
           color: Colors.white,
           child: isMobile
               ? Column(
                   children: [
                     illustration,
-                    const SizedBox(height: 30), 
+                    const SizedBox(height: 30),
                     faqContent,
                   ],
                 )
               : Row(
-                  crossAxisAlignment: CrossAxisAlignment.end, 
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(flex: 5, child: faqContent),
                     const SizedBox(width: 80),
@@ -909,7 +980,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
               initiallyExpanded: isExpanded,
               iconColor: AppColors.primary,
               collapsedIconColor: Colors.grey,
-              title: Text(  
+              title: Text(
                 faq["tanya"]!,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,

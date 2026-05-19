@@ -49,7 +49,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose(); 
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -66,7 +66,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   // 👇 PERBAIKAN DI SINI: Mengarahkan ke rute login khusus donatur
   void _handleLogout() {
     MockDatabase.logout();
-    context.go('/login-donatur'); 
+    context.go('/login-donatur');
   }
 
   @override
@@ -564,8 +564,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
         pageTitle = "Beranda";
         contentView = DashboardView(
           isMobile: isMobile,
-          successDonations: successDonations,
-          allHistories: allHistories,
           onNavigateToDonasi: () => setState(() {
             _selectedIndex = 1;
             _isAkunExpanded = false;
@@ -585,10 +583,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
         break;
       case 2:
         pageTitle = "Riwayat Donasi";
-        contentView = RiwayatDonasiView(
-          isMobile: isMobile,
-          allHistories: allHistories,
-        );
+        contentView = RiwayatDonasiView(isMobile: isMobile);
         break;
       case 3:
         pageTitle = "Laporan Transparan";
@@ -606,8 +601,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
         pageTitle = "Beranda";
         contentView = DashboardView(
           isMobile: isMobile,
-          successDonations: successDonations,
-          allHistories: allHistories,
           onNavigateToDonasi: () => setState(() => _selectedIndex = 1),
         );
     }
@@ -648,7 +641,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
                       child: InkWell(
                         onTap: () {
                           _scrollController.animateTo(
-                            0, 
+                            0,
                             duration: const Duration(milliseconds: 500),
                             curve: Curves.easeInOut,
                           );
@@ -658,9 +651,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
                           width: 45,
                           height: 45,
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF435EFE,
-                            ), 
+                            color: const Color(0xFF435EFE),
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(

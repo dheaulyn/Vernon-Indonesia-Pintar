@@ -10,11 +10,15 @@ class HomeDashboard extends StatelessWidget {
     // LOGIKA PENARIKAN DATA DINAMIS
     // ==========================================
     final allSiswa = MockDatabase.getAllRegisteredSiswaFullData();
-    
+
     // Hitung statistik berdasarkan data asli
     final int totalPendaftar = allSiswa.length;
-    final int menungguReview = allSiswa.where((s) => s['admin_status'] == 'Menunggu Review').length;
-    final int beasiswaAktif = allSiswa.where((s) => s['admin_status'] == 'Diterima').length;
+    final int menungguReview = allSiswa
+        .where((s) => s['admin_status'] == 'Menunggu Review')
+        .length;
+    final int beasiswaAktif = allSiswa
+        .where((s) => s['admin_status'] == 'Diterima')
+        .length;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -24,13 +28,13 @@ class HomeDashboard extends StatelessWidget {
           const Text(
             "Ringkasan Performa",
             style: TextStyle(
-              fontSize: 24, 
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
           const SizedBox(height: 25),
-          
+
           // 👇 LayoutBuilder untuk membuat kartu responsif
           LayoutBuilder(
             builder: (context, constraints) {
@@ -38,23 +42,59 @@ class HomeDashboard extends StatelessWidget {
               if (constraints.maxWidth < 800) {
                 return Column(
                   children: [
-                    _statBox("Total Pendaftar", totalPendaftar.toString(), Colors.blue, Icons.people_alt_rounded),
+                    _statBox(
+                      "Total Pendaftar",
+                      totalPendaftar.toString(),
+                      Colors.blue,
+                      Icons.people_alt_rounded,
+                    ),
                     const SizedBox(height: 15),
-                    _statBox("Menunggu Review", menungguReview.toString(), Colors.orange, Icons.hourglass_empty_rounded),
+                    _statBox(
+                      "Menunggu Review",
+                      menungguReview.toString(),
+                      Colors.orange,
+                      Icons.hourglass_empty_rounded,
+                    ),
                     const SizedBox(height: 15),
-                    _statBox("Beasiswa Aktif", beasiswaAktif.toString(), Colors.green, Icons.school_rounded),
+                    _statBox(
+                      "Beasiswa Aktif",
+                      beasiswaAktif.toString(),
+                      Colors.green,
+                      Icons.school_rounded,
+                    ),
                   ],
                 );
               }
-              
+
               // Jika dibuka di Laptop (layar lebar), jejerkan kartunya menyamping
               return Row(
                 children: [
-                  Expanded(child: _statBox("Total Pendaftar", totalPendaftar.toString(), Colors.blue, Icons.people_alt_rounded)),
+                  Expanded(
+                    child: _statBox(
+                      "Total Pendaftar",
+                      totalPendaftar.toString(),
+                      Colors.blue,
+                      Icons.people_alt_rounded,
+                    ),
+                  ),
                   const SizedBox(width: 20),
-                  Expanded(child: _statBox("Menunggu Review", menungguReview.toString(), Colors.orange, Icons.hourglass_empty_rounded)),
+                  Expanded(
+                    child: _statBox(
+                      "Menunggu Review",
+                      menungguReview.toString(),
+                      Colors.orange,
+                      Icons.hourglass_empty_rounded,
+                    ),
+                  ),
                   const SizedBox(width: 20),
-                  Expanded(child: _statBox("Beasiswa Aktif", beasiswaAktif.toString(), Colors.green, Icons.school_rounded)),
+                  Expanded(
+                    child: _statBox(
+                      "Beasiswa Aktif",
+                      beasiswaAktif.toString(),
+                      Colors.green,
+                      Icons.school_rounded,
+                    ),
+                  ),
                 ],
               );
             },
@@ -71,10 +111,10 @@ class HomeDashboard extends StatelessWidget {
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03), 
-                  blurRadius: 10, 
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             child: const Center(
@@ -83,7 +123,7 @@ class HomeDashboard extends StatelessWidget {
                 style: TextStyle(color: Colors.grey),
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -99,10 +139,10 @@ class HomeDashboard extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03), 
-            blurRadius: 10, 
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -122,16 +162,19 @@ class HomeDashboard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title, 
+                title,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
               const SizedBox(height: 5),
               Text(
-                value, 
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
