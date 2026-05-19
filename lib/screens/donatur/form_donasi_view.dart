@@ -596,7 +596,9 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                       const SizedBox(height: 15),
                       TextFormField(
                         keyboardType: TextInputType.phone,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: _inputStyle("No. WhatsApp"),
                         validator: _validatePhone,
                       ),
@@ -617,7 +619,9 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                       Expanded(
                         child: TextFormField(
                           keyboardType: TextInputType.phone,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: _inputStyle("No. WhatsApp"),
                           validator: _validatePhone,
                         ),

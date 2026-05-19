@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import 'portal_layout.dart'; 
-import '../../data/mock_database.dart'; 
+import 'portal_layout.dart';
+import '../../data/mock_database.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,7 +12,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -23,20 +22,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _checkRevisiStatus() {
     final user = MockDatabase.currentUser ?? {};
-    
+
     if (user['is_revisi'] == true) {
       showDialog(
         context: context,
-        barrierDismissible: false, 
+        barrierDismissible: false,
         builder: (context) {
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 30),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.orange,
+                  size: 30,
+                ),
                 SizedBox(width: 10),
-                Text("Revisi Diperlukan!", style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  "Revisi Diperlukan!",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             content: const Text(
@@ -47,19 +55,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text("Nanti Saja", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Nanti Saja",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); 
-                  context.go('/status-beasiswa'); 
+                  Navigator.pop(context);
+                  context.go('/status-beasiswa');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade700,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                 ),
-                child: const Text("Perbaiki Sekarang", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "Perbaiki Sekarang",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           );
@@ -70,12 +95,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String _formatDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) return '-';
-    
+
     try {
-      final date = DateTime.parse(dateString).toLocal(); 
+      final date = DateTime.parse(dateString).toLocal();
       final jam = date.hour.toString().padLeft(2, '0');
       final menit = date.minute.toString().padLeft(2, '0');
-      
+
       return "${date.day} ${_getMonthName(date.month)} ${date.year}, $jam:$menit WIB";
     } catch (e) {
       return "-";
@@ -83,22 +108,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Ags',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return months[month - 1];
   }
 
   String _getStatusText(int step, bool isRevisi) {
     if (isRevisi) return 'Perhatian: Revisi Dokumen Diperlukan!';
-    
+
     switch (step) {
-      case 0: return 'Belum Melengkapi Formulir Online';
-      case 1: return 'Tahap 2: Menunggu Verifikasi Dokumen';
-      case 2: return 'Tahap 3: Menunggu Jadwal Wawancara';
-      case 3: return 'Tahap 4: Menunggu Pengumuman Hasil Seleksi';
-      case 4: return 'Tahap 5: Lolos - Menunggu Orientasi & TTD';
-      case 5: return 'Tahap 6: Sedang Menjalani Pelatihan Vokasi';
-      case 6: return 'Lulus Program Pelatihan Vernon Edu';
-      default: return 'Belum Melengkapi Formulir';
+      case 0:
+        return 'Belum Melengkapi Formulir Online';
+      case 1:
+        return 'Tahap 2: Menunggu Verifikasi Dokumen';
+      case 2:
+        return 'Tahap 3: Menunggu Jadwal Wawancara';
+      case 3:
+        return 'Tahap 4: Menunggu Pengumuman Hasil Seleksi';
+      case 4:
+        return 'Tahap 5: Lolos - Menunggu Orientasi & TTD';
+      case 5:
+        return 'Tahap 6: Sedang Menjalani Pelatihan Vokasi';
+      case 6:
+        return 'Lulus Program Pelatihan Vernon Edu';
+      default:
+        return 'Belum Melengkapi Formulir';
     }
   }
 
@@ -119,19 +165,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = MockDatabase.currentUser ?? {};
-    
+
     final bool isRegistered = user['is_registered'] == true;
     final int currentStep = user['current_step'] ?? (isRegistered ? 1 : 0);
-    final bool isRevisi = user['is_revisi'] == true; 
-    
+    final bool isRevisi = user['is_revisi'] == true;
+
     // 👇 LOGIKA BARU PENGECEKAN STATUS DITOLAK
     final bool isDitolak = user['admin_status'] == 'Ditolak';
-    
+
     final currentName = user['name'] ?? 'Siswa VIP';
     final bool isMobile = MediaQuery.of(context).size.width < 800;
 
     return PortalLayout(
-      activeMenu: 'dashboard', 
+      activeMenu: 'dashboard',
       content: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 20 : 40),
         child: Column(
@@ -139,7 +185,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Text(
               'Dashboard Siswa',
-              style: TextStyle(fontSize: isMobile ? 24 : 28, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: isMobile ? 24 : 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -151,83 +200,129 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // ==========================================
             // BANNER JADWAL WAWANCARA (SEMBUNYIKAN JIKA DITOLAK)
             // ==========================================
-            if (!isDitolak && currentStep == 2 && user['jadwal_wawancara'] != null && user['jadwal_wawancara'].toString().isNotEmpty) ...[
+            if (!isDitolak &&
+                currentStep == 2 &&
+                user['jadwal_wawancara'] != null &&
+                user['jadwal_wawancara'].toString().isNotEmpty) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [Colors.blue.shade700, Colors.blue.shade500]),
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade700, Colors.blue.shade500],
+                  ),
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: isMobile 
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 30),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Text(
-                                "Selamat! Anda Lolos Wawancara",
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                child: isMobile
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_month_rounded,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  "Selamat! Anda Lolos Wawancara",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            "Jadwal: ${user['jadwal_wawancara']}",
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => context.go('/status-beasiswa'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue.shade700,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                "Cek Detail Lokasi",
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        Text(
-                          "Jadwal: ${user['jadwal_wawancara']}",
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        const SizedBox(height: 15),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_month_rounded,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Selamat! Anda Lolos ke Tahap Wawancara",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "Jadwal Anda: ${user['jadwal_wawancara']}",
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton(
                             onPressed: () => context.go('/status-beasiswa'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.blue.shade700,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            child: const Text("Cek Detail Lokasi", style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: const Text(
+                              "Cek Detail Lokasi",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 40),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Selamat! Anda Lolos ke Tahap Wawancara",
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                "Jadwal Anda: ${user['jadwal_wawancara']}",
-                                style: const TextStyle(color: Colors.white70, fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => context.go('/status-beasiswa'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.blue.shade700,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: const Text("Cek Detail Lokasi", style: TextStyle(fontWeight: FontWeight.bold)),
-                        )
-                      ],
-                    ),
+                        ],
+                      ),
               ),
               const SizedBox(height: 30),
             ],
@@ -243,13 +338,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   // 👇 BORDER MERAH JIKA DITOLAK ATAU REVISI
-                  color: isDitolak ? Colors.red.shade200 : (isRevisi ? Colors.red.shade300 : (currentStep > 0 ? Colors.blue.shade200 : Colors.grey.shade300))
+                  color: isDitolak
+                      ? Colors.red.shade200
+                      : (isRevisi
+                            ? Colors.red.shade300
+                            : (currentStep > 0
+                                  ? Colors.blue.shade200
+                                  : Colors.grey.shade300)),
                 ),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              child: isDitolak 
-                ? _buildStatusDitolak() // 👇 PANGGIL WIDGET DITOLAK
-                : (isMobile ? _buildStatusMobile(currentStep, isRevisi) : _buildStatusDesktop(currentStep, isRevisi)),
+              child: isDitolak
+                  ? _buildStatusDitolak() // 👇 PANGGIL WIDGET DITOLAK
+                  : (isMobile
+                        ? _buildStatusMobile(currentStep, isRevisi)
+                        : _buildStatusDesktop(currentStep, isRevisi)),
             ),
             const SizedBox(height: 30),
 
@@ -294,11 +403,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• Pastikan Anda telah melengkapi seluruh persyaratan sebelum menekan tombol kirim pendaftaran.', style: TextStyle(height: 1.5)),
+                  Text(
+                    '• Pastikan Anda telah melengkapi seluruh persyaratan sebelum menekan tombol kirim pendaftaran.',
+                    style: TextStyle(height: 1.5),
+                  ),
                   SizedBox(height: 8),
-                  Text('• Kelulusan tahap berkas dan undangan wawancara akan diumumkan melalui dashboard ini.', style: TextStyle(height: 1.5)),
+                  Text(
+                    '• Kelulusan tahap berkas dan undangan wawancara akan diumumkan melalui dashboard ini.',
+                    style: TextStyle(height: 1.5),
+                  ),
                   SizedBox(height: 8),
-                  Text('• Jika mengalami kendala teknis, silakan hubungi WhatsApp admin VIP di menu Bantuan.', style: TextStyle(height: 1.5)),
+                  Text(
+                    '• Jika mengalami kendala teknis, silakan hubungi WhatsApp admin VIP di menu Bantuan.',
+                    style: TextStyle(height: 1.5),
+                  ),
                 ],
               ),
             ),
@@ -320,8 +438,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
-              child: Icon(Icons.cancel_rounded, color: Colors.red.shade600, size: 30),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.cancel_rounded,
+                color: Colors.red.shade600,
+                size: 30,
+              ),
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -330,17 +455,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   const Text(
                     'Mohon Maaf, Anda Belum Lolos',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Terima kasih atas partisipasi dan antusiasme Anda mengikuti seleksi Beasiswa Vernon Indonesia Pintar (VIP) 2026. Setelah melalui proses evaluasi yang ketat, dengan berat hati kami sampaikan bahwa Anda belum dapat melanjutkan ke tahap berikutnya pada periode ini.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 15),
                   Text(
                     'Jangan patah semangat! Terus kembangkan potensi Anda dan silakan mencoba kembali di program beasiswa kami selanjutnya.',
-                    style: TextStyle(fontSize: 14, color: Colors.blue.shade800, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -361,7 +498,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       "Seleksi Wawancara",
       "Pengumuman Kelulusan",
       "Orientasi & Penandatanganan Kontrak",
-      "Pelatihan Vokasi Dimulai"
+      "Pelatihan Vokasi Dimulai",
     ];
 
     return Container(
@@ -382,15 +519,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (currentStep == 0) {
             if (index == 0) isActive = true;
           } else if (currentStep >= 6) {
-            isDone = true; 
+            isDone = true;
           } else {
             if (index < currentStep) isDone = true;
             if (index == currentStep) isActive = true;
-            
+
             if (index == 1 && isRevisi) {
-               isDone = false;
-               isActive = true;
-               isError = true;
+              isDone = false;
+              isActive = true;
+              isError = true;
             }
           }
 
@@ -417,7 +554,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     Color circleColor = Colors.grey.shade200;
     Color lineAndTextColor = Colors.grey.shade500;
-    Widget circleContent = Text(stepNumber, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold));
+    Widget circleContent = Text(
+      stepNumber,
+      style: TextStyle(
+        color: Colors.grey.shade600,
+        fontWeight: FontWeight.bold,
+      ),
+    );
 
     if (isDone) {
       circleColor = Colors.green;
@@ -426,11 +569,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (isError) {
       circleColor = Colors.red;
       lineAndTextColor = Colors.red;
-      circleContent = const Icon(Icons.priority_high, color: Colors.white, size: 16);
+      circleContent = const Icon(
+        Icons.priority_high,
+        color: Colors.white,
+        size: 16,
+      );
     } else if (isActive) {
       circleColor = AppColors.primary;
       lineAndTextColor = AppColors.primary;
-      circleContent = Text(stepNumber, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold));
+      circleContent = Text(
+        stepNumber,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      );
     }
 
     return Row(
@@ -466,19 +619,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   title,
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: isActive || isError ? FontWeight.bold : FontWeight.normal,
-                    color: isActive || isDone || isError ? Colors.black87 : Colors.grey.shade500,
+                    fontWeight: isActive || isError
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isActive || isDone || isError
+                        ? Colors.black87
+                        : Colors.grey.shade500,
                   ),
                 ),
                 if (isError)
                   const Padding(
                     padding: EdgeInsets.only(top: 4.0),
-                    child: Text("Perlu perbaikan berkas!", style: TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      "Perlu perbaikan berkas!",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 if (isActive && !isError)
                   Padding(
                     padding: const EdgeInsets.only(top: 4.0),
-                    child: Text("Tahap saat ini", style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      "Tahap saat ini",
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -500,7 +671,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -511,7 +684,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             backgroundColor: Colors.white,
             iconColor: AppColors.primary,
             collapsedIconColor: Colors.grey.shade600,
-            leading: Icon(Icons.assignment_ind_rounded, color: AppColors.primary),
+            leading: Icon(
+              Icons.assignment_ind_rounded,
+              color: AppColors.primary,
+            ),
             title: const Text(
               "Lihat Data Pendaftaran Anda",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -530,20 +706,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _buildDetailRow("Nomor HP", user['telepon'] ?? '-'),
                     _buildDetailRow("Domisili", user['domisili'] ?? '-'),
                     _buildDetailRow("Pendidikan", user['pendidikan'] ?? '-'),
-                    _buildDetailRow("Asal Sekolah", user['asal_sekolah'] ?? '-'),
+                    _buildDetailRow(
+                      "Asal Sekolah",
+                      user['asal_sekolah'] ?? '-',
+                    ),
                     _buildDetailRow("Tahun Lulus", user['tahun_lulus'] ?? '-'),
-                    
+
                     const SizedBox(height: 20),
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 15),
-                    const Text("Dokumen Pendukung Tersimpan:", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                    const Text(
+                      "Dokumen Pendukung Tersimpan:",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
                     const SizedBox(height: 15),
-                    
+
                     _buildFileRow("KTP / Kartu Pelajar", user['file_ktp']),
                     _buildFileRow("Ijazah / SKL Terakhir", user['file_rapor']),
                     _buildFileRow("Pas Foto 3x4", user['file_foto']),
                     _buildFileRow("Surat Motivasi", user['file_motivasi']),
-                    _buildFileRow("Surat Keterangan Tidak Mampu (SKTM)", user['file_sktm']),
+                    _buildFileRow(
+                      "Surat Keterangan Tidak Mampu (SKTM)",
+                      user['file_sktm'],
+                    ),
                   ],
                 ),
               ),
@@ -562,13 +750,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
           ),
           const Text(":  ", style: TextStyle(color: Colors.black54)),
           Expanded(
             child: Text(
-              value.isEmpty ? '-' : value, 
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)
+              value.isEmpty ? '-' : value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
@@ -578,7 +773,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildFileRow(String label, String? fileName) {
     bool hasFile = fileName != null && fileName.isNotEmpty;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -586,25 +781,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+            ),
           ),
           const Text(":  ", style: TextStyle(color: Colors.black54)),
           Expanded(
             child: Row(
               children: [
                 Icon(
-                  hasFile ? Icons.check_circle : Icons.cancel, 
-                  color: hasFile ? Colors.green : Colors.red, 
-                  size: 16
+                  hasFile ? Icons.check_circle : Icons.cancel,
+                  color: hasFile ? Colors.green : Colors.red,
+                  size: 16,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    hasFile ? fileName : "Belum Diunggah", 
+                    hasFile ? fileName : "Belum Diunggah",
                     style: TextStyle(
-                      fontWeight: FontWeight.w600, 
-                      fontSize: 14, 
-                      color: hasFile ? Colors.blue.shade700 : Colors.red
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: hasFile ? Colors.blue.shade700 : Colors.red,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -635,7 +833,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _getStatusBgColor(step, isRevisi),
                       borderRadius: BorderRadius.circular(20),
@@ -659,13 +860,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context.go('/status-beasiswa');
                 }
               },
-              icon: Icon(step == 0 ? Icons.edit_document : (isRevisi ? Icons.warning_rounded : Icons.fact_check_outlined)),
-              label: Text(step == 0 ? 'Lengkapi Berkas Sekarang' : (isRevisi ? 'Perbaiki Berkas' : 'Cek Detail Status')),
+              icon: Icon(
+                step == 0
+                    ? Icons.edit_document
+                    : (isRevisi
+                          ? Icons.warning_rounded
+                          : Icons.fact_check_outlined),
+              ),
+              label: Text(
+                step == 0
+                    ? 'Lengkapi Berkas Sekarang'
+                    : (isRevisi ? 'Perbaiki Berkas' : 'Cek Detail Status'),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isRevisi ? Colors.red.shade600 : AppColors.primary,
+                backgroundColor: isRevisi
+                    ? Colors.red.shade600
+                    : AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -711,13 +929,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 context.go('/status-beasiswa');
               }
             },
-            icon: Icon(step == 0 ? Icons.edit_document : (isRevisi ? Icons.warning_rounded : Icons.fact_check_outlined)),
-            label: Text(step == 0 ? 'Lengkapi Berkas Sekarang' : (isRevisi ? 'Perbaiki Berkas' : 'Cek Detail Status')),
+            icon: Icon(
+              step == 0
+                  ? Icons.edit_document
+                  : (isRevisi
+                        ? Icons.warning_rounded
+                        : Icons.fact_check_outlined),
+            ),
+            label: Text(
+              step == 0
+                  ? 'Lengkapi Berkas Sekarang'
+                  : (isRevisi ? 'Perbaiki Berkas' : 'Cek Detail Status'),
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isRevisi ? Colors.red.shade600 : AppColors.primary,
+              backgroundColor: isRevisi
+                  ? Colors.red.shade600
+                  : AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ),
@@ -729,14 +961,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildProgressBar(int step, bool isRevisi) {
     int displayStep = step == 0 ? 0 : step + 1;
-    
+
     String progressText = '';
     if (step == 0) {
       progressText = 'Tahap 0 dari 6: Belum Mengisi Form';
     } else if (isRevisi) {
       progressText = 'Tahap $displayStep dari 6: Menunggu Perbaikan Anda';
     } else {
-      progressText = 'Tahap $displayStep dari 6: ${_getStatusText(step, false).split(": ").last}';
+      progressText =
+          'Tahap $displayStep dari 6: ${_getStatusText(step, false).split(": ").last}';
     }
 
     return Column(
@@ -745,7 +978,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           progressText,
           style: TextStyle(
-            color: isRevisi ? Colors.red.shade700 : Colors.black54, 
+            color: isRevisi ? Colors.red.shade700 : Colors.black54,
             fontSize: 13,
             fontWeight: isRevisi ? FontWeight.bold : FontWeight.normal,
           ),
