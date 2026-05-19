@@ -48,8 +48,16 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (userRole == 'admin') {
         context.go('/admin-dashboard'); // Masuk ke dashboard Admin
-      } else {
+      } else if (userRole == 'siswa') {
         context.go('/portal'); // Masuk ke dashboard Siswa
+      } else if (userRole == 'donatur') {
+        setState(() {
+          _errorMessage = 'Akun ini adalah akun donatur. Silakan login melalui halaman login donatur.';
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Peran pengguna tidak dikenali.';
+        });
       }
       
     } else {
