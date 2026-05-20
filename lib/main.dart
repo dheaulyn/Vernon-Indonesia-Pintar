@@ -5,6 +5,9 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+// 👇 1. IMPORT SUPABASE BARU
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'data/supabase_service.dart';
 // --- IMPORT PUBLIK ---
 import 'screens/home/home_screen.dart';
 import 'screens/home/widgets/faq_screen.dart';
@@ -27,7 +30,6 @@ import 'screens/admin/auth/login_admin_screen.dart';
 import 'screens/admin/layout_dashboard.dart';
 import 'screens/admin/home_dashboard.dart';
 import 'screens/admin/manajemen_pendaftar_admin.dart';
-// 👇 INI IMPORT BARUNYA
 import 'screens/admin/manajemen_donasi.dart';
 
 import 'screens/admin/cms/hero_banner_admin.dart';
@@ -40,7 +42,20 @@ import 'screens/admin/cms/faq_admin.dart';
 import 'screens/admin/cms/footer_admin.dart';
 import 'screens/admin/cms/partners_admin.dart';
 
-void main() {
+// 👇 2. UBAH MAIN MENJADI ASYNC
+void main() async {
+  // 👇 3. PASTIKAN FLUTTER SIAP MENJALANKAN PROSES ASYNC
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 👇 4. SUNTIKKAN KUNCI SUPABASE (URL dipotong /rest/v1/-nya)
+  await Supabase.initialize(
+    url: 'https://bfuflpeftdysoowrridc.supabase.co',
+    anonKey: 'sb_publishable_U2SA21z0d4FAggmIwYpH-A__NT3kEQa',
+  );
+
+  // 👇 TAMBAHKAN BARIS INI TEPAT DI SINI
+  SupabaseService.listenToFinancialRealtime();
+
   usePathUrlStrategy();
   runApp(const YayasanApp());
 }
