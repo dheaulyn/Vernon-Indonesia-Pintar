@@ -1,10 +1,10 @@
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../shared/custom_navbar.dart'; 
-import '../shared/custom_footer.dart'; 
-import '../../data/mock_database.dart'; 
+import '../shared/custom_navbar.dart';
+import '../shared/custom_footer.dart';
+import '../../data/mock_database.dart';
 
 class MediaScreen extends StatefulWidget {
   const MediaScreen({super.key});
@@ -13,7 +13,8 @@ class MediaScreen extends StatefulWidget {
   State<MediaScreen> createState() => _MediaScreenState();
 }
 
-class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStateMixin {
+class _MediaScreenState extends State<MediaScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   // Data diambil dari MockDatabase
@@ -24,7 +25,7 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
+
     // Menarik data saat halaman pertama kali dibuka
     _artikelList = MockDatabase.getSemuaArtikel();
     _galeriList = MockDatabase.getSemuaGaleri();
@@ -44,11 +45,13 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
   // 👇 FUNGSI PINTAR: Untuk merender gambar URL maupun Base64
   Widget _buildImageDisplay(String imageSource, {BoxFit fit = BoxFit.cover}) {
     if (imageSource.isEmpty) {
-      return const Center(child: Icon(Icons.image_rounded, size: 50, color: Colors.black12));
+      return const Center(
+        child: Icon(Icons.image_rounded, size: 50, color: Colors.black12),
+      );
     }
     if (imageSource.startsWith('http')) {
       return Image.network(imageSource, fit: fit);
-    } 
+    }
     try {
       return Image.memory(base64Decode(imageSource), fit: fit);
     } catch (e) {
@@ -68,7 +71,7 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
           children: [
             // NAVBAR DI BAGIAN ATAS
             const CustomNavbar(),
-            
+
             // HEADER MEDIA PUBLIKASI
             Container(
               width: double.infinity,
@@ -91,7 +94,7 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // ==========================================
                   // PERBAIKAN WIDGET TAB BAR (DI TENGAH)
                   // ==========================================
@@ -99,11 +102,14 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                     width: isMobile ? double.infinity : 500,
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: Colors.white, // Gunakan putih agar bayangan lebih terlihat lembut
+                      color: Colors
+                          .white, // Gunakan putih agar bayangan lebih terlihat lembut
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05), // Bayangan halus
+                          color: Colors.black.withOpacity(
+                            0.05,
+                          ), // Bayangan halus
                           blurRadius: 10,
                           offset: const Offset(0, 4), // Bayangan jatuh ke bawah
                         ),
@@ -121,7 +127,10 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                         ),
                         labelColor: Colors.white,
                         unselectedLabelColor: Colors.grey.shade600,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                         dividerColor: Colors.transparent,
                         tabs: const [
                           Tab(text: "Artikel Terbaru"),
@@ -136,14 +145,17 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
 
             // KONTEN TAB (ARTIKEL ATAU GALERI)
             Container(
-              constraints: const BoxConstraints(minHeight: 500), 
-              width: 1200, 
-              padding: EdgeInsets.symmetric(vertical: isMobile ? 20 : 40, horizontal: isMobile ? 0 : 20),
+              constraints: const BoxConstraints(minHeight: 500),
+              width: 1200,
+              padding: EdgeInsets.symmetric(
+                vertical: isMobile ? 20 : 40,
+                horizontal: isMobile ? 0 : 20,
+              ),
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
-                child: _tabController.index == 0 
-                  ? _buildArtikelTab(isMobile) 
-                  : _buildGaleriTab(isMobile),
+                child: _tabController.index == 0
+                    ? _buildArtikelTab(isMobile)
+                    : _buildGaleriTab(isMobile),
               ),
             ),
 
@@ -169,13 +181,13 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
       key: const ValueKey('artikel'),
       padding: EdgeInsets.all(isMobile ? 15.0 : 0),
       child: GridView.builder(
-        shrinkWrap: true, 
-        physics: const NeverScrollableScrollPhysics(), 
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 25,
           mainAxisSpacing: 25,
-          childAspectRatio: isMobile ? 1.0 : 0.85, 
+          childAspectRatio: isMobile ? 1.0 : 0.85,
         ),
         itemCount: _artikelList.length,
         itemBuilder: (context, index) {
@@ -183,7 +195,9 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
           return Card(
             color: Colors.white,
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
@@ -212,26 +226,42 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   artikel['kategori'] ?? 'Berita',
-                                  style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               Text(
                                 artikel['date'] ?? '-',
-                                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Text(
                             artikel['title'] ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, height: 1.3),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              height: 1.3,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -239,7 +269,11 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                           Expanded(
                             child: Text(
                               artikel['desc'] ?? '',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13, height: 1.5),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -247,11 +281,22 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                           const SizedBox(height: 10),
                           Row(
                             children: const [
-                              Text("Baca Selengkapnya", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                              Text(
+                                "Baca Selengkapnya",
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
                               SizedBox(width: 5),
-                              Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 16),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                color: AppColors.primary,
+                                size: 16,
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -279,23 +324,25 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
       key: const ValueKey('galeri'),
       padding: EdgeInsets.all(isMobile ? 15.0 : 0),
       child: GridView.builder(
-        shrinkWrap: true, 
-        physics: const NeverScrollableScrollPhysics(), 
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
-          childAspectRatio: 1.0, 
+          childAspectRatio: 1.0,
         ),
         itemCount: _galeriList.length,
         itemBuilder: (context, index) {
           final g = _galeriList[index];
           final judulFoto = g['title'] ?? '';
           final imageSource = g['image'] ?? '';
-          
+
           return Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
@@ -304,13 +351,17 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                   context: context,
                   builder: (BuildContext context) {
                     return Dialog(
-                      backgroundColor: Colors.transparent, // Latar belakang transparan agar elegan
+                      backgroundColor: Colors
+                          .transparent, // Latar belakang transparan agar elegan
                       insetPadding: EdgeInsets.all(isMobile ? 20 : 60),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           Container(
-                            constraints: const BoxConstraints(maxWidth: 800, maxHeight: 600),
+                            constraints: const BoxConstraints(
+                              maxWidth: 800,
+                              maxHeight: 600,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
@@ -325,25 +376,33 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                                     width: double.infinity,
                                     decoration: BoxDecoration(
                                       color: Colors.grey.shade200,
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(16),
+                                      ),
                                     ),
-                                    clipBehavior: Clip.antiAlias, // Wajib agar ujung gambar ikut melengkung
+                                    clipBehavior: Clip
+                                        .antiAlias, // Wajib agar ujung gambar ikut melengkung
                                     // 👇 MENAMPILKAN GAMBAR ASLI DI POPUP
                                     child: _buildImageDisplay(imageSource),
                                   ),
                                 ),
                                 // AREA TEKS DESKRIPSI DI BAWAH GAMBAR
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 25,
+                                    vertical: 20,
+                                  ),
                                   decoration: const BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                                    borderRadius: BorderRadius.vertical(
+                                      bottom: Radius.circular(16),
+                                    ),
                                   ),
                                   child: Text(
                                     judulFoto,
                                     style: const TextStyle(
-                                      fontSize: 18, 
-                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
                                       color: Colors.black87,
                                     ),
                                     textAlign: TextAlign.center,
@@ -352,7 +411,7 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                               ],
                             ),
                           ),
-                          
+
                           // TOMBOL CLOSE (X) MELAYANG DI POJOK KANAN ATAS
                           Positioned(
                             top: 0,
@@ -363,7 +422,10 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                                 color: Colors.black54,
                                 shape: const CircleBorder(),
                                 child: IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.white),
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                  ),
                                   tooltip: "Tutup",
                                   onPressed: () => Navigator.of(context).pop(),
                                 ),
@@ -385,7 +447,9 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                     child: _buildImageDisplay(imageSource),
                   ),
                   Positioned(
-                    bottom: 0, left: 0, right: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(15),
                       decoration: const BoxDecoration(
@@ -397,7 +461,12 @@ class _MediaScreenState extends State<MediaScreen> with SingleTickerProviderStat
                       ),
                       child: Text(
                         judulFoto,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, height: 1.3),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

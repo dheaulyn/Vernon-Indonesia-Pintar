@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart'; 
+import '../../core/snackbar_helper.dart';
+import '../../services/supabase_auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +21,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   String _errorMessage = '';
+  String _currentPassword = '';
+  String _currentConfirmPassword = '';
+
+  // Cek persyaratan password
+  bool get _hasMinLength => _currentPassword.length >= 6;
+  bool get _hasUppercase => _currentPassword.contains(RegExp(r'[A-Z]'));
+  bool get _hasDigit => _currentPassword.contains(RegExp(r'[0-9]'));
+  bool get _passwordsMatch =>
+      _currentConfirmPassword.isNotEmpty &&
+      _currentPassword == _currentConfirmPassword;
 
   Future<void> _handleRegister() async {
     setState(() {
@@ -40,6 +51,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // Validasi persyaratan password sebelum kirim ke server
+    if (!_hasMinLength || !_hasUppercase || !_hasDigit) {
+      setState(() {
+        _errorMessage = 'Password belum memenuhi semua persyaratan.';
+        _isLoading = false;
+      });
+      return;
+    }
+
     if (password != confirm) {
       setState(() {
         _errorMessage = 'Password dan Konfirmasi Password tidak cocok!';
@@ -48,29 +68,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    // Panggil Mock Database untuk mendaftar
-    final success = await MockDatabase.register(name, email, password);
+    // Panggil register untuk mendaftarkan akun siswa
+    final error = await SupabaseAuthService.register(name, email, password);
 
     setState(() {
       _isLoading = false;
     });
 
-    if (success) {
+    if (error == null) {
       if (!mounted) return;
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      
+
+      showSuccessSnackBar(context, 'Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.');
+
       // Menggunakan go_router untuk kembali ke halaman login
       context.go('/login');
     } else {
       setState(() {
-        _errorMessage = 'Email sudah terdaftar. Silakan gunakan email lain atau masuk.';
+        _errorMessage = error;
       });
     }
   }
@@ -84,23 +98,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  List<Widget> _buildPasswordChecklist() {
+    return [
+      const SizedBox(height: 10),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Persyaratan Password:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+            ),
+            const SizedBox(height: 6),
+            _buildCheckItem('Minimal 6 karakter', _hasMinLength),
+            _buildCheckItem('Mengandung huruf kapital (A-Z)', _hasUppercase),
+            _buildCheckItem('Mengandung angka (0-9)', _hasDigit),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildCheckItem(String text, bool passed) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            passed ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 15,
+            color: passed ? Colors.green.shade600 : Colors.grey.shade400,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: passed ? Colors.green.shade700 : Colors.grey.shade600,
+              fontWeight: passed ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFB), // Background menyatu dengan layar
+      backgroundColor: const Color(
+        0xFFFBFBFB,
+      ), // Background menyatu dengan layar
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight, 
-              ),
-              child: Center( 
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Container(
-                    width: 450, 
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+                    width: 450,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 40,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -125,7 +194,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Transform.translate(
                               offset: const Offset(-8, 0),
                               child: IconButton(
-                                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                                icon: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.black87,
+                                ),
                                 onPressed: () {
                                   context.go('/login');
                                 },
@@ -139,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ],
                         ),
                         const SizedBox(height: 40),
-                        
+
                         const Text(
                           'Daftar Akun Siswa',
                           style: TextStyle(
@@ -177,125 +249,249 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
 
                         // Form Nama Lengkap
-                        const Text('Nama Lengkap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Text(
+                          'Nama Lengkap',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _nameController, 
+                          controller: _nameController,
                           decoration: InputDecoration(
                             hintText: 'Sesuai KTP / Kartu Pelajar',
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 14,
+                            ),
                             filled: true,
                             fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
 
                         // Form Email
-                        const Text('Email Aktif', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Text(
+                          'Email Aktif',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _emailController, 
+                          controller: _emailController,
                           decoration: InputDecoration(
                             hintText: 'contoh@email.com',
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 14,
+                            ),
                             filled: true,
                             fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
 
                         // Form Password
-                        const Text('Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Text(
+                          'Password',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _passwordController, 
+                          controller: _passwordController,
                           obscureText: !_isPasswordVisible,
+                          onChanged: (val) => setState(() => _currentPassword = val),
                           decoration: InputDecoration(
-                            hintText: 'Minimal 8 karakter',
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintText: 'Min. 6 karakter, huruf besar & angka',
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 14,
+                            ),
                             filled: true,
                             fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: Colors.grey.shade600,
                               ),
-                              onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                              onPressed: () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible,
+                              ),
                             ),
                           ),
                         ),
+                        // ✅ Indikator persyaratan password
+                        if (_currentPassword.isNotEmpty) ..._buildPasswordChecklist(),
                         const SizedBox(height: 20),
 
                         // Form Konfirmasi Password
-                        const Text('Konfirmasi Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Text(
+                          'Konfirmasi Password',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextFormField(
-                          controller: _confirmPasswordController, 
+                          controller: _confirmPasswordController,
                           obscureText: !_isConfirmPasswordVisible,
+                          onChanged: (val) => setState(() => _currentConfirmPassword = val),
                           decoration: InputDecoration(
                             hintText: 'Masukkan ulang password',
-                            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 14,
+                            ),
                             filled: true,
                             fillColor: Colors.grey.shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: _currentConfirmPassword.isEmpty
+                                    ? Colors.grey.shade300
+                                    : _passwordsMatch
+                                        ? Colors.green.shade400
+                                        : Colors.red.shade300,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                                color: Colors.grey.shade600,
+                              borderSide: BorderSide(
+                                color: _currentConfirmPassword.isEmpty
+                                    ? AppColors.primary
+                                    : _passwordsMatch
+                                        ? Colors.green.shade500
+                                        : Colors.red.shade400,
+                                width: 1.5,
                               ),
-                              onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            suffixIcon: _currentConfirmPassword.isEmpty
+                                ? IconButton(
+                                    icon: Icon(
+                                      _isConfirmPasswordVisible
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    onPressed: () => setState(
+                                      () => _isConfirmPasswordVisible =
+                                          !_isConfirmPasswordVisible,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _passwordsMatch
+                                            ? Icons.check_circle
+                                            : Icons.cancel,
+                                        color: _passwordsMatch
+                                            ? Colors.green.shade500
+                                            : Colors.red.shade400,
+                                        size: 22,
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          _isConfirmPasswordVisible
+                                              ? Icons.visibility
+                                              : Icons.visibility_off,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        onPressed: () => setState(
+                                          () => _isConfirmPasswordVisible =
+                                              !_isConfirmPasswordVisible,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -303,7 +499,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Tombol Daftar
                         SizedBox(
                           width: double.infinity,
-                          height: 55, 
+                          height: 55,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleRegister,
                             style: ElevatedButton.styleFrom(
@@ -316,12 +512,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                                    height: 20, width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'DAFTAR SEKARANG',
-                                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 15),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                      fontSize: 15,
+                                    ),
                                   ),
                           ),
                         ),
@@ -331,12 +535,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('Sudah punya akun?', style: TextStyle(fontSize: 14)),
+                            const Text(
+                              'Sudah punya akun?',
+                              style: TextStyle(fontSize: 14),
+                            ),
                             TextButton(
-                              onPressed: () => context.go('/login'), 
+                              onPressed: () => context.go('/login'),
                               child: const Text(
                                 'Masuk di sini',
-                                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14),
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ],

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../data/mock_database.dart';
+
+// 👇 1. IMPORT KEDUA SERVICE (Auth & Donasi)
+import '../../../../services/supabase_auth_service.dart';
+import '../../../../services/supabase_donasi_service.dart';
 
 class RiwayatDonasiView extends StatelessWidget {
   final bool isMobile;
-  // parameter allHistories dihapus karena kita panggil langsung dari MockDatabase
 
   const RiwayatDonasiView({super.key, required this.isMobile});
 
@@ -16,21 +18,19 @@ class RiwayatDonasiView extends StatelessWidget {
       decimalDigits: 0,
     );
 
-    // Ambil nama user yang sedang login
-    final String currentUserName = MockDatabase.currentUser?['name'] ?? '';
+    // Format tanggal untuk Supabase (ISO8601 ke text biasa)
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
+
+    // 👇 2. AMBIL EMAIL USER YANG LOGIN DARI SERVICE NABILA
+    final String? currentUserEmail =
+        SupabaseAuthService.currentUserData?['email'];
 
     return ValueListenableBuilder(
-      valueListenable: MockDatabase.riwayatDonasi,
+      valueListenable: SupabaseDonationService.riwayatDonasi,
       builder: (context, List<Map<String, dynamic>> riwayatGlobal, _) {
-        // 👇 FILTER: Hanya ambil donasi yang namanya sama dengan user login
-        // atau yang berdonasi anonim (Hamba Allah) tapi dari akun ini (bisa difilter via email jika ada)
-        // Untuk simulasi ini, kita tampilkan yang namanya cocok.
+        // 👇 3. FILTER PINTAR: Cocokkan berdasarkan Email, bukan Nama.
         final riwayatPribadi = riwayatGlobal
-            .where(
-              (donasi) =>
-                  donasi['nama'] == currentUserName ||
-                  donasi['nama'] == 'Hamba Allah',
-            )
+            .where((donasi) => donasi['donatur_email'] == currentUserEmail)
             .toList();
 
         return ListView(
@@ -50,8 +50,21 @@ class RiwayatDonasiView extends StatelessWidget {
                 ),
               )
             else
-              ...riwayatPribadi.map(
-                (history) => Container(
+              ...riwayatPribadi.map((history) {
+                // Konversi tanggal dari database
+                String formattedDate = '-';
+                if (history['created_at'] != null) {
+                  try {
+                    DateTime date = DateTime.parse(
+                      history['created_at'],
+                    ).toLocal();
+                    formattedDate = dateFormat.format(date);
+                  } catch (e) {
+                    formattedDate = history['created_at'].toString();
+                  }
+                }
+
+                return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -66,7 +79,8 @@ class RiwayatDonasiView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              history['program'] ?? "Program VIP",
+                              history['program_name'] ??
+                                  "Program VIP", // Sesuai kolom database
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -75,7 +89,7 @@ class RiwayatDonasiView extends StatelessWidget {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              history['tgl'] ?? '-',
+                              formattedDate,
                               style: TextStyle(
                                 color: Colors.grey.shade500,
                                 fontSize: 13,
@@ -88,7 +102,9 @@ class RiwayatDonasiView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            currencyFormatter.format(history['nominal'] ?? 0),
+                            currencyFormatter.format(
+                              history['amount'] ?? 0,
+                            ), // Sesuai kolom database
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -97,7 +113,7 @@ class RiwayatDonasiView extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            "Sukses", // Di sistem real-time kita, uang langsung masuk, jadi statusnya selalu sukses
+                            history['status'] ?? "Sukses",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -108,8 +124,8 @@ class RiwayatDonasiView extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              }),
           ],
         );
       },

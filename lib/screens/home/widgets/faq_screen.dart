@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
-import '../../shared/custom_footer.dart'; 
-import '../../../data/mock_database.dart'; 
+import '../../shared/custom_footer.dart';
+import '../../../data/mock_database.dart';
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -47,7 +47,7 @@ class _FAQScreenState extends State<FAQScreen> {
             // HEADER BANNER
             Container(
               width: double.infinity,
-              height: isMobile ? 250 : 320, 
+              height: isMobile ? 250 : 320,
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/beranda.png'),
@@ -72,13 +72,13 @@ class _FAQScreenState extends State<FAQScreen> {
                       "PUSAT BANTUAN",
                       style: TextStyle(
                         color: Colors.white70,
-                        fontSize: isMobile ? 14 : 16, 
+                        fontSize: isMobile ? 14 : 16,
                         letterSpacing: 3,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 10),
-                    
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
@@ -86,13 +86,13 @@ class _FAQScreenState extends State<FAQScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: isMobile ? 28 : 40, 
+                          fontSize: isMobile ? 28 : 40,
                           fontWeight: FontWeight.bold,
                           height: 1.2,
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -102,8 +102,8 @@ class _FAQScreenState extends State<FAQScreen> {
             // KONTEN DAFTAR PERTANYAAN
             Padding(
               padding: EdgeInsets.only(
-                top: 50, 
-                left: isMobile ? 20 : 100, 
+                top: 50,
+                left: isMobile ? 20 : 100,
                 right: isMobile ? 20 : 100,
               ),
               child: Column(
@@ -120,10 +120,7 @@ class _FAQScreenState extends State<FAQScreen> {
                   const SizedBox(height: 10),
                   Text(
                     "Temukan jawaban dari pertanyaan yang paling sering diajukan di bawah ini.",
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 30),
 
@@ -215,7 +212,7 @@ class _FAQScreenState extends State<FAQScreen> {
                       );
                     }),
 
-                  const SizedBox(height: 60), 
+                  const SizedBox(height: 60),
                 ],
               ),
             ),

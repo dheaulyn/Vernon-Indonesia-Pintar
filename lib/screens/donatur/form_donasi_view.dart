@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/app_colors.dart';
-import '../../../../data/mock_database.dart';
+import '../../../../core/snackbar_helper.dart';
+
+// 👇 1. IMPORT SERVICE SUPABASE BARUMU (MockDatabase dihapus)
+import '../../../../services/supabase_donasi_service.dart';
 
 class FormDonasiView extends StatefulWidget {
   final bool isMobile;
@@ -34,7 +37,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
   }
 
   // ==========================================
-  // FUNGSI POPUP METODE PEMBAYARAN (ANTI OVERFLOW)
+  // FUNGSI POPUP METODE PEMBAYARAN
   // ==========================================
   void _showPaymentMethodDialog(int nominal) {
     final currencyFormatter = NumberFormat.currency(
@@ -95,7 +98,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 2. KONTEN TENGAH (BISA DI-SCROLL)
+                    // 2. KONTEN TENGAH
                     Flexible(
                       child: SingleChildScrollView(
                         child: Column(
@@ -120,8 +123,6 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                                     ),
                                   ),
                                   const SizedBox(height: 5),
-
-                                  // Membungkus nominal agar otomatis mengecil jika teks terlalu panjang
                                   FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
@@ -133,7 +134,6 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                                       ),
                                     ),
                                   ),
-
                                   if (_isAnonymous) ...[
                                     const SizedBox(height: 10),
                                     Container(
@@ -211,53 +211,47 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                             : () async {
                                 setStateDialog(() => isProcessing = true);
 
-                                // Simulasi loading proses ke Payment Gateway (2 detik)
+                                // Simulasi loading Payment Gateway
                                 await Future.delayed(
                                   const Duration(seconds: 2),
                                 );
 
-                                // 👇 INI DIA KABEL BARUNYA YANG KITA SAMBUNGKAN KE SISTEM REAL-TIME
-                                MockDatabase.tambahDonasiInstan({
-                                  'id':
-                                      'tr${DateTime.now().millisecondsSinceEpoch}',
-                                  'nama': _isAnonymous
-                                      ? 'Hamba Allah'
-                                      : (widget.user['name'] ?? 'Donatur VIP'),
-                                  'nominal': nominal,
-                                  'program':
-                                      'Program Karir Kurikulum 10 Bulan VIP',
-                                  'tgl': DateFormat(
-                                    'yyyy-MM-dd',
-                                  ).format(DateTime.now()),
-                                  'bukti': 'Sistem Otomatis',
-                                });
+                                // 👇 2. INI DIA EKSEKUSI KE SUPABASE CLOUD
+                                try {
+                                  // Tentukan nama donatur
+                                  String namaDonatur = _isAnonymous
+                                      ? 'tanpa nama'
+                                      : (widget.user['name'] ?? 'Donatur VIP');
 
-                                if (context.mounted) {
-                                  Navigator.pop(dialogContext); // Tutup dialog
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: const [
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.white,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              'Pembayaran berhasil dikonfirmasi!',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      backgroundColor: Colors.green.shade600,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
+                                  // Kirim ke database!
+                                  await SupabaseDonationService.kirimDonasiKeCloud(
+                                    namaDonatur,
+                                    'Program Karir Kurikulum 10 Bulan VIP', // Nama program
+                                    nominal,
                                   );
 
-                                  // Pindah ke halaman riwayat
-                                  widget.onDonasiSuccess();
+                                  // Jika sukses
+                                  if (context.mounted) {
+                                    Navigator.pop(
+                                      dialogContext,
+                                    ); // Tutup dialog
+                                    showSuccessSnackBar(
+                                      context,
+                                      'Pembayaran berhasil dikonfirmasi!',
+                                    );
+
+                                    // Pindah ke halaman riwayat atau reset form
+                                    widget.onDonasiSuccess();
+                                  }
+                                } catch (e) {
+                                  // Jika terjadi error (misal internet mati)
+                                  if (context.mounted) {
+                                    setStateDialog(() => isProcessing = false);
+                                    showErrorSnackBar(
+                                      context,
+                                      'Transaksi gagal. Coba lagi! ($e)',
+                                    );
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -675,25 +669,9 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                     // Panggil dialog pilihan metode pembayaran
                     _showPaymentMethodDialog(finalNominal);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Mohon lengkapi data dengan benar sebelum melanjutkan.',
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                      ),
+                    showErrorSnackBar(
+                      context,
+                      'Mohon lengkapi data dengan benar sebelum melanjutkan.',
                     );
                   }
                 },

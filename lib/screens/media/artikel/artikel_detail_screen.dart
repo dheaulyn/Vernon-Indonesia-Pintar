@@ -11,10 +11,7 @@ import '../../shared/custom_footer.dart';
 class ArtikelDetailScreen extends StatefulWidget {
   final Map<String, String> artikel;
 
-  const ArtikelDetailScreen({
-    super.key,
-    required this.artikel,
-  });
+  const ArtikelDetailScreen({super.key, required this.artikel});
 
   @override
   State<ArtikelDetailScreen> createState() => _ArtikelDetailScreenState();
@@ -74,7 +71,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
     }
     if (imageSource.startsWith('http')) {
       return Image.network(imageSource, fit: fit);
-    } 
+    }
     try {
       return Image.memory(base64Decode(imageSource), fit: fit);
     } catch (e) {
@@ -85,7 +82,8 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
-    final String imageSource = widget.artikel['image'] ?? ''; // 👇 Ambil data gambar
+    final String imageSource =
+        widget.artikel['image'] ?? ''; // 👇 Ambil data gambar
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -165,7 +163,8 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
 
                     // Judul artikel
                     Text(
-                      widget.artikel['title'] ?? 'Judul Artikel Tidak Ditemukan',
+                      widget.artikel['title'] ??
+                          'Judul Artikel Tidak Ditemukan',
                       style: TextStyle(
                         fontSize: isMobile ? 24 : 36,
                         fontWeight: FontWeight.bold,
@@ -184,7 +183,8 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      clipBehavior: Clip.antiAlias, // Wajib agar ujung gambar melengkung
+                      clipBehavior:
+                          Clip.antiAlias, // Wajib agar ujung gambar melengkung
                       child: _buildImageDisplay(imageSource),
                     ),
 
@@ -216,7 +216,9 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                       )
                     else
                       Text(
-                        widget.artikel['content'] ?? widget.artikel['desc'] ?? '',
+                        widget.artikel['content'] ??
+                            widget.artikel['desc'] ??
+                            '',
                         style: const TextStyle(
                           fontSize: 16,
                           height: 1.8,

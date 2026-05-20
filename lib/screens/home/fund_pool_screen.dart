@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
-import '../../data/mock_database.dart';
+
+// 👇 1. IMPORT SERVICE SUPABASE-MU
+import '../../services/supabase_donasi_service.dart';
 
 class FundPoolScreen extends StatelessWidget {
   const FundPoolScreen({super.key});
@@ -125,8 +127,9 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
-      valueListenable: MockDatabase.totalDonasiTerkumpul,
+      valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
       builder: (context, total, _) {
         return _buildSummaryCard(
           "DONASI MASUK",
@@ -144,8 +147,9 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
-      valueListenable: MockDatabase.danaTersalurkan,
+      valueListenable: SupabaseDonationService.danaTersalurkan,
       builder: (context, tersalurkan, _) {
         return _buildSummaryCard(
           "TERSALURKAN",
@@ -163,11 +167,12 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
-      valueListenable: MockDatabase.totalDonasiTerkumpul,
+      valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
       builder: (context, total, _) {
         return ValueListenableBuilder(
-          valueListenable: MockDatabase.danaTersalurkan,
+          valueListenable: SupabaseDonationService.danaTersalurkan,
           builder: (context, tersalurkan, _) {
             int saldo = total - tersalurkan;
             return _buildSummaryCard(
@@ -244,6 +249,7 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,8 +297,9 @@ class FundPoolScreen extends StatelessWidget {
               BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
             ],
           ),
+          // 👇 Ganti MockDatabase dengan SupabaseDonationService
           child: ValueListenableBuilder(
-            valueListenable: MockDatabase.riwayatDonasi,
+            valueListenable: SupabaseDonationService.riwayatDonasi,
             builder: (context, List<Map<String, dynamic>> riwayat, _) {
               if (riwayat.isEmpty) {
                 return DataTable(
@@ -332,7 +339,7 @@ class FundPoolScreen extends StatelessWidget {
                         DataCell(Text("-")),
                         DataCell(
                           Text(
-                            "Belum ada data",
+                            "Belum ada data donasi",
                             style: TextStyle(fontStyle: FontStyle.italic),
                           ),
                         ),
@@ -375,15 +382,28 @@ class FundPoolScreen extends StatelessWidget {
                   ),
                 ],
                 rows: riwayat.map((donasi) {
+                  // Format tanggal dari Supabase
+                  String formattedDate = '-';
+                  if (donasi['created_at'] != null) {
+                    try {
+                      DateTime date = DateTime.parse(
+                        donasi['created_at'],
+                      ).toLocal();
+                      formattedDate = dateFormat.format(date);
+                    } catch (e) {
+                      formattedDate = donasi['created_at'].toString();
+                    }
+                  }
+
                   return DataRow(
                     cells: [
-                      DataCell(Text(donasi['tgl'] ?? '-')),
+                      DataCell(Text(formattedDate)),
                       DataCell(
                         Text(
-                          donasi['nama'] ?? '-',
+                          donasi['nama_donatur'] ?? '-',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: donasi['nama'] == 'Hamba Allah'
+                            color: donasi['nama_donatur'] == 'Hamba Allah'
                                 ? Colors.grey
                                 : Colors.black87,
                           ),
@@ -391,7 +411,7 @@ class FundPoolScreen extends StatelessWidget {
                       ),
                       DataCell(
                         Text(
-                          formatRp.format(donasi['nominal'] ?? 0),
+                          formatRp.format(donasi['amount'] ?? 0),
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -410,7 +430,7 @@ class FundPoolScreen extends StatelessWidget {
   }
 
   // ========================================================
-  // WIDGET: GRAFIK ALOKASI DANA DESIMAL (FIX HITUNGAN SULTAN)
+  // WIDGET: GRAFIK ALOKASI DANA DESIMAL
   // ========================================================
   Widget _buildAlokasiDana() {
     return Container(
@@ -437,11 +457,12 @@ class FundPoolScreen extends StatelessWidget {
           ),
           const SizedBox(height: 40),
 
+          // 👇 Ganti MockDatabase dengan SupabaseDonationService
           ValueListenableBuilder(
-            valueListenable: MockDatabase.riwayatPenyaluran,
+            valueListenable: SupabaseDonationService.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
               return ValueListenableBuilder(
-                valueListenable: MockDatabase.totalDonasiTerkumpul,
+                valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
                 builder: (context, int totalDonasi, _) {
                   int totalPendidikan = 0;
                   int totalUangSaku = 0;
@@ -465,12 +486,12 @@ class FundPoolScreen extends StatelessWidget {
                       ? (totalOperasional / totalDonasi)
                       : 0.0;
 
-                  // Fungsi pembantu agar angka kecil di bawah 1% tidak langsung terpotong bulat jadi 0%
                   String formatPersenDinamis(double progress) {
                     double hasil = progress * 100;
                     if (hasil == 0) return "0%";
-                    if (hasil < 1)
-                      return "${hasil.toStringAsFixed(2)}%"; // Menampilkan 0.01%
+                    if (hasil < 1) {
+                      return "${hasil.toStringAsFixed(2)}%";
+                    }
                     return "${hasil.toStringAsFixed(1)}%";
                   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../data/mock_database.dart'; 
+import '../../data/mock_database.dart';
 
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
@@ -89,20 +89,26 @@ class CustomFooter extends StatelessWidget {
               children: [
                 // Icon WhatsApp
                 _buildSocialIcon(
-                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/733/733585.png',
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/733/733585.png',
                   url: footerData['whatsapp'] ?? 'https://wa.me/628885864995',
                 ),
                 const SizedBox(width: 15),
-                // 👇 Icon Instagram 
+                // 👇 Icon Instagram
                 _buildSocialIcon(
-                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
-                  url: footerData['instagram'] ?? 'https://www.instagram.com/yayasanvip',
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/174/174855.png',
+                  url:
+                      footerData['instagram'] ??
+                      'https://www.instagram.com/yayasanvip',
                 ),
                 const SizedBox(width: 15),
                 // 👇 Icon Email (Otomatis Tambah Mailto:)
                 _buildSocialIcon(
-                  imageUrl: 'https://cdn-icons-png.flaticon.com/512/732/732200.png',
-                  url: 'mailto:${footerData['email'] ?? 'vernonindonesiapintar@gmail.com'}',
+                  imageUrl:
+                      'https://cdn-icons-png.flaticon.com/512/732/732200.png',
+                  url:
+                      'mailto:${footerData['email'] ?? 'vernonindonesiapintar@gmail.com'}',
                 ),
               ],
             ),

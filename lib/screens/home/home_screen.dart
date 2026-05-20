@@ -9,6 +9,9 @@ import '../../core/app_colors.dart';
 import '../../data/faq_data.dart';
 import '../../data/mock_database.dart';
 
+// 👇 1. IMPORT SERVICE DONASI BARUMU
+import '../../services/supabase_donasi_service.dart';
+
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
   const HomeScreen({super.key, this.targetSection});
@@ -47,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshAllData();
   }
 
+  // Catatan: Data CMS (Hero, Testimoni, Partner) masih pakai MockDatabase
+  // Nanti bisa kamu ubah kalau tabel CMS di Supabase sudah siap ya!
   void _refreshAllData() {
     setState(() {
       _heroData = MockDatabase.getHomeHeroData();
@@ -275,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET IMPACT SECTION (SUDAH FIX FORMAT RUPIAH & ANTI-PECAH)
+  // WIDGET IMPACT SECTION (SUDAH DIHUBUNGKAN KE SUPABASE)
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
@@ -323,8 +328,9 @@ class _HomeScreenState extends State<HomeScreen> {
           if (isMobile)
             Column(
               children: [
+                // 👇 2. GANTI MOCK DATABASE DI SINI
                 ValueListenableBuilder<int>(
-                  valueListenable: MockDatabase.totalDonasiTerkumpul,
+                  valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
                   builder: (context, total, _) {
                     final formatRp = NumberFormat.currency(
                       locale: 'id_ID',
@@ -349,8 +355,10 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               children: [
                 Expanded(
+                  // 👇 3. GANTI MOCK DATABASE DI SINI JUGA UNTUK VERSI DEKTOP
                   child: ValueListenableBuilder<int>(
-                    valueListenable: MockDatabase.totalDonasiTerkumpul,
+                    valueListenable:
+                        SupabaseDonationService.totalDonasiTerkumpul,
                     builder: (context, total, _) {
                       final formatRp = NumberFormat.currency(
                         locale: 'id_ID',
@@ -571,13 +579,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 40),
 
+          // 👇 4. GANTI MOCK DATABASE DI BAGIAN PROGRESS BAR JUGA
           ValueListenableBuilder<int>(
-            valueListenable: MockDatabase.totalDonasiTerkumpul,
+            valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
             builder: (context, int total, _) {
               double progressValue = total / 300000000;
-              String displayTotal = (total / 1000000).toStringAsFixed(
-                total % 1000000 == 0 ? 0 : 1,
+              final formatRp = NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp',
+                decimalDigits: 0,
               );
+              String displayTotal = formatRp.format(total);
+              String displayTarget = formatRp.format(300000000);
 
               return Column(
                 children: [
@@ -605,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             const TextSpan(text: "Terkumpul: "),
                             TextSpan(
-                              text: "Rp ${displayTotal}jt",
+                              text: displayTotal,
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold,
@@ -615,7 +628,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        "Target: Rp 300jt",
+                        "Target: $displayTarget",
                         style: TextStyle(
                           color: Colors.grey.shade500,
                           fontSize: 14,

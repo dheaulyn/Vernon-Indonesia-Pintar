@@ -5,9 +5,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-// 👇 1. IMPORT SUPABASE BARU
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'data/supabase_service.dart';
 // --- IMPORT PUBLIK ---
 import 'screens/home/home_screen.dart';
 import 'screens/home/widgets/faq_screen.dart';
@@ -41,20 +38,24 @@ import 'screens/admin/cms/testimoni_admin.dart';
 import 'screens/admin/cms/faq_admin.dart';
 import 'screens/admin/cms/footer_admin.dart';
 import 'screens/admin/cms/partners_admin.dart';
+// 👇 IMPORT SUPABASE BARU
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'services/supabase_auth_service.dart';
+import 'services/supabase_donasi_service.dart';
 
-// 👇 2. UBAH MAIN MENJADI ASYNC
 void main() async {
-  // 👇 3. PASTIKAN FLUTTER SIAP MENJALANKAN PROSES ASYNC
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 👇 4. SUNTIKKAN KUNCI SUPABASE (URL dipotong /rest/v1/-nya)
   await Supabase.initialize(
     url: 'https://bfuflpeftdysoowrridc.supabase.co',
-    anonKey: 'sb_publishable_U2SA21z0d4FAggmIwYpH-A__NT3kEQa',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmdWZscGVmdGR5c29vd3JyaWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzMyODEsImV4cCI6MjA5NDY0OTI4MX0.-ejrTKRPSONwmoe4fkdE4Ck5DWmXLa3Tp6sZ5MHEa7Y',
   );
 
-  // 👇 TAMBAHKAN BARIS INI TEPAT DI SINI
-  SupabaseService.listenToFinancialRealtime();
+  // Pulihkan sesi jika user sudah login sebelumnya (penting untuk page refresh)
+  await SupabaseAuthService.restoreSession();
+
+  SupabaseDonationService.listenToFinancialRealtime();
 
   usePathUrlStrategy();
   runApp(const YayasanApp());
@@ -81,6 +82,13 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/portal',
+      redirect: (context, state) async {
+        if (!SupabaseAuthService.isLoggedIn) return '/login';
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role == null) return '/login';
+        if (role != 'siswa') return '/login';
+        return null;
+      },
       builder: (context, state) => const DashboardScreen(),
     ),
     GoRoute(
@@ -93,6 +101,12 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/dashboard-donatur',
+      redirect: (context, state) async {
+        if (!SupabaseAuthService.isLoggedIn) return '/login-donatur';
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role != 'donatur') return '/login-donatur';
+        return null;
+      },
       builder: (context, state) => const DonaturDashboardScreen(),
     ),
     GoRoute(
@@ -105,10 +119,22 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/form-beasiswa',
+      redirect: (context, state) async {
+        if (!SupabaseAuthService.isLoggedIn) return '/login';
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role != 'siswa') return '/login';
+        return null;
+      },
       builder: (context, state) => const FormBeasiswaScreen(),
     ),
     GoRoute(
       path: '/status-beasiswa',
+      redirect: (context, state) async {
+        if (!SupabaseAuthService.isLoggedIn) return '/login';
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role != 'siswa') return '/login';
+        return null;
+      },
       builder: (context, state) => const StatusBeasiswaScreen(),
     ),
     GoRoute(
@@ -142,9 +168,13 @@ final GoRouter _router = GoRouter(
     // 2. RUTE ADMIN (MENGGUNAKAN SHELL ROUTE)
     // --------------------------------------------------
     ShellRoute(
+      redirect: (context, state) async {
+        if (!SupabaseAuthService.isLoggedIn) return '/admin-login';
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role != 'admin') return '/admin-login';
+        return null;
+      },
       builder: (context, state, child) {
-        // 'child' adalah halaman aktif (seperti HomeDashboard, HeroBannerAdmin, dll)
-        // yang akan disuntikkan ke dalam LayoutDashboard
         return LayoutDashboard(child: child);
       },
       routes: [

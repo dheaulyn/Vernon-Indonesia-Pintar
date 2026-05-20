@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../data/mock_database.dart'; // 👇 IMPORT DATABASE
 import 'shared/custom_navbar.dart';
@@ -30,7 +30,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       Icons.favorite_border_rounded,
       Icons.folder_open_rounded,
       Icons.assignment_turned_in_outlined,
-      Icons.verified_user_outlined
+      Icons.verified_user_outlined,
     ];
     return icons[index % icons.length];
   }
@@ -45,12 +45,11 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     final List<dynamic> timeline = _detailData['timeline'] ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), 
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: const CustomNavbar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            
             _buildHeroSection(context, isMobile),
             Container(
               width: isMobile ? double.infinity : 1000,
@@ -132,7 +131,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
         vertical: isMobile ? 60 : 100,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFF1E2329), 
+        color: Color(0xFF1E2329),
         image: DecorationImage(
           image: NetworkImage(
             'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2000&auto=format&fit=crop',
@@ -194,7 +193,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 40),
               ElevatedButton(
-                onPressed: () => context.go('/register'), 
+                onPressed: () => context.go('/register'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -250,7 +249,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     List<String> points,
   ) {
     return Container(
-      width: double.infinity, 
+      width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -372,7 +371,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
           // Konten Teks
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 40), 
+              padding: const EdgeInsets.only(bottom: 40),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

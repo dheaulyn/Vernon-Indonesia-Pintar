@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
 import '../../../../data/mock_database.dart'; // Sesuaikan path
 
 class TestimoniAdmin extends StatefulWidget {
@@ -24,28 +25,18 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
     });
   }
 
-  // FUNGSI MENAMPILKAN PESAN BERHASIL (WARNA HIJAU & ROUNDED)
-  void _showSuccessMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating, // Membuatnya mengambang
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)), // Ujung rounded
-        ),
-      ),
-    );
-  }
 
   void _showFormDialog({Map<String, String>? testimoni}) {
     final isEdit = testimoni != null;
-    final nameController = TextEditingController(text: isEdit ? testimoni['name'] : '');
-    final roleController = TextEditingController(text: isEdit ? testimoni['role'] : '');
-    final quoteController = TextEditingController(text: isEdit ? testimoni['quote'] : '');
+    final nameController = TextEditingController(
+      text: isEdit ? testimoni['name'] : '',
+    );
+    final roleController = TextEditingController(
+      text: isEdit ? testimoni['role'] : '',
+    );
+    final quoteController = TextEditingController(
+      text: isEdit ? testimoni['quote'] : '',
+    );
 
     // 👇 Kunci form untuk validasi
     final formKey = GlobalKey<FormState>();
@@ -70,8 +61,11 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
-                    controller: nameController, 
-                    decoration: const InputDecoration(labelText: 'Nama Lengkap', border: OutlineInputBorder()),
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Nama tidak boleh kosong';
@@ -81,8 +75,11 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
-                    controller: roleController, 
-                    decoration: const InputDecoration(labelText: 'Pekerjaan / Role (cth: Alumni Batch 1 - IT)', border: OutlineInputBorder()),
+                    controller: roleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Pekerjaan / Role (cth: Alumni Batch 1 - IT)',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Pekerjaan/Role tidak boleh kosong';
@@ -92,9 +89,12 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
-                    controller: quoteController, 
-                    maxLines: 4, 
-                    decoration: const InputDecoration(labelText: 'Kutipan Testimoni', border: OutlineInputBorder()),
+                    controller: quoteController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Kutipan Testimoni',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Kutipan testimoni tidak boleh kosong';
@@ -110,7 +110,10 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
@@ -125,16 +128,22 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
 
                 if (isEdit) {
                   MockDatabase.editTestimoni(testimoni['id']!, newData);
-                  _showSuccessMessage('Testimoni berhasil diperbarui!');
+                  showSuccessSnackBar(context, 'Testimoni berhasil diperbarui!');
                 } else {
                   MockDatabase.tambahTestimoni(newData);
-                  _showSuccessMessage('Testimoni baru berhasil ditambahkan!');
+                  showSuccessSnackBar(context, 'Testimoni baru berhasil ditambahkan!');
                 }
                 _loadData();
                 Navigator.pop(context);
               }
             },
-            child: const Text('Simpan Testimoni', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Simpan Testimoni',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -147,12 +156,18 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text('Hapus Testimoni?', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Hapus Testimoni?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: const Text('Apakah Anda yakin ingin menghapus testimoni ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -160,9 +175,15 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
               MockDatabase.hapusTestimoni(id);
               _loadData();
               Navigator.pop(context);
-              _showSuccessMessage('Testimoni berhasil dihapus!');
+              showSuccessSnackBar(context, 'Testimoni berhasil dihapus!');
             },
-            child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Hapus',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -179,17 +200,29 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Kelola Testimoni', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text(
+                'Kelola Testimoni',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
               ElevatedButton.icon(
                 onPressed: () => _showFormDialog(),
                 icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Tambah Testimoni', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                label: const Text(
+                  'Tambah Testimoni',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 15,
+                  ),
                   shape: const StadiumBorder(),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -197,7 +230,9 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
           Card(
             color: Colors.white,
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -209,15 +244,36 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                   contentPadding: const EdgeInsets.all(20),
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.format_quote, color: AppColors.primary),
+                    child: const Icon(
+                      Icons.format_quote,
+                      color: AppColors.primary,
+                    ),
                   ),
-                  title: Text(testimoni['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  title: Text(
+                    testimoni['name'] ?? '',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(testimoni['role'] ?? '', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                      Text(
+                        testimoni['role'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 5),
-                      Text('"${testimoni['quote']}"', style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey.shade700)),
+                      Text(
+                        '"${testimoni['quote']}"',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
                     ],
                   ),
                   trailing: Row(
@@ -238,7 +294,7 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                 );
               },
             ),
-          )
+          ),
         ],
       ),
     );
