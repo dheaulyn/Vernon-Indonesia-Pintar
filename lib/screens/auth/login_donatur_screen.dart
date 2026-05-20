@@ -47,11 +47,18 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
       if (!mounted) return;
 
       if (userRole == 'donatur') {
-        context.go('/dashboard-donatur'); 
+        context.go('/dashboard-donatur');
       } else if (userRole == 'admin') {
-        context.go('/admin'); 
+        context.go('/admin');
+      } else if (userRole == 'siswa') {
+        setState(() {
+          _errorMessage =
+              'Akun ini adalah akun siswa. Silakan login melalui halaman login siswa.';
+        });
       } else {
-        context.go('/portal'); 
+        setState(() {
+          _errorMessage = 'Peran pengguna tidak dikenali.';
+        });
       }
     } else {
       setState(() {
@@ -70,9 +77,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFFBFBFB,
-      ), 
+      backgroundColor: const Color(0xFFFBFBFB),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -109,7 +114,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // 👇 PERBAIKAN: Membungkus tombol dengan Transform
-                            // agar posisi tombol bergeser sedikit ke kiri, 
+                            // agar posisi tombol bergeser sedikit ke kiri,
                             // namun efek bulatannya (hover) tetap presisi mengikuti panah.
                             Transform.translate(
                               offset: const Offset(-12, 0),
@@ -369,9 +374,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                                 width: double.infinity,
                                 height: 45,
                                 child: OutlinedButton(
-                                  onPressed: () => context.go(
-                                    '/login',
-                                  ),
+                                  onPressed: () => context.go('/login'),
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(
                                       color: Colors.redAccent,
@@ -383,7 +386,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                                     backgroundColor: Colors.white,
                                   ),
                                   child: const Text(
-                                    "Masuk sebagai Siswa", 
+                                    "Masuk sebagai Siswa",
                                     style: TextStyle(
                                       color: Colors.redAccent,
                                       fontWeight: FontWeight.bold,
