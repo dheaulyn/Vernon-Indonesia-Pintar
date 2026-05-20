@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/app_colors.dart'; 
-import '../../../../data/mock_database.dart'; 
+import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
+import '../../../../data/mock_database.dart';
 
 class FooterAdmin extends StatefulWidget {
   const FooterAdmin({super.key});
@@ -26,7 +27,9 @@ class _FooterAdminState extends State<FooterAdmin> {
           alignLabelWithHint: true,
           filled: true,
           fillColor: Colors.grey.shade50,
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey) : null,
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon, color: Colors.grey)
+              : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -39,7 +42,10 @@ class _FooterAdminState extends State<FooterAdmin> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppColors.primary, width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -48,11 +54,21 @@ class _FooterAdminState extends State<FooterAdmin> {
   void _showEditForm() {
     final currentData = MockDatabase.footerData.value;
 
-    TextEditingController descCtrl = TextEditingController(text: currentData['deskripsi'] ?? '');
-    TextEditingController alamatCtrl = TextEditingController(text: currentData['alamat'] ?? '');
-    TextEditingController waCtrl = TextEditingController(text: currentData['whatsapp'] ?? '');
-    TextEditingController emailCtrl = TextEditingController(text: currentData['email'] ?? '');
-    TextEditingController igCtrl = TextEditingController(text: currentData['instagram'] ?? ''); 
+    TextEditingController descCtrl = TextEditingController(
+      text: currentData['deskripsi'] ?? '',
+    );
+    TextEditingController alamatCtrl = TextEditingController(
+      text: currentData['alamat'] ?? '',
+    );
+    TextEditingController waCtrl = TextEditingController(
+      text: currentData['whatsapp'] ?? '',
+    );
+    TextEditingController emailCtrl = TextEditingController(
+      text: currentData['email'] ?? '',
+    );
+    TextEditingController igCtrl = TextEditingController(
+      text: currentData['instagram'] ?? '',
+    );
 
     showDialog(
       context: context,
@@ -60,7 +76,9 @@ class _FooterAdminState extends State<FooterAdmin> {
         return AlertDialog(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -68,7 +86,10 @@ class _FooterAdminState extends State<FooterAdmin> {
                 children: const [
                   Icon(Icons.edit_note_rounded, color: Colors.orange, size: 28),
                   SizedBox(width: 10),
-                  Text("Edit Footer & Kontak", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  Text(
+                    "Edit Footer & Kontak",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
                 ],
               ),
               const Divider(height: 20, thickness: 1),
@@ -80,14 +101,41 @@ class _FooterAdminState extends State<FooterAdmin> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildInputField(controller: descCtrl, label: "Deskripsi Yayasan", maxLines: 3),
-                  _buildInputField(controller: alamatCtrl, label: "Alamat Lengkap", maxLines: 3, prefixIcon: Icons.location_on),
+                  _buildInputField(
+                    controller: descCtrl,
+                    label: "Deskripsi Yayasan",
+                    maxLines: 3,
+                  ),
+                  _buildInputField(
+                    controller: alamatCtrl,
+                    label: "Alamat Lengkap",
+                    maxLines: 3,
+                    prefixIcon: Icons.location_on,
+                  ),
                   const SizedBox(height: 10),
-                  const Text("Tautan Ikon (Sosial Media)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const Text(
+                    "Tautan Ikon (Sosial Media)",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
                   const SizedBox(height: 10),
-                  _buildInputField(controller: waCtrl, label: "Link WhatsApp (cth: https://wa.me/628...)", prefixIcon: Icons.phone),
-                  _buildInputField(controller: igCtrl, label: "Link Instagram (cth: https://instagram.com/...)", prefixIcon: Icons.camera_alt),
-                  _buildInputField(controller: emailCtrl, label: "Alamat Email", prefixIcon: Icons.email),
+                  _buildInputField(
+                    controller: waCtrl,
+                    label: "Link WhatsApp (cth: https://wa.me/628...)",
+                    prefixIcon: Icons.phone,
+                  ),
+                  _buildInputField(
+                    controller: igCtrl,
+                    label: "Link Instagram (cth: https://instagram.com/...)",
+                    prefixIcon: Icons.camera_alt,
+                  ),
+                  _buildInputField(
+                    controller: emailCtrl,
+                    label: "Alamat Email",
+                    prefixIcon: Icons.email,
+                  ),
                 ],
               ),
             ),
@@ -96,7 +144,13 @@ class _FooterAdminState extends State<FooterAdmin> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Batal", style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Batal",
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -104,32 +158,28 @@ class _FooterAdminState extends State<FooterAdmin> {
                   'deskripsi': descCtrl.text,
                   'alamat': alamatCtrl.text,
                   'whatsapp': waCtrl.text,
-                  'instagram': igCtrl.text, 
+                  'instagram': igCtrl.text,
                   'email': emailCtrl.text,
                 };
 
                 Navigator.pop(context);
-                // 👇 PERUBAHAN: Menyesuaikan SnackBar agar sama persis dengan FAQ
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Info Kontak & Footer berhasil diperbarui!",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating, // Membuatnya mengambang
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10)), // Ujung rounded
-                    ),
-                  ),
-                );
+                showSuccessSnackBar(context, 'Info Kontak & Footer berhasil diperbarui!');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 15,
+                ),
               ),
-              child: const Text("Simpan Perubahan", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "Simpan Perubahan",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         );
@@ -154,12 +204,28 @@ class _FooterAdminState extends State<FooterAdmin> {
               spacing: 15,
               runSpacing: 15,
               children: [
-                const Text("Manajemen Footer & Kontak", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Manajemen Footer & Kontak",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 ElevatedButton.icon(
                   onPressed: _showEditForm,
                   icon: const Icon(Icons.edit, color: Colors.white),
-                  label: const Text("Edit Konten", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), shape: const StadiumBorder()),
+                  label: const Text(
+                    "Edit Konten",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: const StadiumBorder(),
+                  ),
                 ),
               ],
             ),
@@ -171,13 +237,22 @@ class _FooterAdminState extends State<FooterAdmin> {
               child: Card(
                 color: Colors.white,
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(25.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Tampilan Data Saat Ini:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                      const Text(
+                        "Tampilan Data Saat Ini:",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                       const SizedBox(height: 20),
 
                       ValueListenableBuilder<Map<String, String>>(
@@ -186,15 +261,35 @@ class _FooterAdminState extends State<FooterAdmin> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildInfoTile(Icons.info_outline, "Deskripsi Yayasan", footerData['deskripsi'] ?? '-'),
+                              _buildInfoTile(
+                                Icons.info_outline,
+                                "Deskripsi Yayasan",
+                                footerData['deskripsi'] ?? '-',
+                              ),
                               const Divider(),
-                              _buildInfoTile(Icons.location_city, "Alamat Tampil", footerData['alamat'] ?? '-'),
+                              _buildInfoTile(
+                                Icons.location_city,
+                                "Alamat Tampil",
+                                footerData['alamat'] ?? '-',
+                              ),
                               const Divider(),
-                              _buildInfoTile(Icons.link, "Tautan WhatsApp", footerData['whatsapp'] ?? '-'),
+                              _buildInfoTile(
+                                Icons.link,
+                                "Tautan WhatsApp",
+                                footerData['whatsapp'] ?? '-',
+                              ),
                               const Divider(),
-                              _buildInfoTile(Icons.link, "Tautan Instagram", footerData['instagram'] ?? '-'),
+                              _buildInfoTile(
+                                Icons.link,
+                                "Tautan Instagram",
+                                footerData['instagram'] ?? '-',
+                              ),
                               const Divider(),
-                              _buildInfoTile(Icons.link, "Alamat Email", footerData['email'] ?? '-'),
+                              _buildInfoTile(
+                                Icons.link,
+                                "Alamat Email",
+                                footerData['email'] ?? '-',
+                              ),
                             ],
                           );
                         },
@@ -222,9 +317,19 @@ class _FooterAdminState extends State<FooterAdmin> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(content, style: const TextStyle(fontSize: 16, color: Colors.black87)),
+                Text(
+                  content,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
               ],
             ),
           ),

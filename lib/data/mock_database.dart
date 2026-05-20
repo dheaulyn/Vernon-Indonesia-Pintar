@@ -1,5 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_auth_service.dart';
 
 // ==========================================
 // 1. MODEL DATA (Struktur data yang dibutuhkan)
@@ -96,66 +97,10 @@ class MockDatabase {
     },
   };
 
-  static Map<String, dynamic>? currentUser;
+  static Map<String, dynamic>? get currentUser => SupabaseAuthService.currentUserData;
+  static set currentUser(Map<String, dynamic>? val) => SupabaseAuthService.currentUserData = val;
 
-  static final List<DonationHistory> _donationHistory = [
-    DonationHistory(
-      id: 'd1',
-      email: 'donatur@mail.com',
-      programName: 'Beasiswa Vokasi 10 Bulan',
-      amount: 25000000,
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      status: 'Sukses',
-    ),
-    DonationHistory(
-      id: 'd2',
-      email: 'donatur_lain@mail.com',
-      programName: 'Bantuan Alat Belajar',
-      amount: 10500000,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      status: 'Sukses',
-    ),
-  ];
-
-  static Future<String?> loginRole(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (_users.containsKey(email) && _users[email]?['password'] == password) {
-      currentUser = _users[email];
-      return currentUser?['role'] as String?;
-    }
-    return null;
-  }
-
-  static Future<bool> register(
-    String name,
-    String email,
-    String password, [
-    String role = 'siswa',
-  ]) async {
-    await Future.delayed(const Duration(milliseconds: 1500));
-    if (_users.containsKey(email)) return false;
-
-    _users[email] = {
-      'name': name.toUpperCase(),
-      'email': email,
-      'password': password,
-      'role': role,
-      'is_registered': false,
-      'current_step': 0,
-      'is_revisi': false,
-      'catatan_revisi': '',
-      'admin_status': 'Menunggu Review',
-      'telepon': '',
-      'domisili': '',
-      'pendidikan': '',
-      'nik': '',
-      'asal_sekolah': '',
-      'tahun_lulus': '',
-      'tgl_daftar': '',
-      'jadwal_wawancara': '',
-    };
-    return true;
-  }
+  static final List<DonationHistory> _donationHistory = [];
 
   static List<Map<String, dynamic>> getAllRegisteredSiswa() {
     List<Map<String, dynamic>> result = [];
@@ -222,9 +167,7 @@ class MockDatabase {
     }
   }
 
-  static void logout() {
-    currentUser = null;
-  }
+
 
   // ==========================================
   // FITUR DATA PORTAL DONATUR

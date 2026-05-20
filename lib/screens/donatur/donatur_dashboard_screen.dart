@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/app_colors.dart';
 import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
+import '../shared/shared_dashboard_layout.dart';
 
 import 'dashboard_view.dart';
 import 'form_donasi_view.dart';
@@ -24,8 +25,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
 
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  bool _isSidebarCollapsed = false;
-  bool _isAkunExpanded = false;
 
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
@@ -65,7 +64,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
 
   // 👇 PERBAIKAN DI SINI: Mengarahkan ke rute login khusus donatur
   void _handleLogout() {
-    MockDatabase.logout();
+    SupabaseAuthService.logout();
     context.go('/login-donatur');
   }
 
@@ -73,485 +72,68 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 850;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF4F6F9),
-      drawer: isMobile ? Drawer(child: _buildSidebar(isMobile)) : null,
-      body: Column(
-        children: [
-          _buildTopNavbar(isMobile),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isMobile) _buildSidebar(isMobile),
-                Expanded(child: _buildMainContent(isMobile)),
-              ],
-            ),
+    final menuItems = [
+      MenuModel(
+        icon: Icons.home_filled,
+        title: "Beranda",
+        routePath: "/dashboard-donatur?index=0",
+        onTap: () => setState(() => _selectedIndex = 0),
+      ),
+      MenuModel(
+        icon: Icons.volunteer_activism,
+        title: "Formulir Donasi",
+        routePath: "/dashboard-donatur?index=1",
+        onTap: () => setState(() => _selectedIndex = 1),
+      ),
+      MenuModel(
+        icon: Icons.receipt_long_rounded,
+        title: "Riwayat Donasi",
+        routePath: "/dashboard-donatur?index=2",
+        onTap: () => setState(() => _selectedIndex = 2),
+      ),
+      MenuModel(
+        icon: Icons.pie_chart_outline,
+        title: "Laporan Transparan",
+        routePath: "/dashboard-donatur?index=3",
+        onTap: () => setState(() => _selectedIndex = 3),
+      ),
+      MenuModel(
+        icon: Icons.person_rounded,
+        title: "Akun Saya",
+        subMenus: [
+          MenuModel(
+            icon: Icons.chevron_right,
+            title: "Data Diri",
+            routePath: "/dashboard-donatur?index=4",
+            onTap: () => setState(() => _selectedIndex = 4),
+          ),
+          MenuModel(
+            icon: Icons.chevron_right,
+            title: "Ganti Password",
+            routePath: "/dashboard-donatur?index=5",
+            onTap: () => setState(() => _selectedIndex = 5),
           ),
         ],
       ),
-    );
-  }
+    ];
 
-  Widget _buildTopNavbar(bool isMobile) {
-    return Container(
-      height: 65,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+    final bottomMenuItems = [
+      MenuModel(
+        icon: Icons.logout_rounded,
+        title: "Keluar",
+        isLogout: true,
+        routePath: "/login-donatur",
+        onTap: _handleLogout,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black87),
-            splashRadius: 24,
-            onPressed: () {
-              if (isMobile) {
-                _scaffoldKey.currentState?.openDrawer();
-              } else {
-                setState(() {
-                  _isSidebarCollapsed = !_isSidebarCollapsed;
-                  if (_isSidebarCollapsed) _isAkunExpanded = false;
-                });
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          Image.asset(
-            'assets/logo.png',
-            height: 28,
-            errorBuilder: (c, e, s) => const Icon(
-              Icons.volunteer_activism,
-              color: AppColors.primary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Text(
-            "PORTAL DONATUR",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-              color: Colors.black87,
-            ),
-          ),
-          const Spacer(),
+    ];
 
-          Theme(
-            data: Theme.of(context).copyWith(
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-            ),
-            child: PopupMenuButton<String>(
-              offset: const Offset(0, 55),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 4,
-              tooltip: 'Menu Profil',
-              onSelected: (String value) {
-                if (value == 'logout')
-                  _handleLogout();
-                else if (value == 'password') {
-                  setState(() {
-                    _isAkunExpanded = true;
-                    _selectedIndex = 5;
-                    _isSidebarCollapsed = false;
-                  });
-                }
-              },
-              child: Row(
-                children: [
-                  if (!isMobile) ...[
-                    Text(
-                      user['name'].toString().toUpperCase(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.grey.shade400,
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                ],
-              ),
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  enabled: false,
-                  child: Container(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey.shade200),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey.shade400,
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user['name'].toString().toUpperCase(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Donatur VIP",
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'password',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.vpn_key_outlined,
-                        color: Colors.black54,
-                        size: 20,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Ubah Password',
-                        style: TextStyle(color: Colors.black87, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.black54, size: 20),
-                      SizedBox(width: 12),
-                      Text(
-                        'Sign Out',
-                        style: TextStyle(color: Colors.black87, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSidebar(bool isMobile) {
-    final bool isCollapsed = isMobile ? false : _isSidebarCollapsed;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      width: isCollapsed ? 70 : 250,
-      color: const Color(0xFF2C313C),
-      child: Column(
-        crossAxisAlignment: isCollapsed
-            ? CrossAxisAlignment.center
-            : CrossAxisAlignment.start,
-        children: [
-          if (!isCollapsed)
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Text(
-                "MENU",
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-            ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _buildMenuItem(0, Icons.home_filled, "Beranda", isCollapsed),
-                _buildMenuItem(
-                  1,
-                  Icons.volunteer_activism,
-                  "Formulir Donasi",
-                  isCollapsed,
-                ),
-                _buildMenuItem(
-                  2,
-                  Icons.receipt_long_rounded,
-                  "Riwayat Donasi",
-                  isCollapsed,
-                ),
-                _buildMenuItem(
-                  3,
-                  Icons.pie_chart_outline,
-                  "Laporan Transparan",
-                  isCollapsed,
-                ),
-                const SizedBox(height: 10),
-                const Divider(color: Colors.white12, height: 1),
-                const SizedBox(height: 10),
-                _buildExpandableAkunMenu(isCollapsed),
-              ],
-            ),
-          ),
-          InkWell(
-            onTap: _handleLogout,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isCollapsed ? 0 : 20,
-                vertical: 20,
-              ),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.white12)),
-              ),
-              child: Row(
-                mainAxisAlignment: isCollapsed
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.logout_rounded,
-                    color: Colors.redAccent,
-                    size: 20,
-                  ),
-                  if (!isCollapsed) ...[
-                    const SizedBox(width: 16),
-                    const Text(
-                      "Keluar",
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuItem(
-    int index,
-    IconData icon,
-    String title,
-    bool isCollapsed,
-  ) {
-    final bool isSelected = _selectedIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-          _isAkunExpanded = false;
-        });
-        if (MediaQuery.of(context).size.width < 850 &&
-            _scaffoldKey.currentState?.isDrawerOpen == true)
-          Navigator.pop(context);
-
-        if (_scrollController.hasClients) _scrollController.jumpTo(0);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.15)
-              : Colors.transparent,
-          border: Border(
-            left: BorderSide(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 4,
-            ),
-          ),
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: isCollapsed ? 0 : 20,
-          vertical: 16,
-        ),
-        child: Row(
-          mainAxisAlignment: isCollapsed
-              ? MainAxisAlignment.center
-              : MainAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : Colors.grey.shade500,
-              size: 20,
-            ),
-            if (!isCollapsed) ...[
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.grey.shade400,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExpandableAkunMenu(bool isCollapsed) {
-    final bool isAnySubSelected = _selectedIndex == 4 || _selectedIndex == 5;
-    return Column(
-      children: [
-        InkWell(
-          onTap: () {
-            setState(() {
-              if (isCollapsed) {
-                _isSidebarCollapsed = false;
-                _isAkunExpanded = true;
-              } else {
-                _isAkunExpanded = !_isAkunExpanded;
-              }
-            });
-          },
-          child: Container(
-            color: _isAkunExpanded
-                ? Colors.black.withValues(alpha: 0.2)
-                : Colors.transparent,
-            padding: EdgeInsets.symmetric(
-              horizontal: isCollapsed ? 0 : 20,
-              vertical: 16,
-            ),
-            child: Row(
-              mainAxisAlignment: isCollapsed
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.person_rounded,
-                  color: isAnySubSelected || _isAkunExpanded
-                      ? AppColors.primary
-                      : Colors.grey.shade500,
-                  size: 20,
-                ),
-                if (!isCollapsed) ...[
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      "Akun Saya",
-                      style: TextStyle(
-                        color: isAnySubSelected || _isAkunExpanded
-                            ? Colors.white
-                            : Colors.grey.shade400,
-                        fontWeight: isAnySubSelected || _isAkunExpanded
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    _isAkunExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: Colors.grey.shade500,
-                    size: 18,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        if (_isAkunExpanded && !isCollapsed)
-          Container(
-            color: Colors.black.withValues(alpha: 0.1),
-            child: Column(
-              children: [
-                _buildSubMenuItem(4, "Data Diri"),
-                _buildSubMenuItem(5, "Ganti Password"),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildSubMenuItem(int index, String title) {
-    final bool isSelected = _selectedIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() => _selectedIndex = index);
-        if (MediaQuery.of(context).size.width < 850 &&
-            _scaffoldKey.currentState?.isDrawerOpen == true)
-          Navigator.pop(context);
-        if (_scrollController.hasClients) _scrollController.jumpTo(0);
-      },
-      child: Container(
-        padding: const EdgeInsets.only(
-          left: 56,
-          right: 20,
-          top: 12,
-          bottom: 12,
-        ),
-        width: double.infinity,
-        color: isSelected
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.transparent,
-        child: Row(
-          children: [
-            Icon(
-              Icons.chevron_right,
-              color: isSelected ? AppColors.primary : Colors.grey.shade600,
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade400,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SharedDashboardLayout(
+      title: "PORTAL DONATUR",
+      roleText: "Donatur VIP",
+      menuItems: menuItems,
+      bottomMenuItems: bottomMenuItems,
+      activeRoute: "/dashboard-donatur?index=$_selectedIndex",
+      child: _buildMainContent(isMobile),
     );
   }
 
@@ -566,7 +148,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
           isMobile: isMobile,
           onNavigateToDonasi: () => setState(() {
             _selectedIndex = 1;
-            _isAkunExpanded = false;
           }),
         );
         break;

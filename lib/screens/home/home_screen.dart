@@ -575,9 +575,13 @@ class _HomeScreenState extends State<HomeScreen> {
             valueListenable: MockDatabase.totalDonasiTerkumpul,
             builder: (context, int total, _) {
               double progressValue = total / 300000000;
-              String displayTotal = (total / 1000000).toStringAsFixed(
-                total % 1000000 == 0 ? 0 : 1,
+              final formatRp = NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp',
+                decimalDigits: 0,
               );
+              String displayTotal = formatRp.format(total);
+              String displayTarget = formatRp.format(300000000);
 
               return Column(
                 children: [
@@ -605,7 +609,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             const TextSpan(text: "Terkumpul: "),
                             TextSpan(
-                              text: "Rp ${displayTotal}jt",
+                              text: displayTotal,
                               style: const TextStyle(
                                 color: Colors.red,
                                 fontWeight: FontWeight.bold,
@@ -615,7 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        "Target: Rp 300jt",
+                        "Target: $displayTarget",
                         style: TextStyle(
                           color: Colors.grey.shade500,
                           fontSize: 14,

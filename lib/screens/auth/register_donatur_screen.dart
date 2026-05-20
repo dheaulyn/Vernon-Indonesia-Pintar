@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
+import '../../core/snackbar_helper.dart';
+import '../../services/supabase_auth_service.dart';
 
 class RegisterDonaturScreen extends StatefulWidget {
   const RegisterDonaturScreen({super.key});
@@ -24,6 +26,16 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
   bool _isLoading = false;
   bool _isAgreed = false;
   String _errorMessage = '';
+  String _currentPassword = '';
+  String _currentConfirmPassword = '';
+
+  // Cek persyaratan password
+  bool get _hasMinLength => _currentPassword.length >= 6;
+  bool get _hasUppercase => _currentPassword.contains(RegExp(r'[A-Z]'));
+  bool get _hasDigit => _currentPassword.contains(RegExp(r'[0-9]'));
+  bool get _passwordsMatch =>
+      _currentConfirmPassword.isNotEmpty &&
+      _currentPassword == _currentConfirmPassword;
 
   // 👇 FUNGSI YANG SUDAH DIPERBAIKI
   Future<void> _handleRegister() async {
@@ -41,16 +53,24 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       return;
     }
 
+    // Validasi persyaratan password sebelum kirim ke server
+    if (!_hasMinLength || !_hasUppercase || !_hasDigit) {
+      setState(() {
+        _errorMessage = 'Password belum memenuhi semua persyaratan.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    // Panggil MockDatabase dan set role-nya sebagai 'donatur'
-    bool success = await MockDatabase.register(
+    // Panggil register dan set role-nya sebagai 'donatur'
+    String? error = await SupabaseAuthService.register(
       _nameController.text,
       _emailController.text,
       _passwordController.text,
-      'donatur', // Pastikan role-nya 'donatur' agar bisa masuk portal donatur
+      'donatur',
     );
 
     if (!mounted) return;
@@ -59,19 +79,13 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _isLoading = false;
     });
 
-    // Cek apakah registrasi berhasil (email belum dipakai)
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registrasi berhasil! Silakan masuk dengan akun Anda.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    if (error == null) {
+      // null = berhasil
+      showSuccessSnackBar(context, 'Registrasi berhasil! Silakan masuk dengan akun Anda.');
       context.go('/login-donatur');
     } else {
       setState(() {
-        _errorMessage =
-            'Email ini sudah terdaftar. Silakan gunakan email lain.';
+        _errorMessage = error;
       });
     }
   }
@@ -231,6 +245,9 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                                       controller: _phoneController,
                                       hint: '08123456789',
                                       keyboardType: TextInputType.phone,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
                                       validator: (val) => val!.isEmpty
                                           ? 'No. WA wajib diisi'
                                           : null,
@@ -246,27 +263,29 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           _buildLabel('Password'),
                           _buildPasswordField(
                             controller: _passwordController,
-                            hint: 'Minimal 8 karakter',
+                            hint: 'Min. 6 karakter, huruf besar & angka',
                             isVisible: _isPasswordVisible,
                             onVisibilityChanged: () => setState(
                               () => _isPasswordVisible = !_isPasswordVisible,
                             ),
-                            validator: (val) => val!.length < 8
-                                ? 'Password minimal 8 karakter'
-                                : null,
+                            onChanged: (val) => setState(() => _currentPassword = val),
+                            validator: (val) {
+                              if (val!.length < 6) return 'Password minimal 6 karakter';
+                              if (!val.contains(RegExp(r'[A-Z]'))) return 'Harus ada huruf kapital';
+                              if (!val.contains(RegExp(r'[0-9]'))) return 'Harus ada angka';
+                              return null;
+                            },
                           ),
+                          // ✅ Indikator persyaratan password
+                          if (_currentPassword.isNotEmpty) ..._buildPasswordChecklist(),
                           const SizedBox(height: 20),
 
                           // Form Konfirmasi Password
                           _buildLabel('Konfirmasi Password'),
-                          _buildPasswordField(
+                          TextFormField(
                             controller: _confirmPasswordController,
-                            hint: 'Ulangi password Anda',
-                            isVisible: _isConfirmPasswordVisible,
-                            onVisibilityChanged: () => setState(
-                              () => _isConfirmPasswordVisible =
-                                  !_isConfirmPasswordVisible,
-                            ),
+                            obscureText: !_isConfirmPasswordVisible,
+                            onChanged: (val) => setState(() => _currentConfirmPassword = val),
                             validator: (val) {
                               if (val!.isEmpty) return 'Wajib diisi';
                               if (val != _passwordController.text) {
@@ -274,6 +293,67 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                               }
                               return null;
                             },
+                            decoration: InputDecoration(
+                              hintText: 'Ulangi password Anda',
+                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: _currentConfirmPassword.isEmpty
+                                      ? Colors.grey.shade300
+                                      : _passwordsMatch
+                                          ? Colors.green.shade400
+                                          : Colors.red.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: _currentConfirmPassword.isEmpty
+                                      ? AppColors.primary
+                                      : _passwordsMatch
+                                          ? Colors.green.shade500
+                                          : Colors.red.shade400,
+                                  width: 1.5,
+                                ),
+                              ),
+                              errorBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                                borderSide: BorderSide(color: Colors.redAccent, width: 1),
+                              ),
+                              suffixIcon: _currentConfirmPassword.isEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                                    )
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _passwordsMatch ? Icons.check_circle : Icons.cancel,
+                                          color: _passwordsMatch ? Colors.green.shade500 : Colors.red.shade400,
+                                          size: 22,
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                          onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                                        ),
+                                      ],
+                                    ),
+                            ),
                           ),
                           const SizedBox(height: 20),
 
@@ -461,11 +541,13 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,
@@ -501,11 +583,13 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
     required String hint,
     required bool isVisible,
     required VoidCallback onVisibilityChanged,
+    ValueChanged<String>? onChanged,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: !isVisible,
+      onChanged: onChanged,
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,
@@ -539,6 +623,58 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
           ),
           onPressed: onVisibilityChanged,
         ),
+      ),
+    );
+  }
+
+  List<Widget> _buildPasswordChecklist() {
+    return [
+      const SizedBox(height: 10),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FF),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Persyaratan Password:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54),
+            ),
+            const SizedBox(height: 6),
+            _buildCheckItem('Minimal 6 karakter', _hasMinLength),
+            _buildCheckItem('Mengandung huruf kapital (A-Z)', _hasUppercase),
+            _buildCheckItem('Mengandung angka (0-9)', _hasDigit),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildCheckItem(String text, bool passed) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            passed ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 15,
+            color: passed ? Colors.green.shade600 : Colors.grey.shade400,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: passed ? Colors.green.shade700 : Colors.grey.shade600,
+              fontWeight: passed ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
   }

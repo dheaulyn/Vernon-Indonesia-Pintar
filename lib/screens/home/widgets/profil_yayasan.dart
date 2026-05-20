@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
-import '/core/app_colors.dart'; 
-import '/data/mock_database.dart'; 
+import '/core/app_colors.dart';
+import '/data/mock_database.dart';
 
 class ProfilYayasanScreen extends StatefulWidget {
   const ProfilYayasanScreen({super.key});
@@ -26,15 +26,35 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
     final double height = isMobile ? 300 : 400;
 
     if (imageSource.isEmpty) {
-      return Image.asset('assets/tentang.png', fit: BoxFit.cover, width: double.infinity, height: height);
+      return Image.asset(
+        'assets/tentang.png',
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: height,
+      );
     }
     if (imageSource.startsWith('http')) {
-      return Image.network(imageSource, fit: BoxFit.cover, width: double.infinity, height: height);
+      return Image.network(
+        imageSource,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: height,
+      );
     }
     try {
-      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover, width: double.infinity, height: height);
+      return Image.memory(
+        base64Decode(imageSource),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: height,
+      );
     } catch (e) {
-      return Container(color: Colors.grey.shade300, width: double.infinity, height: height, child: const Icon(Icons.broken_image, color: Colors.red));
+      return Container(
+        color: Colors.grey.shade300,
+        width: double.infinity,
+        height: height,
+        child: const Icon(Icons.broken_image, color: Colors.red),
+      );
     }
   }
 
@@ -50,7 +70,7 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
         child: Column(
           children: [
             _buildHeader(isMobile),
-            
+
             Padding(
               padding: EdgeInsets.symmetric(
                 vertical: isMobile ? 50 : 80,
@@ -70,11 +90,14 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
                           ],
                         )
                       : Row(
-                          crossAxisAlignment: CrossAxisAlignment.center, 
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(flex: 5, child: _buildAboutText(isMobile)),
                             const SizedBox(width: 60),
-                            Expanded(flex: 4, child: _buildImageSection(isMobile)), 
+                            Expanded(
+                              flex: 4,
+                              child: _buildImageSection(isMobile),
+                            ),
                           ],
                         ),
 
@@ -115,7 +138,10 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
   Widget _buildHeader(bool isMobile) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: isMobile ? 50 : 80, horizontal: 20),
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 50 : 80,
+        horizontal: 20,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
@@ -124,13 +150,21 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
         children: [
           const Text(
             "TENTANG KAMI",
-            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 2),
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
           ),
           const SizedBox(height: 15),
           Text(
             "Profil Yayasan",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: isMobile ? 32 : 45, fontWeight: FontWeight.w900, color: Colors.black87),
+            style: TextStyle(
+              fontSize: isMobile ? 32 : 45,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
           ),
         ],
       ),
@@ -143,8 +177,13 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _dataProfil['title'] ?? "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?",
-          style: TextStyle(fontSize: isMobile ? 24 : 32, fontWeight: FontWeight.bold, height: 1.3),
+          _dataProfil['title'] ??
+              "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?",
+          style: TextStyle(
+            fontSize: isMobile ? 24 : 32,
+            fontWeight: FontWeight.bold,
+            height: 1.3,
+          ),
         ),
         const SizedBox(height: 20),
         Text(
@@ -172,7 +211,11 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
         borderRadius: BorderRadius.circular(16),
         border: const Border(left: BorderSide(color: Colors.amber, width: 6)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -182,13 +225,26 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
             children: const [
               Text("✨", style: TextStyle(fontSize: 28)),
               SizedBox(width: 12),
-              Text("VISION", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: Colors.amber, letterSpacing: 1.5)),
+              Text(
+                "VISION",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  color: Colors.amber,
+                  letterSpacing: 1.5,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
           Text(
             _dataProfil['vision_text'] ?? "Teks Visi...",
-            style: TextStyle(fontSize: 16, color: Colors.grey[800], height: 1.6, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[800],
+              height: 1.6,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -204,9 +260,15 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: const Border(left: BorderSide(color: AppColors.primary, width: 6)),
+        border: const Border(
+          left: BorderSide(color: AppColors.primary, width: 6),
+        ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -216,13 +278,23 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
             children: const [
               Text("🚀", style: TextStyle(fontSize: 28)),
               SizedBox(width: 12),
-              Text("MISSION", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: AppColors.primary, letterSpacing: 1.5)),
+              Text(
+                "MISSION",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  color: AppColors.primary,
+                  letterSpacing: 1.5,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Loop data poin misi dari database
-          ...missions.map((missionText) => _buildMissionItem(missionText.toString())),
+          ...missions.map(
+            (missionText) => _buildMissionItem(missionText.toString()),
+          ),
         ],
       ),
     );
@@ -238,16 +310,24 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
             margin: const EdgeInsets.only(top: 4),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1), 
-              shape: BoxShape.circle
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 10),
+            child: const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.primary,
+              size: 10,
+            ),
           ),
           const SizedBox(width: 15),
           Expanded(
             child: Text(
-              text, 
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade700, height: 1.4),
+              text,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade700,
+                height: 1.4,
+              ),
             ),
           ),
         ],

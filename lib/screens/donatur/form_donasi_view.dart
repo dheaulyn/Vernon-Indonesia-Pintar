@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
 import '../../../../data/mock_database.dart';
 
 class FormDonasiView extends StatefulWidget {
@@ -235,26 +236,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                                 if (context.mounted) {
                                   Navigator.pop(dialogContext); // Tutup dialog
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: const [
-                                          Icon(
-                                            Icons.check_circle,
-                                            color: Colors.white,
-                                          ),
-                                          SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              'Pembayaran berhasil dikonfirmasi!',
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      backgroundColor: Colors.green.shade600,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  showSuccessSnackBar(context, 'Pembayaran berhasil dikonfirmasi!');
 
                                   // Pindah ke halaman riwayat
                                   widget.onDonasiSuccess();
@@ -675,26 +657,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                     // Panggil dialog pilihan metode pembayaran
                     _showPaymentMethodDialog(finalNominal);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Mohon lengkapi data dengan benar sebelum melanjutkan.',
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                    showErrorSnackBar(context, 'Mohon lengkapi data dengan benar sebelum melanjutkan.');
                   }
                 },
                 style: ElevatedButton.styleFrom(

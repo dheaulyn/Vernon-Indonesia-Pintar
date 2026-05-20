@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     // Panggil loginRole untuk mendapatkan peran (hanya cek admin / siswa)
-    final String? userRole = await MockDatabase.loginRole(email, password);
+    final String? userRole = await SupabaseAuthService.loginRole(email, password);
 
     setState(() {
       _isLoading = false;

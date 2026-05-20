@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
 
 class DataDiriView extends StatelessWidget {
   final bool isMobile;
@@ -53,6 +55,8 @@ class DataDiriView extends StatelessWidget {
                     child: _buildProfileTextField(
                       "No. WhatsApp",
                       "081234567890",
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                 ],
@@ -92,12 +96,7 @@ class DataDiriView extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Data berhasil diperbarui!"),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  showSuccessSnackBar(context, 'Data berhasil diperbarui!');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -131,6 +130,8 @@ class DataDiriView extends StatelessWidget {
     String initialValue, {
     bool isReadOnly = false,
     int maxLines = 1,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,6 +149,8 @@ class DataDiriView extends StatelessWidget {
           initialValue: initialValue,
           readOnly: isReadOnly,
           maxLines: maxLines,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           style: TextStyle(
             fontSize: 14,
             color: isReadOnly ? Colors.grey.shade600 : Colors.black87,

@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../../../core/app_colors.dart'; 
-import '../../../../data/mock_database.dart'; 
+import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
+import '../../../../data/mock_database.dart';
 
 class AboutSectionAdmin extends StatefulWidget {
   const AboutSectionAdmin({super.key});
@@ -42,43 +43,14 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     super.dispose();
   }
 
-  // 👇 FUNGSI MENAMPILKAN PESAN BERHASIL (WARNA HIJAU & ROUNDED)
-  void _showSuccessMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating, // Membuatnya mengambang
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)), // Ujung rounded
-        ),
-      ),
-    );
-  }
-
-  // 👇 FUNGSI MENAMPILKAN PESAN PERINGATAN (WARNA MERAH & ROUNDED)
-  void _showWarningMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-      ),
-    );
-  }
 
   Widget _buildImageDisplay(String imageSource) {
-    if (imageSource.isEmpty) return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
-    if (imageSource.startsWith('http')) return Image.network(imageSource, fit: BoxFit.cover);
+    if (imageSource.isEmpty)
+      return const Center(
+        child: Icon(Icons.image, color: Colors.grey, size: 40),
+      );
+    if (imageSource.startsWith('http'))
+      return Image.network(imageSource, fit: BoxFit.cover);
     try {
       return Image.memory(base64Decode(imageSource), fit: BoxFit.cover);
     } catch (e) {
@@ -89,7 +61,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
   Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
-      withData: true, 
+      withData: true,
     );
 
     if (result != null && result.files.first.bytes != null) {
@@ -109,9 +81,9 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
         'image': _imageBase64,
       });
 
-      _showSuccessMessage('About Section Beranda berhasil diperbarui!');
+      showSuccessSnackBar(context, 'About Section Beranda berhasil diperbarui!');
     } else {
-      _showWarningMessage('Penyimpanan gagal. Masih ada form yang kosong!');
+      showErrorSnackBar(context, 'Penyimpanan gagal. Masih ada form yang kosong!');
     }
   }
 
@@ -124,13 +96,18 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Kelola Tentang Kami', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text(
+              'Kelola Tentang Kami',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 20),
-            
+
             Card(
               color: Colors.white,
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(30),
                 child: Column(
@@ -139,28 +116,41 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     // ==========================================
                     // 1. TEKS UTAMA
                     // ==========================================
-                    const Text("Judul Utama", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Judul Utama",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
-                      controller: _titleController, 
+                      controller: _titleController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: "Contoh: Membantu Anak Bangsa Meraih Mimpi"
+                        hintText: "Contoh: Membantu Anak Bangsa Meraih Mimpi",
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Judul tidak boleh kosong' : null,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Judul tidak boleh kosong'
+                          : null,
                     ),
                     const SizedBox(height: 20),
 
-                    const Text("Deskripsi", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Deskripsi",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
-                      controller: _descController, 
-                      maxLines: 4, 
+                      controller: _descController,
+                      maxLines: 4,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: "Contoh: Vernon Indonesia Pintar bukan sekadar yayasan..."
+                        hintText:
+                            "Contoh: Vernon Indonesia Pintar bukan sekadar yayasan...",
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Deskripsi tidak boleh kosong' : null,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Deskripsi tidak boleh kosong'
+                          : null,
                     ),
                     const SizedBox(height: 30),
 
@@ -170,41 +160,68 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
                     Row(
                       children: [
-                        const Text("Gambar Samping", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          "Gambar Samping",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(width: 8),
                         Tooltip(
-                          message: "Gambar ini akan ditampilkan di sebelah teks 'Tentang Kami' pada layar Desktop.",
-                          child: Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                          message:
+                              "Gambar ini akan ditampilkan di sebelah teks 'Tentang Kami' pada layar Desktop.",
+                          child: Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Colors.blue.shade700,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "Rekomendasi ukuran: 1000 x 750 piksel (Landscape) agar proporsional dan tidak pecah.",
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
 
+                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
                     InkWell(
                       onTap: _pickImage,
                       child: Container(
-                        height: 250, width: 400,
-                        decoration: BoxDecoration(color: Colors.grey.shade100, border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                        height: 250,
+                        width: 400,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         clipBehavior: Clip.antiAlias,
                         child: _imageBase64.isEmpty
-                            ? const Center(child: Text("Klik untuk Unggah Gambar"))
+                            ? const Center(
+                                child: Text("Klik untuk Unggah Gambar"),
+                              )
                             : Stack(
                                 fit: StackFit.expand,
                                 children: [
                                   _buildImageDisplay(_imageBase64),
                                   Positioned(
-                                    top: 10, right: 10,
+                                    top: 10,
+                                    right: 10,
                                     child: CircleAvatar(
                                       backgroundColor: Colors.black54,
-                                      child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => setState(() => _imageBase64 = '')),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () =>
+                                            setState(() => _imageBase64 = ''),
+                                      ),
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                       ),
@@ -215,17 +232,30 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     // TOMBOL SIMPAN
                     // ==========================================
                     SizedBox(
-                      width: double.infinity, height: 55,
+                      width: double.infinity,
+                      height: 55,
                       child: ElevatedButton(
                         onPressed: _saveData,
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: const Text("SIMPAN PERUBAHAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          "SIMPAN PERUBAHAN",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

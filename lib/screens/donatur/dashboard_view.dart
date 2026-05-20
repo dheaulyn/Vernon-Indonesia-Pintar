@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/app_colors.dart';
-import '../../../../data/mock_database.dart';
+import '../../core/app_colors.dart';
+import '../../data/mock_database.dart';
+import '../shared/stat_card.dart';
 
 class DashboardView extends StatelessWidget {
   final bool isMobile;
@@ -155,22 +156,22 @@ class DashboardView extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildMetricCard(
-                    Icons.monitor_heart_rounded,
-                    Colors.blue.shade600,
-                    currencyFormatter.format(
+                  child: StatCard(
+                    icon: Icons.monitor_heart_rounded,
+                    color: Colors.blue.shade600,
+                    value: currencyFormatter.format(
                       totalUangPribadi,
                     ), // 👈 Real-time Nominal
-                    "Total Donasi",
+                    title: "Total Donasi",
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: _buildMetricCard(
-                    Icons.repeat_rounded,
-                    Colors.green.shade600,
-                    "$frekuensiDonasi Kali", // 👈 Real-time Frekuensi
-                    "Frekuensi Donasi",
+                  child: StatCard(
+                    icon: Icons.repeat_rounded,
+                    color: Colors.green.shade600,
+                    value: "$frekuensiDonasi Kali", // 👈 Real-time Frekuensi
+                    title: "Frekuensi Donasi",
                   ),
                 ),
               ],
@@ -323,55 +324,6 @@ class DashboardView extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildMetricCard(
-    IconData icon,
-    Color iconColor,
-    String value,
-    String label,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

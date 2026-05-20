@@ -469,8 +469,9 @@ class FundPoolScreen extends StatelessWidget {
                   String formatPersenDinamis(double progress) {
                     double hasil = progress * 100;
                     if (hasil == 0) return "0%";
-                    if (hasil < 1)
+                    if (hasil < 1) {
                       return "${hasil.toStringAsFixed(2)}%"; // Menampilkan 0.01%
+                    }
                     return "${hasil.toStringAsFixed(1)}%";
                   }
 

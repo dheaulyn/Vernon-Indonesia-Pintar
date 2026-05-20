@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../data/mock_database.dart';
 import 'package:intl/intl.dart';
+import '../../../core/snackbar_helper.dart';
 
 // ========================================================
 // 1. VIEW: RIWAYAT DANA MASUK
@@ -278,7 +279,7 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
-                  value: selectedKategori,
+                  initialValue: selectedKategori,
                   decoration: const InputDecoration(
                     labelText: "Pilih Kategori Penyaluran",
                     border: OutlineInputBorder(),
@@ -306,31 +307,14 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                             nominal,
                             selectedKategori!,
                           );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Penyaluran berhasil dicatat! Dana publik terupdate.',
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
+                          showSuccessSnackBar(context, 'Penyaluran berhasil dicatat! Dana publik terupdate.');
                           nominalController.clear();
                           setState(() => selectedKategori = null);
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(e.toString()),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          showErrorSnackBar(context, e.toString());
                         }
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Mohon lengkapi nominal & kategori!'),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
+                        showInfoSnackBar(context, 'Mohon lengkapi nominal & kategori!');
                       }
                     },
                     child: const Text(

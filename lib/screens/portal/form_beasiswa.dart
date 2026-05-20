@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/app_colors.dart';
+import '../../core/snackbar_helper.dart';
 import 'portal_layout.dart';
 import '../../data/mock_database.dart';
 
@@ -147,24 +149,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
         _fileNameFoto == null ||
         _fileNameMotivasi == null ||
         _fileNameSktm == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Mohon periksa kembali. Ada data wajib atau dokumen yang belum lengkap.',
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
-        ),
-      );
+      showErrorSnackBar(context, 'Mohon periksa kembali. Ada data wajib atau dokumen yang belum lengkap.');
       return;
     }
 
@@ -642,6 +627,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                 : ((isPhone || isNumber)
                       ? TextInputType.number
                       : TextInputType.text),
+            inputFormatters: (isPhone || isNumber)
+                ? [FilteringTextInputFormatter.digitsOnly]
+                : null,
             style: TextStyle(
               color: readOnly ? Colors.grey.shade700 : Colors.black87,
             ),
@@ -685,8 +673,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               fillColor: readOnly ? Colors.grey.shade200 : Colors.grey.shade50,
             ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty)
+              if (value == null || value.trim().isEmpty) {
                 return '$label tidak boleh kosong';
+              }
               return null;
             },
           ),
@@ -713,7 +702,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -781,7 +770,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _selectedPendidikan,
+            initialValue: _selectedPendidikan,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,

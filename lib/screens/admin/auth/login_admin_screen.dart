@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; 
+import 'package:go_router/go_router.dart';
 // import '/core/app_colors.dart';
-import '/data/mock_database.dart'; 
+import '/services/supabase_auth_service.dart';
 
 class LoginAdminScreen extends StatefulWidget {
   const LoginAdminScreen({super.key});
@@ -21,7 +21,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
   Future<void> _handleAdminLogin() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = ''; 
+      _errorMessage = '';
     });
 
     final email = _emailController.text.trim();
@@ -35,7 +35,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
       return;
     }
 
-    final String? userRole = await MockDatabase.loginRole(email, password);
+    final String? userRole = await SupabaseAuthService.loginRole(email, password);
 
     setState(() {
       _isLoading = false;
@@ -48,7 +48,8 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
     } else if (userRole != null) {
       // Jika siswa/donatur nyasar ke sini, tendang keluar
       setState(() {
-        _errorMessage = 'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
+        _errorMessage =
+            'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
       });
     } else {
       setState(() {
@@ -67,20 +68,23 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5), // Background abu-abu kebiruan khas halaman admin
+      backgroundColor: const Color(
+        0xFFF0F2F5,
+      ), // Background abu-abu kebiruan khas halaman admin
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight, 
-              ),
-              child: Center( 
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Container(
                     width: 400, // Sedikit lebih ramping
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 40,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -94,14 +98,15 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Rata tengah agar formal
+                      crossAxisAlignment:
+                          CrossAxisAlignment.center, // Rata tengah agar formal
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset('assets/logo.png', height: 45),
                         const SizedBox(height: 30),
-                        
+
                         const Text(
-                          'Sistem Manajemen VIP', 
+                          'Sistem Manajemen VIP',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -130,7 +135,10 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                               ),
                               child: Text(
                                 _errorMessage,
-                                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                                style: TextStyle(
+                                  color: Colors.red.shade700,
+                                  fontSize: 13,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -140,24 +148,41 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Email Administrator', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Text(
+                              'Email Administrator',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             TextFormField(
-                              controller: _emailController, 
+                              controller: _emailController,
                               decoration: InputDecoration(
                                 hintText: 'admin@yayasan.vip',
-                                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 14,
+                                ),
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.black87, width: 1.5), // Fokus warna hitam elegan
+                                  borderSide: const BorderSide(
+                                    color: Colors.black87,
+                                    width: 1.5,
+                                  ), // Fokus warna hitam elegan
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -168,31 +193,53 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Kata Sandi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Text(
+                              'Kata Sandi',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             TextFormField(
-                              controller: _passwordController, 
+                              controller: _passwordController,
                               obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
                                 hintText: '••••••••',
-                                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                                hintStyle: TextStyle(
+                                  color: Colors.grey.shade400,
+                                  fontSize: 14,
+                                ),
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.black87, width: 1.5),
+                                  borderSide: const BorderSide(
+                                    color: Colors.black87,
+                                    width: 1.5,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
                                     color: Colors.grey.shade600,
                                   ),
-                                  onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                                  onPressed: () => setState(
+                                    () => _isPasswordVisible =
+                                        !_isPasswordVisible,
+                                  ),
                                 ),
                               ),
                             ),
@@ -203,33 +250,48 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                         // Tombol Masuk
                         SizedBox(
                           width: double.infinity,
-                          height: 50, 
+                          height: 50,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleAdminLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black87, // Tombol hitam mencirikan halaman backend
+                              backgroundColor: Colors
+                                  .black87, // Tombol hitam mencirikan halaman backend
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              elevation: 0, 
+                              elevation: 0,
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                                    height: 20, width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text(
                                     'MASUK',
-                                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 14),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                      fontSize: 14,
+                                    ),
                                   ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 20),
                         TextButton(
-                          onPressed: () => context.go('/'), 
-                          child: const Text('Kembali ke Beranda Publik', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                          onPressed: () => context.go('/'),
+                          child: const Text(
+                            'Kembali ke Beranda Publik',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ],
                     ),

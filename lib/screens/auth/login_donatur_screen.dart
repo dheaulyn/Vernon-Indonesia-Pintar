@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
 
 class LoginDonaturScreen extends StatefulWidget {
   const LoginDonaturScreen({super.key});
@@ -37,7 +37,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
     }
 
     // Panggil loginRole untuk mendapatkan peran
-    final String? userRole = await MockDatabase.loginRole(email, password);
+    final String? userRole = await SupabaseAuthService.loginRole(email, password);
 
     setState(() {
       _isLoading = false;
@@ -49,7 +49,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
       if (userRole == 'donatur') {
         context.go('/dashboard-donatur');
       } else if (userRole == 'admin') {
-        context.go('/admin');
+        context.go('/admin-dashboard');
       } else if (userRole == 'siswa') {
         setState(() {
           _errorMessage =
