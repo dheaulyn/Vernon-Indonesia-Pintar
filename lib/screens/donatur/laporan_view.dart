@@ -88,10 +88,10 @@ class _LaporanViewState extends State<LaporanView> {
           // Catatan: Jika total donasi sudah pindah ke SupabaseDonationService,
           // ganti MockDatabase.totalDonasiTerkumpul di bawah ini.
           ValueListenableBuilder(
-            valueListenable: MockDatabase.riwayatPenyaluran,
+            valueListenable: SupabaseDonationService.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
               return ValueListenableBuilder(
-                valueListenable: MockDatabase.totalDonasiTerkumpul,
+                valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
                 builder: (context, int totalDonasi, _) {
                   int totalPendidikan = 0;
                   int totalUangSaku = 0;

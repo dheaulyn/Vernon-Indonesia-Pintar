@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
 import '../../services/supabase_auth_service.dart';
+import '../../services/supabase_pendaftaran_service.dart';
+import '../../services/supabase_donasi_service.dart';
 
 class MenuModel {
   final IconData? icon;
@@ -63,17 +64,28 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
 
   bool _hasUnreadNotif() {
     if (_isNotifCleared) return false;
-    final user = MockDatabase.currentUser ?? {};
-    final isRevisi = user['is_revisi'] == true;
-    final status = user['admin_status'] ?? 'Menunggu Review';
-    return isRevisi || (status != 'Menunggu Review' && status.isNotEmpty);
+    final user = SupabaseAuthService.currentUserData ?? {};
+    final String role = user['role'] ?? 'siswa';
+
+    if (role == 'admin') {
+      final pendingCount = SupabasePendaftaranService.listPendaftar.value
+          .where((p) => p['admin_status'] == 'Menunggu Review')
+          .length;
+      return pendingCount > 0;
+    } else if (role == 'donatur') {
+      // Donatur always has a notification (welcome or thanks) until cleared
+      return true;
+    } else {
+      // Siswa
+      final isRevisi = user['is_revisi'] == true;
+      final status = user['admin_status'] ?? 'Menunggu Review';
+      return isRevisi || (status != 'Menunggu Review' && status.isNotEmpty);
+    }
   }
 
   List<PopupMenuEntry<String>> _buildNotificationItems() {
-    final user = MockDatabase.currentUser ?? {};
-    final bool isRevisi = user['is_revisi'] == true;
-    final String status = user['admin_status'] ?? 'Menunggu Review';
-    final String catatan = user['catatan_revisi'] ?? '';
+    final user = SupabaseAuthService.currentUserData ?? {};
+    final String role = user['role'] ?? 'siswa';
 
     List<PopupMenuEntry<String>> items = [
       const PopupMenuItem<String>(
@@ -87,41 +99,74 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
     ];
 
     if (_hasUnreadNotif()) {
-      if (isRevisi) {
+      if (role == 'admin') {
+        final pendingCount = SupabasePendaftaranService.listPendaftar.value
+            .where((p) => p['admin_status'] == 'Menunggu Review')
+            .length;
+
         items.add(
           PopupMenuItem<String>(
-            value: 'go_status',
+            value: 'go_admin_pendaftar',
             child: SizedBox(
               width: 250,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.orange,
-                    size: 28,
-                  ),
+                  const Icon(Icons.people_alt_rounded, color: Colors.blue, size: 28),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Revisi Diperlukan',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
+                          'Pendaftar Baru',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          catatan,
+                          'Terdapat $pendingCount siswa menunggu review dari Anda.',
                           maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      } else if (role == 'donatur') {
+        final currentUserName = user['name'] ?? '';
+        final userDonations = SupabaseDonationService.riwayatDonasi.value
+            .where((donasi) => donasi['nama_donatur'] == currentUserName || donasi['nama_donatur'] == 'Hamba Allah')
+            .length;
+            
+        items.add(
+          PopupMenuItem<String>(
+            value: 'go_donatur_riwayat',
+            child: SizedBox(
+              width: 250,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.favorite_rounded, color: Colors.red, size: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userDonations > 0 ? 'Terima Kasih!' : 'Halo Donatur VIP!',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          userDonations > 0
+                              ? 'Anda telah berdonasi sebanyak $userDonations kali. Kebaikan Anda sangat berarti.'
+                              : 'Mari mulai langkah kebaikan Anda hari ini untuk masa depan bangsa.',
+                          maxLines: 3,
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
                         ),
                       ],
                     ),
@@ -132,56 +177,91 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
           ),
         );
       } else {
-        IconData statusIcon = Icons.info;
-        Color statusColor = Colors.blue;
+        // Siswa
+        final bool isRevisi = user['is_revisi'] == true;
+        final String status = user['admin_status'] ?? 'Menunggu Review';
+        final String catatan = user['catatan_revisi'] ?? '';
 
-        if (status == 'Diterima') {
-          statusIcon = Icons.check_circle;
-          statusColor = Colors.green;
-        }
-        if (status == 'Ditolak') {
-          statusIcon = Icons.cancel;
-          statusColor = Colors.red;
-        }
-
-        items.add(
-          PopupMenuItem<String>(
-            value: 'go_status',
-            child: SizedBox(
-              width: 250,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(statusIcon, color: statusColor, size: 28),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Status Diperbarui',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+        if (isRevisi) {
+          items.add(
+            PopupMenuItem<String>(
+              value: 'go_status',
+              child: SizedBox(
+                width: 250,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Revisi Diperlukan',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Status pendaftaran Anda saat ini: $status',
-                          maxLines: 2,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
+                          const SizedBox(height: 4),
+                          Text(
+                            catatan,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, color: Colors.black54),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        );
+          );
+        } else {
+          IconData statusIcon = Icons.info;
+          Color statusColor = Colors.blue;
+
+          if (status == 'Diterima') {
+            statusIcon = Icons.check_circle;
+            statusColor = Colors.green;
+          }
+          if (status == 'Ditolak') {
+            statusIcon = Icons.cancel;
+            statusColor = Colors.red;
+          }
+
+          items.add(
+            PopupMenuItem<String>(
+              value: 'go_status',
+              child: SizedBox(
+                width: 250,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 28),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Status Diperbarui',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Status pendaftaran Anda saat ini: $status',
+                            maxLines: 2,
+                            style: const TextStyle(fontSize: 12, color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
       }
 
       items.add(const PopupMenuDivider());
@@ -298,11 +378,16 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
           ),
           itemBuilder: (context) => _buildNotificationItems(),
           onSelected: (value) {
-            setState(() => _isNotifOpen = false);
-            if (value == 'clear') {
-              setState(() => _isNotifCleared = true);
-            } else if (value == 'go_status') {
+            setState(() {
+              _isNotifOpen = false;
+              _isNotifCleared = true; // Mark as read when ANY item is clicked
+            });
+            if (value == 'go_status') {
               context.go('/status-beasiswa');
+            } else if (value == 'go_admin_pendaftar') {
+              context.go('/admin-pendaftar');
+            } else if (value == 'go_donatur_riwayat') {
+              context.go('/dashboard-donatur?index=2');
             }
           },
         ),
@@ -326,7 +411,7 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
                 children: [
                   if (!isMobile)
                     Text(
-                      MockDatabase.currentUser?['name'] ?? widget.roleText,
+                      SupabaseAuthService.currentUserData?['name'] ?? widget.roleText,
                       style: const TextStyle(
                         color: Colors.black87,
                         fontWeight: FontWeight.w600,
@@ -349,7 +434,7 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      MockDatabase.currentUser?['name'] ?? widget.roleText,
+                      SupabaseAuthService.currentUserData?['name'] ?? widget.roleText,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,

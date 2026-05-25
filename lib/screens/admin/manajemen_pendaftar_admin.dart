@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/snackbar_helper.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_pendaftaran_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ==========================================
 // 1. MODEL DATA
@@ -32,6 +33,7 @@ class ManajemenPendaftarAdmin extends StatefulWidget {
 
 class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
   List<PendaftarModel> listPendaftar = [];
+  bool _isLoadingData = true;
 
   @override
   void initState() {
@@ -39,19 +41,22 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     _loadData();
   }
 
-  void _loadData() {
-    final allFullData = MockDatabase.getAllRegisteredSiswaFullData();
+  Future<void> _loadData() async {
+    setState(() => _isLoadingData = true);
+
+    final allFullData = await SupabasePendaftaranService.getAllPendaftar();
 
     setState(() {
       listPendaftar = allFullData.map((s) {
         return PendaftarModel(
-          id: s['email'],
-          nama: s['name'],
+          id: s['email'] ?? '',
+          nama: s['name'] ?? '-',
           asalSekolah: s['asal_sekolah'] ?? '-',
           tglDaftar: _formatDate(s['tgl_daftar']),
           status: s['admin_status'] ?? 'Menunggu Review',
         );
       }).toList();
+      _isLoadingData = false;
     });
   }
 
@@ -224,8 +229,15 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
           ? const Icon(Icons.open_in_new, color: Colors.blue, size: 20)
           : null,
       onTap: hasFile
-          ? () {
-              showInfoSnackBar(context, 'Membuka dokumen: $fileName... (Mode Simulasi)');
+          ? () async {
+              final uri = Uri.tryParse(fileName);
+              if (uri != null && await canLaunchUrl(uri)) {
+                await launchUrl(uri);
+              } else {
+                if (mounted) {
+                  showErrorSnackBar(context, 'Tidak dapat membuka file atau URL tidak valid.');
+                }
+              }
             }
           : null,
     );
@@ -234,12 +246,13 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
   // ==========================================
   // FUNGSI REVIEW & UBAH STATUS PENDAFTAR
   // ==========================================
-  void _showReviewDialog(PendaftarModel pendaftar, int index) {
-    final allFullData = MockDatabase.getAllRegisteredSiswaFullData();
-    final detailSiswa = allFullData.firstWhere(
-      (u) => u['email'] == pendaftar.id,
-      orElse: () => {},
-    );
+  void _showReviewDialog(PendaftarModel pendaftar, int index) async {
+    // Ambil detail siswa dari Supabase
+    final detailSiswa = await SupabasePendaftaranService.getDetailPendaftar(pendaftar.id);
+    if (detailSiswa == null) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data detail siswa.');
+      return;
+    }
 
     String selectedStatus = pendaftar.status;
     final TextEditingController catatanController = TextEditingController(
@@ -898,7 +911,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     // 👇 CEK VALIDASI ERROR
                     if (selectedStatus == 'Wawancara' &&
                         (selectedDate == null ||
@@ -911,14 +924,20 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                       return;
                     }
 
-                    MockDatabase.updateStatusSiswa(
-                      pendaftar.id,
-                      selectedStatus,
-                      catatanController.text,
+                    // Kirim update status ke Supabase
+                    final error = await SupabasePendaftaranService.updateStatusPendaftar(
+                      email: pendaftar.id,
+                      newStatus: selectedStatus,
+                      catatan: catatanController.text,
                       jadwalWawancara: selectedStatus == 'Wawancara'
                           ? jadwalDisplayController.text
                           : null,
                     );
+
+                    if (error != null) {
+                      if (context.mounted) showErrorSnackBar(context, error);
+                      return;
+                    }
 
                     setState(() {
                       listPendaftar[index].status = selectedStatus;
@@ -1004,7 +1023,9 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: listPendaftar.isEmpty
+              child: _isLoadingData
+                  ? const Center(child: CircularProgressIndicator())
+                  : listPendaftar.isEmpty
                   ? const Center(
                       child: Text(
                         "Belum ada pendaftar yang men-submit formulir.",

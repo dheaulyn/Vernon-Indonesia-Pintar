@@ -42,6 +42,7 @@ import 'screens/admin/cms/partners_admin.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/supabase_auth_service.dart';
 import 'services/supabase_donasi_service.dart';
+import 'services/supabase_pendaftaran_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ void main() async {
   await SupabaseAuthService.restoreSession();
 
   SupabaseDonationService.listenToFinancialRealtime();
+  SupabasePendaftaranService.listenToPendaftaranRealtime();
 
   usePathUrlStrategy();
   runApp(const YayasanApp());

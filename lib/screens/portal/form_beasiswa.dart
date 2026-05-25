@@ -5,7 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/app_colors.dart';
 import '../../core/snackbar_helper.dart';
 import 'portal_layout.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
+import '../../services/supabase_pendaftaran_service.dart';
+import '../../services/api_wilayah_service.dart';
 
 class FormBeasiswaScreen extends StatefulWidget {
   const FormBeasiswaScreen({super.key});
@@ -33,53 +35,31 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   String? _selectedProvinsi;
   String? _selectedKota;
   String? _selectedKecamatan;
+  String? _selectedKelurahan;
 
-  // State untuk menyimpan nama file yang diunggah
-  String? _fileNameKtp;
-  String? _fileNameIjazah;
-  String? _fileNameSktm;
-  String? _fileNameFoto;
-  String? _fileNameMotivasi;
+  List<Map<String, dynamic>> _provinces = [];
+  List<Map<String, dynamic>> _regencies = [];
+  List<Map<String, dynamic>> _districts = [];
+  List<Map<String, dynamic>> _villages = [];
+  bool _isLoadingWilayah = true;
+
+  // State untuk menyimpan objek file yang diunggah
+  PlatformFile? _fileKtp;
+  PlatformFile? _fileIjazah;
+  PlatformFile? _fileSktm;
+  PlatformFile? _fileFoto;
+  PlatformFile? _fileMotivasi;
 
   // 👇 VARIABEL STATE BARU UNTUK VALIDASI DOKUMEN
   bool _hasAttemptedSubmit = false;
 
   bool _isLoading = false;
 
-  // DATA DUMMY WILAYAH INDONESIA
-  final Map<String, Map<String, List<String>>> _dataWilayah = {
-    "Jawa Timur": {
-      "Kota Malang": [
-        "Lowokwaru",
-        "Blimbing",
-        "Klojen",
-        "Sukun",
-        "Kedungkandang",
-      ],
-      "Kabupaten Malang": [
-        "Singosari",
-        "Kepanjen",
-        "Lawang",
-        "Pakis",
-        "Dau",
-        "Karangploso",
-      ],
-      "Kota Surabaya": ["Gubeng", "Tegalsari", "Sukolilo", "Wonokromo"],
-    },
-    "Jawa Barat": {
-      "Kota Bandung": ["Coblong", "Cidadap", "Andir", "Buahbatu"],
-      "Kota Bogor": ["Bogor Tengah", "Bogor Timur", "Bogor Utara"],
-    },
-    "DKI Jakarta": {
-      "Jakarta Selatan": ["Tebet", "Setiabudi", "Kebayoran Baru", "Pancoran"],
-      "Jakarta Pusat": ["Menteng", "Tanah Abang", "Senen", "Cempaka Putih"],
-    },
-  };
-
   @override
   void initState() {
     super.initState();
-    final user = MockDatabase.currentUser ?? {};
+    _loadProvinces();
+    final user = SupabaseAuthService.currentUserData ?? {};
 
     _nameController = TextEditingController(text: user['name'] ?? '');
     _emailController = TextEditingController(text: user['email'] ?? '');
@@ -91,6 +71,42 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
         ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
       _selectedPendidikan = user['pendidikan'];
     }
+  }
+
+  Future<void> _loadProvinces() async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getProvinces();
+    setState(() {
+      _provinces = data;
+      _isLoadingWilayah = false;
+    });
+  }
+
+  Future<void> _loadRegencies(String provinceId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getRegencies(provinceId);
+    setState(() {
+      _regencies = data;
+      _isLoadingWilayah = false;
+    });
+  }
+
+  Future<void> _loadDistricts(String regencyId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getDistricts(regencyId);
+    setState(() {
+      _districts = data;
+      _isLoadingWilayah = false;
+    });
+  }
+
+  Future<void> _loadVillages(String districtId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getVillages(districtId);
+    setState(() {
+      _villages = data;
+      _isLoadingWilayah = false;
+    });
   }
 
   @override
@@ -109,26 +125,27 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true, // IMPORTANT for web to get bytes
     );
 
-    if (result != null) {
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        String fileName = result.files.first.name;
+        PlatformFile file = result.files.first;
         switch (type) {
           case 'ktp':
-            _fileNameKtp = fileName;
+            _fileKtp = file;
             break;
           case 'ijazah':
-            _fileNameIjazah = fileName;
+            _fileIjazah = file;
             break;
           case 'foto':
-            _fileNameFoto = fileName;
+            _fileFoto = file;
             break;
           case 'motivasi':
-            _fileNameMotivasi = fileName;
+            _fileMotivasi = file;
             break;
           case 'sktm':
-            _fileNameSktm = fileName;
+            _fileSktm = file;
             break;
         }
       });
@@ -144,11 +161,12 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
         _selectedProvinsi == null ||
         _selectedKota == null ||
         _selectedKecamatan == null ||
-        _fileNameKtp == null ||
-        _fileNameIjazah == null ||
-        _fileNameFoto == null ||
-        _fileNameMotivasi == null ||
-        _fileNameSktm == null) {
+        _selectedKelurahan == null ||
+        _fileKtp == null ||
+        _fileIjazah == null ||
+        _fileFoto == null ||
+        _fileMotivasi == null ||
+        _fileSktm == null) {
       showErrorSnackBar(context, 'Mohon periksa kembali. Ada data wajib atau dokumen yang belum lengkap.');
       return;
     }
@@ -157,39 +175,48 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
       _isLoading = true;
     });
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (MockDatabase.currentUser != null) {
-      MockDatabase.currentUser!['name'] = _nameController.text.toUpperCase();
-      MockDatabase.currentUser!['telepon'] = _phoneController.text;
-
-      String domisiliLengkap =
-          '${_detailAlamatController.text}, Kec. $_selectedKecamatan, $_selectedKota, $_selectedProvinsi';
-      MockDatabase.currentUser!['domisili'] = domisiliLengkap;
-
-      MockDatabase.currentUser!['pendidikan'] = _selectedPendidikan;
-      MockDatabase.currentUser!['nik'] = _nikController.text;
-      MockDatabase.currentUser!['asal_sekolah'] = _asalSekolahController.text;
-      MockDatabase.currentUser!['tahun_lulus'] = _tahunLulusController.text;
-
-      MockDatabase.currentUser!['file_ktp'] = _fileNameKtp;
-      MockDatabase.currentUser!['file_rapor'] = _fileNameIjazah;
-      MockDatabase.currentUser!['file_foto'] = _fileNameFoto;
-      MockDatabase.currentUser!['file_motivasi'] = _fileNameMotivasi;
-      MockDatabase.currentUser!['file_sktm'] = _fileNameSktm;
-
-      MockDatabase.currentUser!['tgl_daftar'] = DateTime.now()
-          .toIso8601String();
-
-      MockDatabase.currentUser!['is_registered'] = true;
-      MockDatabase.currentUser!['current_step'] = 1;
+    String getWilayahName(String? value) {
+      if (value == null) return '';
+      final parts = value.split('|');
+      return parts.length > 1 ? parts[1] : value;
     }
+
+    String provName = getWilayahName(_selectedProvinsi);
+    String kotaName = getWilayahName(_selectedKota);
+    String kecName = getWilayahName(_selectedKecamatan);
+    String kelName = getWilayahName(_selectedKelurahan);
+
+    // Gabungkan domisili lengkap
+    String domisiliLengkap =
+        '${_detailAlamatController.text}, Kel. $kelName, Kec. $kecName, $kotaName, $provName';
+
+    // Kirim data pendaftaran ke Supabase
+    final error = await SupabasePendaftaranService.submitPendaftaran(
+      nama: _nameController.text,
+      nik: _nikController.text,
+      telepon: _phoneController.text,
+      domisili: domisiliLengkap,
+      pendidikan: _selectedPendidikan ?? '',
+      asalSekolah: _asalSekolahController.text,
+      tahunLulus: _tahunLulusController.text,
+      fileKtp: _fileKtp,
+      fileRapor: _fileIjazah,
+      fileFoto: _fileFoto,
+      fileMotivasi: _fileMotivasi,
+      fileSktm: _fileSktm,
+    );
 
     setState(() {
       _isLoading = false;
     });
 
     if (!mounted) return;
+
+    if (error != null) {
+      showErrorSnackBar(context, error);
+      return;
+    }
+
 
     showDialog(
       context: context,
@@ -250,7 +277,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDatabase.currentUser ?? {};
+    final user = SupabaseAuthService.currentUserData ?? {};
     final int currentStep = user['current_step'] ?? 0;
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
@@ -397,14 +424,22 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                     _buildDropdownWilayah(
                       label: "Provinsi",
                       hint: "Pilih Provinsi",
-                      items: _dataWilayah.keys.toList(),
+                      items: _provinces,
                       value: _selectedProvinsi,
                       onChanged: (val) {
                         setState(() {
                           _selectedProvinsi = val;
                           _selectedKota = null;
                           _selectedKecamatan = null;
+                          _selectedKelurahan = null;
+                          _regencies = [];
+                          _districts = [];
+                          _villages = [];
                         });
+                        if (val != null) {
+                          final id = val.split('|')[0];
+                          _loadRegencies(id);
+                        }
                       },
                     ),
 
@@ -413,15 +448,20 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       hint: _selectedProvinsi == null
                           ? "Pilih Provinsi Terlebih Dahulu"
                           : "Pilih Kota/Kabupaten",
-                      items: _selectedProvinsi != null
-                          ? _dataWilayah[_selectedProvinsi]!.keys.toList()
-                          : [],
+                      items: _regencies,
                       value: _selectedKota,
                       onChanged: (val) {
                         setState(() {
                           _selectedKota = val;
                           _selectedKecamatan = null;
+                          _selectedKelurahan = null;
+                          _districts = [];
+                          _villages = [];
                         });
+                        if (val != null) {
+                          final id = val.split('|')[0];
+                          _loadDistricts(id);
+                        }
                       },
                     ),
 
@@ -430,13 +470,31 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       hint: _selectedKota == null
                           ? "Pilih Kota Terlebih Dahulu"
                           : "Pilih Kecamatan",
-                      items: _selectedKota != null
-                          ? _dataWilayah[_selectedProvinsi]![_selectedKota]!
-                          : [],
+                      items: _districts,
                       value: _selectedKecamatan,
                       onChanged: (val) {
                         setState(() {
                           _selectedKecamatan = val;
+                          _selectedKelurahan = null;
+                          _villages = [];
+                        });
+                        if (val != null) {
+                          final id = val.split('|')[0];
+                          _loadVillages(id);
+                        }
+                      },
+                    ),
+
+                    _buildDropdownWilayah(
+                      label: "Kelurahan / Desa",
+                      hint: _selectedKecamatan == null
+                          ? "Pilih Kecamatan Terlebih Dahulu"
+                          : "Pilih Kelurahan/Desa",
+                      items: _villages,
+                      value: _selectedKelurahan,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedKelurahan = val;
                         });
                       },
                     ),
@@ -491,31 +549,31 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                     _buildFileUploadField(
                       label: "Fotokopi KTP / Kartu Pelajar (Wajib)",
                       hint: "Pilih file KTP...",
-                      fileName: _fileNameKtp,
+                      fileName: _fileKtp?.name,
                       onTap: () => _pickFile('ktp'),
                     ),
                     _buildFileUploadField(
                       label: "Fotokopi Ijazah / SKL Terakhir (Wajib)",
                       hint: "Pilih file Ijazah/SKL...",
-                      fileName: _fileNameIjazah,
+                      fileName: _fileIjazah?.name,
                       onTap: () => _pickFile('ijazah'),
                     ),
                     _buildFileUploadField(
                       label: "Pas Foto 3x4 Terbaru (Wajib)",
                       hint: "Pilih file Pas Foto...",
-                      fileName: _fileNameFoto,
+                      fileName: _fileFoto?.name,
                       onTap: () => _pickFile('foto'),
                     ),
                     _buildFileUploadField(
                       label: "Surat Motivasi Tulis Tangan (Wajib)",
                       hint: "Pilih file Surat Motivasi...",
-                      fileName: _fileNameMotivasi,
+                      fileName: _fileMotivasi?.name,
                       onTap: () => _pickFile('motivasi'),
                     ),
                     _buildFileUploadField(
                       label: "Surat Keterangan Tidak Mampu / SKTM (Wajib)",
                       hint: "Pilih file SKTM...",
-                      fileName: _fileNameSktm,
+                      fileName: _fileSktm?.name,
                       onTap: () => _pickFile('sktm'),
                     ),
 
@@ -687,7 +745,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   Widget _buildDropdownWilayah({
     required String label,
     required String hint,
-    required List<String> items,
+    required List<Map<String, dynamic>> items,
     required String? value,
     required ValueChanged<String?> onChanged,
   }) {
@@ -747,8 +805,12 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
             icon: const Icon(Icons.arrow_drop_down),
             items: items.isEmpty
                 ? null
-                : items.map((String item) {
-                    return DropdownMenuItem(value: item, child: Text(item));
+                : items.map((item) {
+                    final valStr = '${item['id']}|${item['name']}';
+                    return DropdownMenuItem(
+                      value: valStr,
+                      child: Text(item['name'] ?? ''),
+                    );
                   }).toList(),
             onChanged: items.isEmpty ? null : onChanged,
             validator: (val) => val == null ? '$label harus dipilih' : null,
