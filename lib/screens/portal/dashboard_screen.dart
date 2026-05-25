@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import 'portal_layout.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,7 +21,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _checkRevisiStatus() {
-    final user = MockDatabase.currentUser ?? {};
+    final user = SupabaseAuthService.currentUserData ?? {};
 
     if (user['is_revisi'] == true) {
       showDialog(
@@ -164,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = MockDatabase.currentUser ?? {};
+    final user = SupabaseAuthService.currentUserData ?? {};
 
     final bool isRegistered = user['is_registered'] == true;
     final int currentStep = user['current_step'] ?? (isRegistered ? 1 : 0);

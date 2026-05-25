@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../data/mock_database.dart';
 import '../../services/supabase_auth_service.dart';
 import '../shared/shared_dashboard_layout.dart';
 
@@ -20,8 +19,6 @@ class DonaturDashboardScreen extends StatefulWidget {
 
 class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   late Map<String, dynamic> user;
-  late List<DonationHistory> allHistories;
-  late List<DonationHistory> successDonations;
 
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -32,10 +29,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    user =
-        MockDatabase.currentUser ??
-        {'name': 'Dhea Aulyanti', 'email': 'dhea@mail.com'};
-    _refreshData();
+    user = SupabaseAuthService.currentUserData ?? {};
 
     _scrollController.addListener(() {
       if (_scrollController.offset > 300 && !_showBackToTopButton) {
@@ -50,16 +44,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _refreshData() {
-    setState(() {
-      allHistories = MockDatabase.getDonationHistory(user['email']);
-      allHistories.sort((a, b) => b.date.compareTo(a.date));
-      successDonations = allHistories
-          .where((h) => h.status == 'Sukses')
-          .toList();
-    });
   }
 
   // 👇 PERBAIKAN DI SINI: Mengarahkan ke rute login khusus donatur
@@ -157,7 +141,6 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
           isMobile: isMobile,
           user: user,
           onDonasiSuccess: () {
-            _refreshData();
             setState(() => _selectedIndex = 2);
           },
         );

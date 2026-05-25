@@ -4,7 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/app_colors.dart';
 import '../../core/snackbar_helper.dart';
 import 'portal_layout.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
+import '../../services/supabase_pendaftaran_service.dart';
+import '../../services/api_wilayah_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StatusBeasiswaScreen extends StatefulWidget {
   const StatusBeasiswaScreen({super.key});
@@ -24,20 +27,21 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   late TextEditingController _phoneController;
   final _detailAlamatController = TextEditingController();
 
-  final _nikController = TextEditingController();
-  final _asalSekolahController = TextEditingController();
-  final _tahunLulusController = TextEditingController();
+  late TextEditingController _nikController;
+  late TextEditingController _asalSekolahController;
+  late TextEditingController _tahunLulusController;
 
   String? _selectedPendidikan;
   String? _selectedProvinsi;
   String? _selectedKota;
   String? _selectedKecamatan;
+  String? _selectedKelurahan;
 
-  String? _fileNameKtp;
-  String? _fileNameIjazah;
-  String? _fileNameSktm;
-  String? _fileNameFoto;
-  String? _fileNameMotivasi;
+  PlatformFile? _fileKtp;
+  PlatformFile? _fileIjazah;
+  PlatformFile? _fileSktm;
+  PlatformFile? _fileFoto;
+  PlatformFile? _fileMotivasi;
 
   bool _isLoading = false;
   bool _isReadOnly = true;
@@ -45,40 +49,16 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   String _catatanRevisi = '';
   int _currentStep = 0;
 
-  // DATA DUMMY WILAYAH INDONESIA
-  final Map<String, Map<String, List<String>>> _dataWilayah = {
-    "Jawa Timur": {
-      "Kota Malang": [
-        "Lowokwaru",
-        "Blimbing",
-        "Klojen",
-        "Sukun",
-        "Kedungkandang",
-      ],
-      "Kabupaten Malang": [
-        "Singosari",
-        "Kepanjen",
-        "Lawang",
-        "Pakis",
-        "Dau",
-        "Karangploso",
-      ],
-      "Kota Surabaya": ["Gubeng", "Tegalsari", "Sukolilo", "Wonokromo"],
-    },
-    "Jawa Barat": {
-      "Kota Bandung": ["Coblong", "Cidadap", "Andir", "Buahbatu"],
-      "Kota Bogor": ["Bogor Tengah", "Bogor Timur", "Bogor Utara"],
-    },
-    "DKI Jakarta": {
-      "Jakarta Selatan": ["Tebet", "Setiabudi", "Kebayoran Baru", "Pancoran"],
-      "Jakarta Pusat": ["Menteng", "Tanah Abang", "Senen", "Cempaka Putih"],
-    },
-  };
+  List<Map<String, dynamic>> _provinces = [];
+  List<Map<String, dynamic>> _regencies = [];
+  List<Map<String, dynamic>> _districts = [];
+  List<Map<String, dynamic>> _villages = [];
+  bool _isLoadingWilayah = true;
 
   @override
   void initState() {
     super.initState();
-    final user = MockDatabase.currentUser ?? {};
+    final user = SupabaseAuthService.currentUserData ?? {};
 
     _currentStep = user['current_step'] ?? 0;
     _isRevisi = user['is_revisi'] == true;
@@ -90,37 +70,119 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     _nameController = TextEditingController(text: user['name'] ?? '');
     _emailController = TextEditingController(text: user['email'] ?? '');
     _phoneController = TextEditingController(text: user['telepon'] ?? '');
-    _nikController.text = user['nik'] ?? '';
-    _asalSekolahController.text = user['asal_sekolah'] ?? '';
-    _tahunLulusController.text = user['tahun_lulus'] ?? '';
 
     if (user['pendidikan'] != null &&
         ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
       _selectedPendidikan = user['pendidikan'];
     }
 
-    // PEMECAH STRING DOMISILI CERDAS & AMAN
-    String domisili = user['domisili'] ?? '';
+    if (user['pendidikan'] != null &&
+        ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
+      _selectedPendidikan = user['pendidikan'];
+    }
+
+    _nikController = TextEditingController(text: user['nik'] ?? '');
+    _asalSekolahController =
+        TextEditingController(text: user['asal_sekolah'] ?? '');
+    _tahunLulusController =
+        TextEditingController(text: user['tahun_lulus']?.toString() ?? '');
+
+    _initWilayahData(user['domisili'] ?? '');
+  }
+
+  Future<void> _initWilayahData(String domisili) async {
+    setState(() => _isLoadingWilayah = true);
+    
+    final provData = await ApiWilayahService.getProvinces();
+    _provinces = provData;
+
     List<String> parts = domisili.split(', ');
+    
     if (parts.length >= 4) {
-      _selectedProvinsi = parts.last;
-      _selectedKota = parts[parts.length - 2];
-      _selectedKecamatan = parts[parts.length - 3].replaceAll('Kec. ', '');
-      _detailAlamatController.text = parts
-          .sublist(0, parts.length - 3)
-          .join(', ');
+      String provName = parts.last.trim();
+      String kotaName = parts[parts.length - 2].trim();
+      String kecName = parts[parts.length - 3].replaceAll('Kec. ', '').trim();
+      String? kelName;
+      
+      if (parts.length >= 5) {
+        kelName = parts[parts.length - 4].replaceAll('Kel. ', '').replaceAll('Desa ', '').trim();
+        _detailAlamatController.text = parts.sublist(0, parts.length - 4).join(', ');
+      } else {
+        _detailAlamatController.text = parts.sublist(0, parts.length - 3).join(', ');
+      }
+
+      // Safe matching helper
+      Map<String, dynamic>? findMatch(List<Map<String, dynamic>> list, String name) {
+        try {
+          return list.firstWhere((item) => (item['name'] as String).toUpperCase() == name.toUpperCase());
+        } catch (e) {
+          try {
+             return list.firstWhere((item) => (item['name'] as String).toUpperCase().contains(name.toUpperCase()) || name.toUpperCase().contains((item['name'] as String).toUpperCase()));
+          } catch(e) {
+             return null;
+          }
+        }
+      }
+
+      final provMatch = findMatch(_provinces, provName);
+      
+      if (provMatch != null) {
+        _selectedProvinsi = '${provMatch['id']}|${provMatch['name']}';
+        _regencies = await ApiWilayahService.getRegencies(provMatch['id']);
+        
+        final kotaMatch = findMatch(_regencies, kotaName);
+        
+        if (kotaMatch != null) {
+          _selectedKota = '${kotaMatch['id']}|${kotaMatch['name']}';
+          _districts = await ApiWilayahService.getDistricts(kotaMatch['id']);
+          
+          final kecMatch = findMatch(_districts, kecName);
+          
+          if (kecMatch != null) {
+            _selectedKecamatan = '${kecMatch['id']}|${kecMatch['name']}';
+            _villages = await ApiWilayahService.getVillages(kecMatch['id']);
+            
+            if (kelName != null) {
+              final kelMatch = findMatch(_villages, kelName);
+              if (kelMatch != null) {
+                _selectedKelurahan = '${kelMatch['id']}|${kelMatch['name']}';
+              }
+            }
+          }
+        }
+      }
     } else {
       _detailAlamatController.text = domisili;
     }
+    
+    setState(() => _isLoadingWilayah = false);
+  }
 
-    // Muat data file yang sudah pernah diunggah
-    if (_currentStep > 0) {
-      _fileNameKtp = user['file_ktp'];
-      _fileNameIjazah = user['file_rapor'];
-      _fileNameFoto = user['file_foto'];
-      _fileNameMotivasi = user['file_motivasi'];
-      _fileNameSktm = user['file_sktm'];
-    }
+  Future<void> _loadRegencies(String provinceId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getRegencies(provinceId);
+    setState(() {
+      _regencies = data;
+      _isLoadingWilayah = false;
+    });
+  }
+
+  Future<void> _loadDistricts(String regencyId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getDistricts(regencyId);
+    setState(() {
+      _districts = data;
+      _isLoadingWilayah = false;
+    });
+  }
+
+  Future<void> _loadVillages(String districtId) async {
+    setState(() => _isLoadingWilayah = true);
+    final data = await ApiWilayahService.getVillages(districtId);
+    setState(() {
+      _villages = data;
+      _isLoadingWilayah = false;
+    });
   }
 
   @override
@@ -135,33 +197,33 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     super.dispose();
   }
 
-  // 👇 FUNGSI UNTUK MEMILIH FILE DARI PERANGKAT (KHUSUS SAAT REVISI)
   Future<void> _pickFile(String type) async {
     if (_isReadOnly) return;
 
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true, // IMPORTANT for web to get bytes
     );
 
-    if (result != null) {
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        String fileName = result.files.first.name;
+        PlatformFile file = result.files.first;
         switch (type) {
           case 'ktp':
-            _fileNameKtp = fileName;
+            _fileKtp = file;
             break;
           case 'ijazah':
-            _fileNameIjazah = fileName;
+            _fileIjazah = file;
             break;
           case 'foto':
-            _fileNameFoto = fileName;
+            _fileFoto = file;
             break;
           case 'motivasi':
-            _fileNameMotivasi = fileName;
+            _fileMotivasi = file;
             break;
           case 'sktm':
-            _fileNameSktm = fileName;
+            _fileSktm = file;
             break;
         }
       });
@@ -174,52 +236,59 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
         _selectedProvinsi == null ||
         _selectedKota == null ||
         _selectedKecamatan == null ||
-        _fileNameKtp == null ||
-        _fileNameIjazah == null ||
-        _fileNameFoto == null ||
-        _fileNameMotivasi == null ||
-        _fileNameSktm == null) {
-      showErrorSnackBar(context, 'Mohon periksa kembali. Semua data dan dokumen wajib diisi.');
+        _selectedKelurahan == null) {
+      showErrorSnackBar(context, 'Mohon periksa kembali. Semua data wilayah wajib dipilih.');
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
 
-    if (MockDatabase.currentUser != null) {
-      MockDatabase.currentUser!['name'] = _nameController.text.toUpperCase();
-      MockDatabase.currentUser!['telepon'] = _phoneController.text;
-
-      // Menggabungkan kembali string domisili
-      String domisiliLengkap =
-          '${_detailAlamatController.text}, Kec. $_selectedKecamatan, $_selectedKota, $_selectedProvinsi';
-      MockDatabase.currentUser!['domisili'] = domisiliLengkap;
-
-      MockDatabase.currentUser!['pendidikan'] = _selectedPendidikan;
-      MockDatabase.currentUser!['nik'] = _nikController.text;
-      MockDatabase.currentUser!['asal_sekolah'] = _asalSekolahController.text;
-      MockDatabase.currentUser!['tahun_lulus'] = _tahunLulusController.text;
-
-      // 👇 SIMPAN NAMA FILE REVISI KE DATABASE
-      MockDatabase.currentUser!['file_ktp'] = _fileNameKtp;
-      MockDatabase.currentUser!['file_rapor'] = _fileNameIjazah;
-      MockDatabase.currentUser!['file_foto'] = _fileNameFoto;
-      MockDatabase.currentUser!['file_motivasi'] = _fileNameMotivasi;
-      MockDatabase.currentUser!['file_sktm'] = _fileNameSktm;
-
-      // Panggil fungsi resmi dari MockDatabase
-      MockDatabase.submitRevisiSiswa();
+    String getWilayahName(String? value) {
+      if (value == null) return '';
+      final parts = value.split('|');
+      return parts.length > 1 ? parts[1] : value;
     }
+
+    String provName = getWilayahName(_selectedProvinsi);
+    String kotaName = getWilayahName(_selectedKota);
+    String kecName = getWilayahName(_selectedKecamatan);
+    String kelName = getWilayahName(_selectedKelurahan);
+
+    // Menggabungkan kembali string domisili
+    String domisiliLengkap =
+        '${_detailAlamatController.text}, Kel. $kelName, Kec. $kecName, $kotaName, $provName';
+
+    // Kirim revisi ke Supabase
+    final error = await SupabasePendaftaranService.submitRevisi(
+      nama: _nameController.text,
+      nik: _nikController.text,
+      telepon: _phoneController.text,
+      domisili: domisiliLengkap,
+      pendidikan: _selectedPendidikan ?? '',
+      asalSekolah: _asalSekolahController.text,
+      tahunLulus: _tahunLulusController.text,
+      fileKtp: _fileKtp,
+      fileRapor: _fileIjazah,
+      fileFoto: _fileFoto,
+      fileMotivasi: _fileMotivasi,
+      fileSktm: _fileSktm,
+    );
 
     setState(() {
       _isLoading = false;
-      _isRevisi = false;
-      _isReadOnly = true;
-      _currentStep = 1;
+      if (error == null) {
+        _isRevisi = false;
+        _isReadOnly = true;
+        _currentStep = 1;
+      }
     });
 
     if (!mounted) return;
-    showSuccessSnackBar(context, 'Revisi berhasil dikirim ke Admin!');
+    if (error != null) {
+      showErrorSnackBar(context, error);
+    } else {
+      showSuccessSnackBar(context, 'Revisi berhasil dikirim ke Admin!');
+    }
   }
 
   // --- WIDGET STATUS ---
@@ -244,11 +313,21 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     }
   }
 
+  String? _getFileNameFromUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    try {
+      final uri = Uri.parse(url);
+      return Uri.decodeComponent(uri.pathSegments.last);
+    } catch (e) {
+      return 'Dokumen Tersimpan';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
+    final user = SupabaseAuthService.currentUserData ?? {};
 
-    // Jika belum daftar (step 0), jangan tampilkan form di sini
     if (_currentStep == 0) {
       return PortalLayout(
         activeMenu: 'status_beasiswa',
@@ -260,13 +339,6 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
         ),
       );
     }
-
-    // GENERATE LIST ITEM DENGAN AMAN UNTUK MENCEGAH ERROR DROPDOWN
-    List<String> provItems = _dataWilayah.keys.toList();
-    List<String> kotaItems =
-        _dataWilayah[_selectedProvinsi]?.keys.toList() ?? [];
-    List<String> kecItems =
-        _dataWilayah[_selectedProvinsi]?[_selectedKota] ?? [];
 
     return PortalLayout(
       activeMenu: 'status_beasiswa',
@@ -335,8 +407,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             // 👇 KARTU JADWAL WAWANCARA (MUNCUL JIKA TAHAP 2)
             // ==========================================
             if (_currentStep == 2 &&
-                MockDatabase.currentUser?['jadwal_wawancara'] != null &&
-                MockDatabase.currentUser!['jadwal_wawancara']
+                SupabaseAuthService.currentUserData?['jadwal_wawancara'] != null &&
+                SupabaseAuthService.currentUserData!['jadwal_wawancara']
                     .toString()
                     .isNotEmpty)
               Container(
@@ -390,7 +462,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                           const SizedBox(width: 15),
                           Expanded(
                             child: Text(
-                              MockDatabase.currentUser!['jadwal_wawancara'],
+                              SupabaseAuthService.currentUserData!['jadwal_wawancara'],
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -510,8 +582,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                     _buildDropdownWilayah(
                       label: "Provinsi",
                       hint: "Pilih Provinsi",
-                      items: provItems,
-                      value: provItems.contains(_selectedProvinsi)
+                      items: _provinces,
+                      value: _provinces.any((p) => '${p['id']}|${p['name']}' == _selectedProvinsi)
                           ? _selectedProvinsi
                           : null,
                       onChanged: _isReadOnly
@@ -521,7 +593,14 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                                 _selectedProvinsi = val;
                                 _selectedKota = null;
                                 _selectedKecamatan = null;
+                                _selectedKelurahan = null;
+                                _regencies = [];
+                                _districts = [];
+                                _villages = [];
                               });
+                              if (val != null) {
+                                _loadRegencies(val.split('|')[0]);
+                              }
                             },
                     ),
 
@@ -530,8 +609,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       hint: _selectedProvinsi == null
                           ? "Pilih Provinsi Terlebih Dahulu"
                           : "Pilih Kota/Kabupaten",
-                      items: kotaItems,
-                      value: kotaItems.contains(_selectedKota)
+                      items: _regencies,
+                      value: _regencies.any((p) => '${p['id']}|${p['name']}' == _selectedKota)
                           ? _selectedKota
                           : null,
                       onChanged: _isReadOnly
@@ -540,7 +619,13 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                               setState(() {
                                 _selectedKota = val;
                                 _selectedKecamatan = null;
+                                _selectedKelurahan = null;
+                                _districts = [];
+                                _villages = [];
                               });
+                              if (val != null) {
+                                _loadDistricts(val.split('|')[0]);
+                              }
                             },
                     ),
 
@@ -549,8 +634,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       hint: _selectedKota == null
                           ? "Pilih Kota Terlebih Dahulu"
                           : "Pilih Kecamatan",
-                      items: kecItems,
-                      value: kecItems.contains(_selectedKecamatan)
+                      items: _districts,
+                      value: _districts.any((p) => '${p['id']}|${p['name']}' == _selectedKecamatan)
                           ? _selectedKecamatan
                           : null,
                       onChanged: _isReadOnly
@@ -558,6 +643,29 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                           : (val) {
                               setState(() {
                                 _selectedKecamatan = val;
+                                _selectedKelurahan = null;
+                                _villages = [];
+                              });
+                              if (val != null) {
+                                _loadVillages(val.split('|')[0]);
+                              }
+                            },
+                    ),
+
+                    _buildDropdownWilayah(
+                      label: "Kelurahan / Desa",
+                      hint: _selectedKecamatan == null
+                          ? "Pilih Kecamatan Terlebih Dahulu"
+                          : "Pilih Kelurahan/Desa",
+                      items: _villages,
+                      value: _villages.any((p) => '${p['id']}|${p['name']}' == _selectedKelurahan)
+                          ? _selectedKelurahan
+                          : null,
+                      onChanged: _isReadOnly
+                          ? null
+                          : (val) {
+                              setState(() {
+                                _selectedKelurahan = val;
                               });
                             },
                     ),
@@ -607,31 +715,36 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                     _buildFileUploadField(
                       label: "Fotokopi KTP / Kartu Pelajar (Wajib)",
                       hint: "Pilih file KTP...",
-                      fileName: _fileNameKtp,
+                      fileName: _fileKtp?.name ?? _getFileNameFromUrl(user['file_ktp']),
+                      fileUrl: _fileKtp == null ? user['file_ktp'] : null,
                       onTap: () => _pickFile('ktp'),
                     ),
                     _buildFileUploadField(
                       label: "Fotokopi Ijazah / SKL Terakhir (Wajib)",
                       hint: "Pilih file Ijazah/SKL...",
-                      fileName: _fileNameIjazah,
+                      fileName: _fileIjazah?.name ?? _getFileNameFromUrl(user['file_rapor']),
+                      fileUrl: _fileIjazah == null ? user['file_rapor'] : null,
                       onTap: () => _pickFile('ijazah'),
                     ),
                     _buildFileUploadField(
                       label: "Pas Foto 3x4 Terbaru (Wajib)",
                       hint: "Pilih file Pas Foto...",
-                      fileName: _fileNameFoto,
+                      fileName: _fileFoto?.name ?? _getFileNameFromUrl(user['file_foto']),
+                      fileUrl: _fileFoto == null ? user['file_foto'] : null,
                       onTap: () => _pickFile('foto'),
                     ),
                     _buildFileUploadField(
                       label: "Surat Motivasi Tulis Tangan (Wajib)",
                       hint: "Pilih file Surat Motivasi...",
-                      fileName: _fileNameMotivasi,
+                      fileName: _fileMotivasi?.name ?? _getFileNameFromUrl(user['file_motivasi']),
+                      fileUrl: _fileMotivasi == null ? user['file_motivasi'] : null,
                       onTap: () => _pickFile('motivasi'),
                     ),
                     _buildFileUploadField(
                       label: "Surat Keterangan Tidak Mampu / SKTM (Wajib)",
                       hint: "Pilih file SKTM...",
-                      fileName: _fileNameSktm,
+                      fileName: _fileSktm?.name ?? _getFileNameFromUrl(user['file_sktm']),
+                      fileUrl: _fileSktm == null ? user['file_sktm'] : null,
                       onTap: () => _pickFile('sktm'),
                     ),
 
@@ -736,8 +849,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             validator: isFieldReadOnly
                 ? null
                 : (value) {
-                    if (value == null || value.trim().isEmpty)
+                    if (value == null || value.trim().isEmpty) {
                       return '$label tidak boleh kosong';
+                    }
                     return null;
                   },
           ),
@@ -749,7 +863,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   Widget _buildDropdownWilayah({
     required String label,
     required String hint,
-    required List<String> items,
+    required List<Map<String, dynamic>> items,
     required String? value,
     required ValueChanged<String?>? onChanged,
   }) {
@@ -808,15 +922,11 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             ),
             items: items.isEmpty
                 ? null
-                : items.map((String item) {
+                : items.map((item) {
+                    final valStr = '${item['id']}|${item['name']}';
                     return DropdownMenuItem(
-                      value: item,
-                      child: Text(
-                        item,
-                        style: TextStyle(
-                          color: _isReadOnly ? Colors.black54 : Colors.black87,
-                        ),
-                      ),
+                      value: valStr,
+                      child: Text(item['name'] ?? ''),
                     );
                   }).toList(),
             onChanged: onChanged,
@@ -903,6 +1013,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     required String label,
     required String hint,
     required String? fileName,
+    String? fileUrl,
     required VoidCallback onTap,
   }) {
     return Padding(
@@ -915,75 +1026,93 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          InkWell(
-            onTap: _isReadOnly ? null : onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: BoxDecoration(
-                color: _isReadOnly ? Colors.grey.shade50 : Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _isReadOnly
-                      ? Colors.transparent
-                      : Colors.grey.shade300,
-                  width: 1.0,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: _isReadOnly ? Colors.grey.shade50 : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isReadOnly ? Colors.transparent : Colors.grey.shade300,
+                width: 1.0,
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    _isReadOnly
-                        ? Icons.insert_drive_file
-                        : Icons.upload_file_rounded,
-                    color: fileName != null
-                        ? (_isReadOnly ? Colors.blue : AppColors.primary)
-                        : Colors.grey.shade400,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isReadOnly ? Icons.insert_drive_file : Icons.upload_file_rounded,
+                  color: fileName != null
+                      ? (_isReadOnly ? Colors.blue : AppColors.primary)
+                      : Colors.grey.shade400,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    fileName ?? hint,
+                    style: TextStyle(
+                      color: fileName != null
+                          ? (_isReadOnly ? Colors.black54 : Colors.black87)
+                          : Colors.grey.shade400,
+                      fontSize: 14,
+                      fontWeight: fileName != null ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Text(
-                      fileName ?? hint,
-                      style: TextStyle(
-                        color: fileName != null
-                            ? (_isReadOnly ? Colors.black54 : Colors.black87)
-                            : Colors.grey.shade400,
-                        fontSize: 14,
-                        fontWeight: fileName != null
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                ),
+                if (fileUrl != null) ...[
+                  InkWell(
+                    onTap: () async {
+                      final uri = Uri.tryParse(fileUrl);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      child: Row(
+                        children: [
+                          Icon(Icons.open_in_new, size: 14, color: Colors.blue.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Buka",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  if (fileName != null)
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 22,
-                    )
-                  else if (!_isReadOnly)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                  const SizedBox(width: 10),
+                ],
+                if (fileName != null && fileUrl == null)
+                  const Icon(Icons.check_circle, color: Colors.green, size: 22)
+                else if (!_isReadOnly)
+                  InkWell(
+                    onTap: onTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
-                        "Pilih Ulang",
-                        style: TextStyle(
+                      child: Text(
+                        fileUrl != null ? "Ganti File" : "Pilih File",
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Colors.black54,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],

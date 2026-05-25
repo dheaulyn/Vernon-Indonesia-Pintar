@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../data/mock_database.dart';
+import '../../services/supabase_donasi_service.dart';
 import 'package:intl/intl.dart';
 import '../../../core/snackbar_helper.dart';
 
@@ -34,7 +34,7 @@ class RiwayatDanaMasukView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
-              valueListenable: MockDatabase.riwayatDonasi,
+              valueListenable: SupabaseDonationService.riwayatDonasi,
               builder: (context, List<Map<String, dynamic>> donasiList, _) {
                 if (donasiList.isEmpty) {
                   return const Center(
@@ -64,14 +64,14 @@ class RiwayatDanaMasukView extends StatelessWidget {
                           ),
                         ),
                         title: Text(
-                          item['nama']?.toString() ?? 'Donatur VIP',
+                          item['nama_donatur']?.toString() ?? 'Donatur VIP',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "${item['program'] ?? 'Program VIP'}\n${item['tgl'] ?? '-'}",
+                          "${item['program_name'] ?? 'Program VIP'}\n${item['created_at']?.toString().substring(0, 10) ?? '-'}",
                         ),
                         trailing: Text(
-                          "+ ${currencyFormat.format(item['nominal'] ?? 0)}",
+                          "+ ${currencyFormat.format(item['amount'] ?? 0)}",
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -122,7 +122,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
-              valueListenable: MockDatabase.riwayatPenyaluran,
+              valueListenable: SupabaseDonationService.riwayatPenyaluran,
               builder: (context, List<Map<String, dynamic>> pengeluaranList, _) {
                 if (pengeluaranList.isEmpty) {
                   return const Center(
@@ -156,7 +156,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "Alokasi Program VIP\nTanggal pengeluaran: ${item['tgl'] ?? '-'}",
+                          "Alokasi Program VIP\nTanggal pengeluaran: ${item['created_at']?.toString().substring(0, 10) ?? '-'}",
                         ),
                         trailing: Text(
                           "- ${currencyFormat.format(item['nominal'] ?? 0)}",
@@ -248,10 +248,10 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                       const Icon(Icons.info_outline, color: Colors.blue),
                       const SizedBox(width: 10),
                       ValueListenableBuilder(
-                        valueListenable: MockDatabase.totalDonasiTerkumpul,
+                        valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
                         builder: (context, total, _) {
                           return ValueListenableBuilder(
-                            valueListenable: MockDatabase.danaTersalurkan,
+                            valueListenable: SupabaseDonationService.danaTersalurkan,
                             builder: (context, tersalurkan, _) {
                               int saldoAktif = total - tersalurkan;
                               return Text(
@@ -298,20 +298,24 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       if (nominalController.text.isNotEmpty &&
                           selectedKategori != null) {
                         try {
                           int nominal = int.parse(nominalController.text);
-                          MockDatabase.salurkanDanaAdmin(
+                          await SupabaseDonationService.catatPengeluaranKeCloud(
                             nominal,
                             selectedKategori!,
                           );
-                          showSuccessSnackBar(context, 'Penyaluran berhasil dicatat! Dana publik terupdate.');
-                          nominalController.clear();
-                          setState(() => selectedKategori = null);
+                          if (context.mounted) {
+                            showSuccessSnackBar(context, 'Penyaluran berhasil dicatat! Dana publik terupdate.');
+                            nominalController.clear();
+                            setState(() => selectedKategori = null);
+                          }
                         } catch (e) {
-                          showErrorSnackBar(context, e.toString());
+                          if (context.mounted) {
+                            showErrorSnackBar(context, e.toString());
+                          }
                         }
                       } else {
                         showInfoSnackBar(context, 'Mohon lengkapi nominal & kategori!');

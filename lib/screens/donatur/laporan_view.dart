@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/app_colors.dart';
 import '../../../../data/mock_database.dart';
+import '../../../../services/supabase_donasi_service.dart';
 
 class LaporanView extends StatelessWidget {
   final bool isMobile;
@@ -28,10 +29,10 @@ class LaporanView extends StatelessWidget {
           // 1. KARTU ALOKASI DANA REVISI (SINKRON DESIMAL REAL-TIME)
           // ========================================================
           ValueListenableBuilder(
-            valueListenable: MockDatabase.riwayatPenyaluran,
+            valueListenable: SupabaseDonationService.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
               return ValueListenableBuilder(
-                valueListenable: MockDatabase.totalDonasiTerkumpul,
+                valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
                 builder: (context, int totalDonasi, _) {
                   int totalPendidikan = 0;
                   int totalUangSaku = 0;

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_auth_service.dart';
+import '../../services/supabase_donasi_service.dart';
 import '../shared/stat_card.dart';
 
 class DashboardView extends StatelessWidget {
@@ -24,24 +25,24 @@ class DashboardView extends StatelessWidget {
     );
 
     // Ambil nama user yang sedang login
-    final String currentUserName = MockDatabase.currentUser?['name'] ?? '';
+    final String currentUserName = SupabaseAuthService.currentUserData?['name'] ?? '';
 
     return ValueListenableBuilder(
-      valueListenable: MockDatabase.riwayatDonasi,
+      valueListenable: SupabaseDonationService.riwayatDonasi,
       builder: (context, List<Map<String, dynamic>> riwayatGlobal, _) {
         // 👇 FILTER KHUSUS USER INI
         final riwayatPribadi = riwayatGlobal
             .where(
               (donasi) =>
-                  donasi['nama'] == currentUserName ||
-                  donasi['nama'] == 'Hamba Allah',
+                  donasi['nama_donatur'] == currentUserName ||
+                  donasi['nama_donatur'] == 'Hamba Allah',
             )
             .toList();
 
         // Kalkulasi matematika real-time
         final int totalUangPribadi = riwayatPribadi.fold(
           0,
-          (sum, item) => sum + (item['nominal'] as int),
+          (sum, item) => sum + (item['amount'] as int? ?? 0),
         );
         final int frekuensiDonasi = riwayatPribadi.length;
 

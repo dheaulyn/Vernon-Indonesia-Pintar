@@ -97,12 +97,12 @@ class SupabaseAuthService {
   /// Berguna ketika user me-refresh halaman sehingga currentUserData di-load ulang.
   static Future<void> restoreSession() async {
     final user = _client.auth.currentUser;
-    if (user != null && currentUserData == null) {
+    if (user != null) {
       try {
         final data = await _client
             .from('profiles')
             .select()
-            .eq('email', user.email!)
+            .eq('id', user.id)
             .maybeSingle();
         if (data != null) {
           currentUserData = data;
@@ -112,4 +112,32 @@ class SupabaseAuthService {
       }
     }
   }
+
+  /// Mengupdate field-field tertentu di tabel profiles untuk user yang sedang login.
+  /// Setelah update, currentUserData juga disinkronkan.
+  static Future<String?> updateProfileFields(Map<String, dynamic> fields) async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return 'User belum login.';
+
+      await _client.from('profiles').update(fields).eq('id', user.id);
+
+      // Sinkronkan data lokal
+      final data = await _client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (data != null) {
+        currentUserData = data;
+      }
+
+      return null; // null = sukses
+    } catch (e) {
+      debugPrint('updateProfileFields Error: $e');
+      return 'Gagal mengupdate data: $e';
+    }
+  }
 }
+

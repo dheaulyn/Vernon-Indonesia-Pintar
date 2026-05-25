@@ -2,20 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart';
+import '../../services/supabase_pendaftaran_service.dart';
+import '../../services/supabase_donasi_service.dart';
 import '../shared/stat_card.dart';
 
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
 
   @override
+  State<HomeDashboard> createState() => _HomeDashboardState();
+}
+
+class _HomeDashboardState extends State<HomeDashboard> {
+  bool _isLoading = true;
+  List<Map<String, dynamic>> allSiswa = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final data = await SupabasePendaftaranService.getAllPendaftar();
+    if (mounted) {
+      setState(() {
+        allSiswa = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     // ==========================================
     // LOGIKA PENARIKAN DATA DINAMIS
     // ==========================================
-    final allSiswa = MockDatabase.getAllRegisteredSiswaFullData();
-
     // Hitung statistik berdasarkan data asli
+
     final int totalPendaftar = allSiswa.length;
     final int menungguReview = allSiswa
         .where((s) => s['admin_status'] == 'Menunggu Review')
@@ -24,7 +52,7 @@ class HomeDashboard extends StatelessWidget {
         .where((s) => s['admin_status'] == 'Diterima')
         .length;
 
-    final int totalDonasi = MockDatabase.getTotalDonasi();
+    final int totalDonasi = SupabaseDonationService.totalDonasiTerkumpul.value;
     final String totalDonasiFormatted = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp',
