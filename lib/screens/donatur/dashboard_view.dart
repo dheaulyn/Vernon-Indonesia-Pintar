@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_colors.dart';
-import '../../services/supabase_auth_service.dart';
-import '../../services/supabase_donasi_service.dart';
 import '../shared/stat_card.dart';
+
+// 👇 1. IMPORT SERVICE SUPABASE DONASI & AUTH
+import '../../services/supabase_donasi_service.dart';
+import '../../services/supabase_auth_service.dart';
 
 class DashboardView extends StatelessWidget {
   final bool isMobile;
-  // parameter successDonations dan allHistories dihapus
   final VoidCallback onNavigateToDonasi;
 
   const DashboardView({
@@ -24,22 +25,23 @@ class DashboardView extends StatelessWidget {
       decimalDigits: 0,
     );
 
-    // Ambil nama user yang sedang login
-    final String currentUserName = SupabaseAuthService.currentUserData?['name'] ?? '';
+    // Format tanggal dari database
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
+
+    // 👇 2. AMBIL EMAIL USER YANG SEDANG LOGIN (Bukan nama)
+    final String? currentUserEmail =
+        SupabaseAuthService.currentUserData?['email'];
 
     return ValueListenableBuilder(
-      valueListenable: SupabaseDonationService.riwayatDonasi,
+      valueListenable:
+          SupabaseDonationService.riwayatDonasi, // Ambil dari Cloud
       builder: (context, List<Map<String, dynamic>> riwayatGlobal, _) {
-        // 👇 FILTER KHUSUS USER INI
+        // 👇 3. FILTER KHUSUS USER INI BERDASARKAN EMAIL
         final riwayatPribadi = riwayatGlobal
-            .where(
-              (donasi) =>
-                  donasi['nama_donatur'] == currentUserName ||
-                  donasi['nama_donatur'] == 'Hamba Allah',
-            )
+            .where((donasi) => donasi['donatur_email'] == currentUserEmail)
             .toList();
 
-        // Kalkulasi matematika real-time
+        // Kalkulasi matematika real-time (Sesuai nama kolom Supabase: 'amount')
         final int totalUangPribadi = riwayatPribadi.fold(
           0,
           (sum, item) => sum + (item['amount'] as int? ?? 0),
@@ -262,8 +264,21 @@ class DashboardView extends StatelessWidget {
                         .take(
                           3,
                         ) // Tampilkan maksimal 3 donasi terakhir di beranda
-                        .map(
-                          (history) => Column(
+                        .map((history) {
+                          // Konversi tanggal dari database Supabase
+                          String formattedDate = '-';
+                          if (history['created_at'] != null) {
+                            try {
+                              DateTime date = DateTime.parse(
+                                history['created_at'],
+                              ).toLocal();
+                              formattedDate = dateFormat.format(date);
+                            } catch (e) {
+                              formattedDate = history['created_at'].toString();
+                            }
+                          }
+
+                          return Column(
                             children: [
                               Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -275,7 +290,7 @@ class DashboardView extends StatelessWidget {
                                     Expanded(
                                       flex: 2,
                                       child: Text(
-                                        history['tgl'] ?? '-',
+                                        formattedDate,
                                         style: const TextStyle(fontSize: 14),
                                       ),
                                     ),
@@ -283,7 +298,8 @@ class DashboardView extends StatelessWidget {
                                       Expanded(
                                         flex: 4,
                                         child: Text(
-                                          history['program'] ?? '-',
+                                          history['program_name'] ??
+                                              '-', // Sesuaikan kolom DB
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
@@ -296,7 +312,8 @@ class DashboardView extends StatelessWidget {
                                       flex: 2,
                                       child: Text(
                                         currencyFormatter.format(
-                                          history['nominal'] ?? 0,
+                                          history['amount'] ??
+                                              0, // Sesuaikan kolom DB
                                         ),
                                         style: const TextStyle(fontSize: 14),
                                       ),
@@ -304,7 +321,7 @@ class DashboardView extends StatelessWidget {
                                     Expanded(
                                       flex: 1,
                                       child: Text(
-                                        "Sukses",
+                                        history['status'] ?? "Sukses",
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
@@ -317,8 +334,8 @@ class DashboardView extends StatelessWidget {
                               ),
                               Divider(height: 1, color: Colors.grey.shade100),
                             ],
-                          ),
-                        ),
+                          );
+                        }),
                 ],
               ),
             ),

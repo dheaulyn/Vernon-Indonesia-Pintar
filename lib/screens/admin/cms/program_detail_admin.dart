@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
-import '../../../../data/mock_database.dart';
 
 class ReqController {
   TextEditingController titleCtrl;
@@ -29,45 +31,75 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   final List<ReqController> _reqControllers = [];
   final List<TimelineController> _timelineControllers = [];
 
+  bool _isLoading = true;
+  bool _isSaving = false;
+  int _programId = 1; // ID baris di tabel programs
+
+  final _supabase = Supabase.instance.client;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadData();
+    _loadDataFromSupabase();
   }
 
-  void _loadData() {
-    final data = MockDatabase.getProgramDetailData();
+  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  Future<void> _loadDataFromSupabase() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _supabase
+          .from('programs')
+          .select()
+          .order('id', ascending: true)
+          .limit(1)
+          .maybeSingle();
 
-    // Load Requirements
-    _reqControllers.clear();
-    if (data['requirements'] != null) {
-      for (var req in data['requirements']) {
-        List<TextEditingController> pts = [];
-        for (var pt in req['points']) {
-          pts.add(TextEditingController(text: pt.toString()));
+      if (response != null) {
+        _programId = response['id'];
+
+        // Load Requirements (Syarat & Ketentuan)
+        _reqControllers.clear();
+        final reqData = response['syarat_ketentuan'];
+        if (reqData != null && reqData is List) {
+          for (var req in reqData) {
+            List<TextEditingController> pts = [];
+            if (req['points'] != null && req['points'] is List) {
+              for (var pt in req['points']) {
+                pts.add(TextEditingController(text: pt.toString()));
+              }
+            }
+            _reqControllers.add(
+              ReqController(
+                TextEditingController(text: req['title']?.toString() ?? ''),
+                pts,
+              ),
+            );
+          }
         }
-        _reqControllers.add(
-          ReqController(TextEditingController(text: req['title']), pts),
-        );
-      }
-    }
 
-    // Load Timeline
-    _timelineControllers.clear();
-    if (data['timeline'] != null) {
-      for (var step in data['timeline']) {
-        _timelineControllers.add(
-          TimelineController(
-            TextEditingController(text: step['title']),
-            TextEditingController(text: step['description']),
-          ),
-        );
+        // Load Timeline (Alur Pendaftaran)
+        _timelineControllers.clear();
+        final timelineData = response['alur_pendaftaran'];
+        if (timelineData != null && timelineData is List) {
+          for (var step in timelineData) {
+            _timelineControllers.add(
+              TimelineController(
+                TextEditingController(text: step['title']?.toString() ?? ''),
+                TextEditingController(
+                  text: step['description']?.toString() ?? '',
+                ),
+              ),
+            );
+          }
+        }
       }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() {});
   }
-
 
   // FUNGSI DIALOG KONFIRMASI HAPUS
   void _confirmDelete(String title, String content, VoidCallback onConfirm) {
@@ -105,38 +137,67 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  void _saveData() {
-    // Kumpulkan data Requirements
-    List<Map<String, dynamic>> updatedReqs = _reqControllers.map((reqCtrl) {
-      return {
-        "title": reqCtrl.titleCtrl.text,
-        "points": reqCtrl.pointsCtrl
-            .map((p) => p.text)
-            .where((text) => text.isNotEmpty)
-            .toList(),
-      };
-    }).toList();
+  // 👇 FUNGSI MENYIMPAN DATA KE SUPABASE
+  Future<void> _saveData() async {
+    setState(() => _isSaving = true);
 
-    // Kumpulkan data Timeline
-    List<Map<String, String>> updatedTimeline = _timelineControllers.map((
-      timeCtrl,
-    ) {
-      return {
-        "title": timeCtrl.titleCtrl.text,
-        "description": timeCtrl.descCtrl.text,
-      };
-    }).toList();
+    try {
+      // 1. Kumpulkan data Requirements dan bungkus ke format yang pas
+      List<Map<String, dynamic>> updatedReqs = _reqControllers
+          .map((reqCtrl) {
+            return {
+              "title": reqCtrl.titleCtrl.text.trim(),
+              "points": reqCtrl.pointsCtrl
+                  .map((p) => p.text.trim())
+                  .where((text) => text.isNotEmpty)
+                  .toList(),
+            };
+          })
+          .where(
+            (req) =>
+                req['title'].toString().isNotEmpty ||
+                (req['points'] as List).isNotEmpty,
+          )
+          .toList();
 
-    MockDatabase.updateProgramDetailData({
-      "requirements": updatedReqs,
-      "timeline": updatedTimeline,
-    });
+      // 2. Kumpulkan data Timeline
+      List<Map<String, String>> updatedTimeline = _timelineControllers
+          .map((timeCtrl) {
+            return {
+              "title": timeCtrl.titleCtrl.text.trim(),
+              "description": timeCtrl.descCtrl.text.trim(),
+            };
+          })
+          .where(
+            (step) =>
+                step['title']!.isNotEmpty || step['description']!.isNotEmpty,
+          )
+          .toList();
 
-    showSuccessSnackBar(context, 'Detail Program berhasil diperbarui!');
+      // 3. Tembak ke Supabase (Otomatis menjadi tipe data JSONB di database)
+      await _supabase
+          .from('programs')
+          .update({
+            'syarat_ketentuan': updatedReqs,
+            'alur_pendaftaran': updatedTimeline,
+          })
+          .eq('id', _programId);
+
+      if (mounted)
+        showSuccessSnackBar(context, 'Detail Program berhasil diperbarui!');
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Padding(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -150,11 +211,20 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
-                onPressed: _saveData,
-                icon: const Icon(Icons.save, color: Colors.white),
-                label: const Text(
-                  "SIMPAN SEMUA",
-                  style: TextStyle(
+                onPressed: _isSaving ? null : _saveData,
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.save, color: Colors.white),
+                label: Text(
+                  _isSaving ? "MENYIMPAN..." : "SIMPAN SEMUA",
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
@@ -298,7 +368,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                         IconButton(
                           icon: const Icon(Icons.close, color: Colors.red),
                           tooltip: "Hapus Poin",
-                          // 👇 PERUBAHAN: Menambahkan konfirmasi hapus pada level poin
                           onPressed: () => _confirmDelete(
                             'Hapus Poin Persyaratan?',
                             'Apakah Anda yakin ingin menghapus poin persyaratan ini?',

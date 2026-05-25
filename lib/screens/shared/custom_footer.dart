@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../data/mock_database.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CustomFooter extends StatelessWidget {
   const CustomFooter({super.key});
 
-  // FUNGSI UNTUK MEMBUKA LINK (MAPS & SOSMED)
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -18,11 +17,15 @@ class CustomFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
+    final supabase = Supabase.instance.client;
 
-    // 👇 MENGGUNAKAN DATA DARI MOCK DATABASE
-    return ValueListenableBuilder<Map<String, String>>(
-      valueListenable: MockDatabase.footerData,
-      builder: (context, footerData, child) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: supabase.from('cms_footer').stream(primaryKey: ['id']),
+      builder: (context, snapshot) {
+        final footerData = (snapshot.data != null && snapshot.data!.isNotEmpty)
+            ? snapshot.data!.first
+            : {};
+
         Widget aboutFooter = Column(
           crossAxisAlignment: isMobile
               ? CrossAxisAlignment.center
@@ -39,7 +42,7 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              footerData['deskripsi'] ?? '',
+              footerData['deskripsi_yayasan'] ?? 'Loading...',
               textAlign: isMobile ? TextAlign.center : TextAlign.left,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.6),
@@ -63,13 +66,18 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 15),
 
-            // ALAMAT YANG BISA DIKLIK MENGARAH KE MAPS
+            // 👇 Alamat (Bisa diklik untuk buka Maps, link sudah diperbaiki)
             InkWell(
-              onTap: () => _launchURL(
-                "https://www.google.com/maps/search/?api=1&query=Jl.+Letjen+Sutoyo+No.102A,+Bunulrejo,+Malang",
-              ),
+              onTap: () {
+                final alamat = footerData['alamat'] ?? '';
+                if (alamat.isNotEmpty) {
+                  _launchURL(
+                    "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(alamat)}",
+                  );
+                }
+              },
               child: Text(
-                footerData['alamat'] ?? '',
+                footerData['alamat'] ?? '-',
                 textAlign: isMobile ? TextAlign.center : TextAlign.left,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
@@ -79,36 +87,50 @@ class CustomFooter extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 15),
 
-            // BARISAN ICON SOSMED
+            // 👇 Email dengan Ikon Amplop Penanda
             Row(
               mainAxisAlignment: isMobile
                   ? MainAxisAlignment.center
                   : MainAxisAlignment.start,
               children: [
-                // Icon WhatsApp
+                Icon(
+                  Icons.email_outlined,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: SelectableText(
+                    footerData['email'] ?? '-',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 25),
+
+            // 👇 Ikon sosmed sisa WhatsApp dan Instagram
+            Row(
+              mainAxisAlignment: isMobile
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              children: [
                 _buildSocialIcon(
                   imageUrl:
                       'https://cdn-icons-png.flaticon.com/512/733/733585.png',
-                  url: footerData['whatsapp'] ?? 'https://wa.me/628885864995',
+                  url: footerData['whatsapp'] ?? '',
                 ),
                 const SizedBox(width: 15),
-                // 👇 Icon Instagram
                 _buildSocialIcon(
                   imageUrl:
                       'https://cdn-icons-png.flaticon.com/512/174/174855.png',
-                  url:
-                      footerData['instagram'] ??
-                      'https://www.instagram.com/yayasanvip',
-                ),
-                const SizedBox(width: 15),
-                // 👇 Icon Email (Otomatis Tambah Mailto:)
-                _buildSocialIcon(
-                  imageUrl:
-                      'https://cdn-icons-png.flaticon.com/512/732/732200.png',
-                  url:
-                      'mailto:${footerData['email'] ?? 'vernonindonesiapintar@gmail.com'}',
+                  url: footerData['instagram'] ?? '',
                 ),
               ],
             ),
@@ -159,7 +181,9 @@ class CustomFooter extends StatelessWidget {
 
   Widget _buildSocialIcon({required String imageUrl, required String url}) {
     return InkWell(
-      onTap: () => _launchURL(url),
+      onTap: () {
+        if (url.isNotEmpty) _launchURL(url);
+      },
       borderRadius: BorderRadius.circular(50),
       child: Container(
         width: 40,

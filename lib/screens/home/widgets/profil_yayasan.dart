@@ -3,24 +3,12 @@ import 'package:flutter/material.dart';
 import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
 import '/core/app_colors.dart';
-import '/data/mock_database.dart';
 
-class ProfilYayasanScreen extends StatefulWidget {
+// 👇 1. IMPORT SERVICE CMS SUPABASE
+import '../../../services/supabase_cms_service.dart';
+
+class ProfilYayasanScreen extends StatelessWidget {
   const ProfilYayasanScreen({super.key});
-
-  @override
-  State<ProfilYayasanScreen> createState() => _ProfilYayasanScreenState();
-}
-
-class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
-  late Map<String, dynamic> _dataProfil;
-
-  @override
-  void initState() {
-    super.initState();
-    // Mengambil data dari MockDatabase saat halaman dimuat
-    _dataProfil = MockDatabase.getProfilYayasanData();
-  }
 
   Widget _buildImageDisplay(String imageSource, bool isMobile) {
     final double height = isMobile ? 300 : 400;
@@ -31,6 +19,12 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
         fit: BoxFit.cover,
         width: double.infinity,
         height: height,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: Colors.grey.shade300,
+          width: double.infinity,
+          height: height,
+          child: const Center(child: Text("Gambar Default")),
+        ),
       );
     }
     if (imageSource.startsWith('http')) {
@@ -66,71 +60,96 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(isMobile),
+      // 👇 2. BUNGKUS DENGAN VALUELISTENABLEBUILDER
+      body: ValueListenableBuilder<Map<String, dynamic>>(
+        valueListenable: SupabaseCmsService.foundationProfile,
+        builder: (context, dataProfil, _) {
+          // Siapkan data dengan fallback jika belum ter-load dari internet
+          final String title =
+              dataProfil['title'] ??
+              "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?";
+          final String description =
+              dataProfil['description'] ?? "Deskripsi tentang Yayasan...";
+          final String vision = dataProfil['vision'] ?? "Teks Visi...";
+          final String imageUrl = dataProfil['image_url'] ?? '';
 
-            Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: isMobile ? 50 : 80,
-                horizontal: isMobile ? 20 : 80,
-              ),
-              child: Column(
-                children: [
-                  // ==========================================
-                  // SECTION 1: TENTANG KAMI & GAMBAR
-                  // ==========================================
-                  isMobile
-                      ? Column(
-                          children: [
-                            _buildImageSection(isMobile),
-                            const SizedBox(height: 40),
-                            _buildAboutText(isMobile),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(flex: 5, child: _buildAboutText(isMobile)),
-                            const SizedBox(width: 60),
-                            Expanded(
-                              flex: 4,
-                              child: _buildImageSection(isMobile),
+          // Ambil array JSON missions, jika kosong berikan list kosong
+          final List<dynamic> missions = dataProfil['missions'] ?? [];
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(isMobile),
+
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 50 : 80,
+                    horizontal: isMobile ? 20 : 80,
+                  ),
+                  child: Column(
+                    children: [
+                      // ==========================================
+                      // SECTION 1: TENTANG KAMI & GAMBAR
+                      // ==========================================
+                      isMobile
+                          ? Column(
+                              children: [
+                                _buildImageSection(imageUrl, isMobile),
+                                const SizedBox(height: 40),
+                                _buildAboutText(title, description, isMobile),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: _buildAboutText(
+                                    title,
+                                    description,
+                                    isMobile,
+                                  ),
+                                ),
+                                const SizedBox(width: 60),
+                                Expanded(
+                                  flex: 4,
+                                  child: _buildImageSection(imageUrl, isMobile),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
 
-                  const SizedBox(height: 80),
+                      const SizedBox(height: 80),
 
-                  // ==========================================
-                  // SECTION 2: VISION & MISSION
-                  // ==========================================
-                  isMobile
-                      ? Column(
-                          children: [
-                            _buildVisionCard(),
-                            const SizedBox(height: 30),
-                            _buildMissionCard(),
-                          ],
-                        )
-                      : IntrinsicHeight(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(child: _buildVisionCard()),
-                              const SizedBox(width: 40),
-                              Expanded(child: _buildMissionCard()),
-                            ],
-                          ),
-                        ),
-                ],
-              ),
+                      // ==========================================
+                      // SECTION 2: VISION & MISSION
+                      // ==========================================
+                      isMobile
+                          ? Column(
+                              children: [
+                                _buildVisionCard(vision),
+                                const SizedBox(height: 30),
+                                _buildMissionCard(missions),
+                              ],
+                            )
+                          : IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(child: _buildVisionCard(vision)),
+                                  const SizedBox(width: 40),
+                                  Expanded(child: _buildMissionCard(missions)),
+                                ],
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+
+                const CustomFooter(),
+              ],
             ),
-
-            const CustomFooter(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -171,14 +190,13 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
     );
   }
 
-  // 👇 Data Teks Dinamis
-  Widget _buildAboutText(bool isMobile) {
+  // 👇 Data Teks Dinamis via Parameter
+  Widget _buildAboutText(String title, String description, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _dataProfil['title'] ??
-              "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?",
+          title,
           style: TextStyle(
             fontSize: isMobile ? 24 : 32,
             fontWeight: FontWeight.bold,
@@ -187,23 +205,23 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          _dataProfil['description'] ?? "Deskripsi tentang Yayasan...",
+          description,
           style: TextStyle(fontSize: 16, color: Colors.grey[800], height: 1.6),
         ),
       ],
     );
   }
 
-  // 👇 Data Gambar Dinamis
-  Widget _buildImageSection(bool isMobile) {
+  // 👇 Data Gambar Dinamis via Parameter
+  Widget _buildImageSection(String imageUrl, bool isMobile) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: _buildImageDisplay(_dataProfil['image'] ?? '', isMobile),
+      child: _buildImageDisplay(imageUrl, isMobile),
     );
   }
 
-  // 👇 Data Visi Dinamis
-  Widget _buildVisionCard() {
+  // 👇 Data Visi Dinamis via Parameter
+  Widget _buildVisionCard(String vision) {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
@@ -238,7 +256,7 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            _dataProfil['vision_text'] ?? "Teks Visi...",
+            vision,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[800],
@@ -251,10 +269,8 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
     );
   }
 
-  // 👇 Data Misi Dinamis dari Array
-  Widget _buildMissionCard() {
-    List<dynamic> missions = _dataProfil['mission_points'] ?? [];
-
+  // 👇 Data Misi Dinamis dari Array via Parameter
+  Widget _buildMissionCard(List<dynamic> missions) {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
@@ -292,9 +308,15 @@ class _ProfilYayasanScreenState extends State<ProfilYayasanScreen> {
           const SizedBox(height: 20),
 
           // Loop data poin misi dari database
-          ...missions.map(
-            (missionText) => _buildMissionItem(missionText.toString()),
-          ),
+          if (missions.isEmpty)
+            const Text(
+              "Belum ada poin misi",
+              style: TextStyle(color: Colors.grey),
+            )
+          else
+            ...missions.map(
+              (missionText) => _buildMissionItem(missionText.toString()),
+            ),
         ],
       ),
     );

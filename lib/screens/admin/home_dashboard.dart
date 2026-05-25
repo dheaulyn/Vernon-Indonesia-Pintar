@@ -6,7 +6,10 @@ import '../../services/supabase_pendaftaran_service.dart';
 import '../../services/supabase_donasi_service.dart';
 import '../shared/stat_card.dart';
 
-class HomeDashboard extends StatefulWidget {
+// 👇 1. IMPORT SERVICE DONASI SUPABASE
+import '../../services/supabase_donasi_service.dart';
+
+class HomeDashboard extends StatelessWidget {
   const HomeDashboard({super.key});
 
   @override
@@ -40,7 +43,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
     }
 
     // ==========================================
-    // LOGIKA PENARIKAN DATA DINAMIS
+    // LOGIKA PENARIKAN DATA SISWA (SEMENTARA MOCK)
     // ==========================================
     // Hitung statistik berdasarkan data asli
 
@@ -51,13 +54,6 @@ class _HomeDashboardState extends State<HomeDashboard> {
     final int beasiswaAktif = allSiswa
         .where((s) => s['admin_status'] == 'Diterima')
         .length;
-
-    final int totalDonasi = SupabaseDonationService.totalDonasiTerkumpul.value;
-    final String totalDonasiFormatted = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp',
-      decimalDigits: 0,
-    ).format(totalDonasi);
 
     // ==========================================
     // LOGIKA GRAFIK 6 BULAN TERAKHIR
@@ -163,11 +159,24 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       icon: Icons.school_rounded,
                     ),
                     const SizedBox(height: 15),
-                    StatCard(
-                      title: "Total Donasi",
-                      value: totalDonasiFormatted,
-                      color: Colors.purple,
-                      icon: Icons.volunteer_activism_rounded,
+                    // 👇 2. CARD DONASI REAL-TIME (MOBILE)
+                    ValueListenableBuilder<int>(
+                      valueListenable:
+                          SupabaseDonationService.totalDonasiTerkumpul,
+                      builder: (context, totalDonasi, _) {
+                        final String formattedDonasi = NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp',
+                          decimalDigits: 0,
+                        ).format(totalDonasi);
+
+                        return StatCard(
+                          title: "Total Donasi",
+                          value: formattedDonasi,
+                          color: Colors.purple,
+                          icon: Icons.volunteer_activism_rounded,
+                        );
+                      },
                     ),
                   ],
                 );
@@ -210,11 +219,25 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   Row(
                     children: [
                       Expanded(
-                        child: StatCard(
-                          title: "Total Donasi Terkumpul",
-                          value: totalDonasiFormatted,
-                          color: Colors.purple,
-                          icon: Icons.volunteer_activism_rounded,
+                        // 👇 3. CARD DONASI REAL-TIME (DESKTOP)
+                        child: ValueListenableBuilder<int>(
+                          valueListenable:
+                              SupabaseDonationService.totalDonasiTerkumpul,
+                          builder: (context, totalDonasi, _) {
+                            final String formattedDonasi =
+                                NumberFormat.currency(
+                                  locale: 'id_ID',
+                                  symbol: 'Rp',
+                                  decimalDigits: 0,
+                                ).format(totalDonasi);
+
+                            return StatCard(
+                              title: "Total Donasi Terkumpul",
+                              value: formattedDonasi,
+                              color: Colors.purple,
+                              icon: Icons.volunteer_activism_rounded,
+                            );
+                          },
                         ),
                       ),
                     ],

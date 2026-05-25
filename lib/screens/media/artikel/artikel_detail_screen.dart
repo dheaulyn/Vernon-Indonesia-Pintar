@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -9,7 +8,8 @@ import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
 
 class ArtikelDetailScreen extends StatefulWidget {
-  final Map<String, String> artikel;
+  // 👇 UBAH JADI dynamic KARENA DATA DARI SUPABASE ADALAH DYNAMIC
+  final Map<String, dynamic> artikel;
 
   const ArtikelDetailScreen({super.key, required this.artikel});
 
@@ -27,18 +27,13 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
     _initQuill();
   }
 
-  // =========================================================
-  // MEMBACA DATA QUILL DELTA JSON
-  // =========================================================
   void _initQuill() {
     final content = widget.artikel['content'] ?? '';
 
-    // Jika konten berupa JSON Delta Quill
     if (content.trim().startsWith('[')) {
       try {
         final List<dynamic> jsonData =
             jsonDecode(content.trim()) as List<dynamic>;
-
         final document = quill.Document.fromJson(jsonData);
 
         _quillController = quill.QuillController(
@@ -53,7 +48,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
       }
     }
 
-    // Fallback ke teks biasa
     _isRichText = false;
     _quillController = null;
   }
@@ -64,7 +58,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
     super.dispose();
   }
 
-  // 👇 FUNGSI PINTAR: Untuk merender gambar URL maupun Base64
   Widget _buildImageDisplay(String imageSource, {BoxFit fit = BoxFit.cover}) {
     if (imageSource.isEmpty) {
       return const Icon(Icons.image_rounded, size: 80, color: Colors.black12);
@@ -82,8 +75,8 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
-    final String imageSource =
-        widget.artikel['image'] ?? ''; // 👇 Ambil data gambar
+    // 👇 Ubah 'image' menjadi 'image_url' sesuai nama kolom DB
+    final String imageSource = widget.artikel['image_url'] ?? '';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -91,10 +84,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
         child: Column(
           children: [
             const CustomNavbar(),
-
-            // =================================================
-            // KONTEN ARTIKEL
-            // =================================================
             Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 800),
@@ -102,7 +91,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tombol kembali
                     InkWell(
                       onTap: () => context.go('/media'),
                       child: Row(
@@ -124,10 +112,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
-                    // Kategori dan tanggal
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -141,7 +126,8 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            widget.artikel['kategori'] ?? 'Berita',
+                            widget.artikel['category'] ??
+                                'Berita', // 👇 'kategori' jadi 'category'
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 13,
@@ -158,10 +144,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
-
-                    // Judul artikel
                     Text(
                       widget.artikel['title'] ??
                           'Judul Artikel Tidak Ditemukan',
@@ -172,10 +155,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                         color: Colors.black87,
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
-                    // 👇 MENAMPILKAN HERO IMAGE ARTIKEL
                     Container(
                       width: double.infinity,
                       height: isMobile ? 200 : 400,
@@ -183,16 +163,11 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      clipBehavior:
-                          Clip.antiAlias, // Wajib agar ujung gambar melengkung
+                      clipBehavior: Clip.antiAlias,
                       child: _buildImageDisplay(imageSource),
                     ),
-
                     const SizedBox(height: 40),
 
-                    // =================================================
-                    // KONTEN ARTIKEL (QUILL / TEXT BIASA)
-                    // =================================================
                     if (_isRichText && _quillController != null)
                       Container(
                         width: double.infinity,
@@ -216,8 +191,9 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                       )
                     else
                       Text(
+                        // 👇 'desc' jadi 'description'
                         widget.artikel['content'] ??
-                            widget.artikel['desc'] ??
+                            widget.artikel['description'] ??
                             '',
                         style: const TextStyle(
                           fontSize: 16,
@@ -230,7 +206,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 20),
 
-                    // Share section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -256,7 +231,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                 ),
               ),
             ),
-
             const CustomFooter(),
           ],
         ),

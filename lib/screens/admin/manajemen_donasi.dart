@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../services/supabase_donasi_service.dart';
 import 'package:intl/intl.dart';
 import '../../../core/snackbar_helper.dart';
+
+// 👇 1. IMPORT SERVICE SUPABASE DONASI (Gantikan MockDatabase)
+import '../../../services/supabase_donasi_service.dart';
 
 // ========================================================
 // 1. VIEW: RIWAYAT DANA MASUK
@@ -16,6 +18,7 @@ class RiwayatDanaMasukView extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
 
     return Padding(
       padding: const EdgeInsets.all(32.0),
@@ -34,6 +37,7 @@ class RiwayatDanaMasukView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
+              // 👇 Gunakan data asli dari Supabase
               valueListenable: SupabaseDonationService.riwayatDonasi,
               builder: (context, List<Map<String, dynamic>> donasiList, _) {
                 if (donasiList.isEmpty) {
@@ -48,6 +52,19 @@ class RiwayatDanaMasukView extends StatelessWidget {
                   itemCount: donasiList.length,
                   itemBuilder: (context, index) {
                     final item = donasiList[index];
+
+                    // Format tanggal dari database
+                    String tgl = '-';
+                    if (item['created_at'] != null) {
+                      try {
+                        tgl = dateFormat.format(
+                          DateTime.parse(item['created_at']).toLocal(),
+                        );
+                      } catch (e) {
+                        tgl = item['created_at'].toString();
+                      }
+                    }
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       shape: RoundedRectangleBorder(
@@ -64,14 +81,15 @@ class RiwayatDanaMasukView extends StatelessWidget {
                           ),
                         ),
                         title: Text(
-                          item['nama_donatur']?.toString() ?? 'Donatur VIP',
+                          item['nama_donatur']?.toString() ??
+                              'Donatur VIP', // Sesuai kolom DB
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "${item['program_name'] ?? 'Program VIP'}\n${item['created_at']?.toString().substring(0, 10) ?? '-'}",
+                          "${item['program_name'] ?? 'Program VIP'}\n$tgl", // Sesuai kolom DB
                         ),
                         trailing: Text(
-                          "+ ${currencyFormat.format(item['amount'] ?? 0)}",
+                          "+ ${currencyFormat.format(item['amount'] ?? 0)}", // Sesuai kolom DB
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -92,7 +110,7 @@ class RiwayatDanaMasukView extends StatelessWidget {
 }
 
 // ========================================================
-// 2. VIEW: RIWAYAT DANA KELUAR (SUDAH FIX BEBAS ERROR RED SCREEN)
+// 2. VIEW: RIWAYAT DANA KELUAR
 // ========================================================
 class RiwayatDanaKeluarView extends StatelessWidget {
   const RiwayatDanaKeluarView({super.key});
@@ -104,6 +122,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
 
     return Padding(
       padding: const EdgeInsets.all(32.0),
@@ -122,6 +141,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
+              // 👇 Gunakan data asli dari Supabase
               valueListenable: SupabaseDonationService.riwayatPenyaluran,
               builder: (context, List<Map<String, dynamic>> pengeluaranList, _) {
                 if (pengeluaranList.isEmpty) {
@@ -136,6 +156,19 @@ class RiwayatDanaKeluarView extends StatelessWidget {
                   itemCount: pengeluaranList.length,
                   itemBuilder: (context, index) {
                     final item = pengeluaranList[index];
+
+                    // Format tanggal dari database
+                    String tgl = '-';
+                    if (item['created_at'] != null) {
+                      try {
+                        tgl = dateFormat.format(
+                          DateTime.parse(item['created_at']).toLocal(),
+                        );
+                      } catch (e) {
+                        tgl = item['created_at'].toString();
+                      }
+                    }
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       shape: RoundedRectangleBorder(
@@ -152,14 +185,15 @@ class RiwayatDanaKeluarView extends StatelessWidget {
                           ),
                         ),
                         title: Text(
-                          item['keterangan']?.toString() ?? 'Penyaluran Dana',
+                          item['keterangan']?.toString() ??
+                              'Penyaluran Dana', // Sesuai DB
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "Alokasi Program VIP\nTanggal pengeluaran: ${item['created_at']?.toString().substring(0, 10) ?? '-'}",
+                          "Alokasi Program VIP\nTanggal pengeluaran: $tgl",
                         ),
                         trailing: Text(
-                          "- ${currencyFormat.format(item['nominal'] ?? 0)}",
+                          "- ${currencyFormat.format(item['nominal'] ?? 0)}", // Sesuai DB
                           style: const TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -180,7 +214,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
 }
 
 // ========================================================
-// 3. VIEW: FORM PENYALURAN DANA (FIX TYPO CLASS STATE)
+// 3. VIEW: FORM PENYALURAN DANA
 // ========================================================
 class PenyaluranDanaView extends StatefulWidget {
   const PenyaluranDanaView({super.key});
@@ -197,6 +231,7 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
   );
   final nominalController = TextEditingController();
   String? selectedKategori;
+  bool _isProcessing = false; // Tambahan indikator loading
 
   final List<String> kategoriList = [
     "Pendidikan & Vokasi",
@@ -247,11 +282,14 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                     children: [
                       const Icon(Icons.info_outline, color: Colors.blue),
                       const SizedBox(width: 10),
+                      // 👇 Gunakan data asli dari Supabase
                       ValueListenableBuilder(
-                        valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
+                        valueListenable:
+                            SupabaseDonationService.totalDonasiTerkumpul,
                         builder: (context, total, _) {
                           return ValueListenableBuilder(
-                            valueListenable: SupabaseDonationService.danaTersalurkan,
+                            valueListenable:
+                                SupabaseDonationService.danaTersalurkan,
                             builder: (context, tersalurkan, _) {
                               int saldoAktif = total - tersalurkan;
                               return Text(
@@ -298,33 +336,62 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () async {
-                      if (nominalController.text.isNotEmpty &&
-                          selectedKategori != null) {
-                        try {
-                          int nominal = int.parse(nominalController.text);
-                          await SupabaseDonationService.catatPengeluaranKeCloud(
-                            nominal,
-                            selectedKategori!,
-                          );
-                          if (context.mounted) {
-                            showSuccessSnackBar(context, 'Penyaluran berhasil dicatat! Dana publik terupdate.');
-                            nominalController.clear();
-                            setState(() => selectedKategori = null);
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            showErrorSnackBar(context, e.toString());
-                          }
-                        }
-                      } else {
-                        showInfoSnackBar(context, 'Mohon lengkapi nominal & kategori!');
-                      }
-                    },
-                    child: const Text(
-                      "Simpan Catatan Pengeluaran",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    onPressed: _isProcessing
+                        ? null
+                        : () async {
+                            // 👇 Ubah jadi async
+                            if (nominalController.text.isNotEmpty &&
+                                selectedKategori != null) {
+                              setState(() => _isProcessing = true);
+                              try {
+                                int nominal = int.parse(nominalController.text);
+
+                                // 👇 EKSEKUSI KE CLOUD
+                                await SupabaseDonationService.catatPengeluaranKeCloud(
+                                  nominal,
+                                  selectedKategori!,
+                                );
+
+                                if (context.mounted) {
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Penyaluran berhasil dicatat! Dana publik terupdate.',
+                                  );
+                                  nominalController.clear();
+                                  setState(() => selectedKategori = null);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  showErrorSnackBar(
+                                    context,
+                                    'Gagal mencatat penyaluran: ${e.toString().replaceAll("Exception:", "")}',
+                                  );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setState(() => _isProcessing = false);
+                                }
+                              }
+                            } else {
+                              showInfoSnackBar(
+                                context,
+                                'Mohon lengkapi nominal & kategori!',
+                              );
+                            }
+                          },
+                    child: _isProcessing
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Simpan Catatan Pengeluaran",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],

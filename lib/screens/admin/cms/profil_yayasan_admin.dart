@@ -1,10 +1,10 @@
-import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
-import '../../../../data/mock_database.dart';
 
 class ProfilYayasanAdmin extends StatefulWidget {
   const ProfilYayasanAdmin({super.key});
@@ -14,40 +14,62 @@ class ProfilYayasanAdmin extends StatefulWidget {
 }
 
 class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
-  // Kunci form untuk validasi
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _visionController = TextEditingController();
 
-  final List<TextEditingController> _missionControllers = [];
-  String _imageBase64 = '';
+  // 👇 List controller dinamis untuk menampung banyak Misi
+  List<TextEditingController> _missionControllers = [];
 
+  String _currentImageUrl = '';
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageExt;
+
+  int _profileId = 1;
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  final _supabase = Supabase.instance.client;
+
+  
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadDataFromSupabase();
   }
 
-  void _loadData() {
-    final data = MockDatabase.getProfilYayasanData();
-    setState(() {
-      _titleController.text = data['title'] ?? '';
-      _descController.text = data['description'] ?? '';
-      _visionController.text = data['vision_text'] ?? '';
-      _imageBase64 = data['image'] ?? '';
+  // 👇 1. KONEKSI DATA FROM SUPABASE
+  Future<void> _loadDataFromSupabase() async {
+    try {
+      final response = await _supabase
+          .from('cms_foundation_profiles')
+          .select()
+          .order('id', ascending: true)
+          .limit(1)
+          .maybeSingle();
 
-      _missionControllers.clear();
-      if (data['mission_points'] != null) {
-        List<dynamic> points = data['mission_points'];
-        for (var point in points) {
-          _missionControllers.add(
-            TextEditingController(text: point.toString()),
-          );
-        }
+      if (response != null) {
+        setState(() {
+          _profileId = response['id'];
+          _titleController.text = response['title'] ?? '';
+          _descController.text = response['description'] ?? '';
+          _visionController.text = response['vision'] ?? '';
+          _currentImageUrl = response['image_url'] ?? '';
+
+          // Bongkar array JSONMisi menjadi List TextEditingController
+          final List<dynamic> internalMissions = response['missions'] ?? [];
+          _missionControllers = internalMissions
+              .map((m) => TextEditingController(text: m.toString()))
+              .toList();
+        });
       }
-    });
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -61,55 +83,18 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     super.dispose();
   }
 
-
-  // FUNGSI DIALOG KONFIRMASI HAPUS
-  void _confirmDelete(String title, String content, VoidCallback onConfirm) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Batal',
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              onConfirm();
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Hapus',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  // 👇 2. MANAJEMEN MISI DINAMIS (TAMBAH / HAPUS BARIS)
+  void _addMissionField() {
+    setState(() {
+      _missionControllers.add(TextEditingController());
+    });
   }
 
-  Widget _buildImageDisplay(String imageSource) {
-    if (imageSource.isEmpty)
-      return const Center(
-        child: Icon(Icons.image, color: Colors.grey, size: 40),
-      );
-    if (imageSource.startsWith('http'))
-      return Image.network(imageSource, fit: BoxFit.cover);
-    try {
-      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover);
-    } catch (e) {
-      return const Center(child: Icon(Icons.broken_image, color: Colors.red));
-    }
+  void _removeMissionField(int index) {
+    setState(() {
+      _missionControllers[index].dispose();
+      _missionControllers.removeAt(index);
+    });
   }
 
   Future<void> _pickImage() async {
@@ -119,36 +104,91 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     );
 
     if (result != null && result.files.first.bytes != null) {
-      final bytes = result.files.first.bytes!;
       setState(() {
-        _imageBase64 = base64Encode(bytes);
+        _selectedImageBytes = result.files.first.bytes!;
+        _selectedImageExt = result.files.first.extension ?? 'png';
+        _currentImageUrl = '';
       });
     }
   }
 
-  void _saveData() {
-    if (_formKey.currentState!.validate()) {
-      List<String> updatedMissions = _missionControllers
-          .map((controller) => controller.text.trim())
+  Widget _buildImageDisplay() {
+    if (_selectedImageBytes != null) {
+      return Image.memory(_selectedImageBytes!, fit: BoxFit.cover);
+    } else if (_currentImageUrl.isNotEmpty) {
+      return Image.network(_currentImageUrl, fit: BoxFit.cover);
+    }
+    return const Center(child: Text("Klik untuk Unggah Gambar"));
+  }
+
+  // 👇 3. PROSES SAVE COMPREHENSIVE KONTEN KE CLOUD
+  Future<void> _saveProfileData() async {
+    if (!_formKey.currentState!.validate()) {
+      showErrorSnackBar(
+        context,
+        'Penyimpanan gagal. Mohon lengkapi seluruh formulir!',
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      String finalImageUrl = _currentImageUrl;
+
+      if (_selectedImageBytes != null) {
+        final fileName =
+            'profile_${DateTime.now().millisecondsSinceEpoch}.$_selectedImageExt';
+        await _supabase.storage
+            .from('cms_images')
+            .uploadBinary(
+              fileName,
+              _selectedImageBytes!,
+              fileOptions: const FileOptions(upsert: true),
+            );
+        finalImageUrl = _supabase.storage
+            .from('cms_images')
+            .getPublicUrl(fileName);
+      }
+
+      // Kumpulkan teks dari semua inputan misi yang diisi admin
+      List<String> textMissions = _missionControllers
+          .map((c) => c.text.trim())
           .where((text) => text.isNotEmpty)
           .toList();
 
-      MockDatabase.updateProfilYayasanData({
-        'title': _titleController.text,
-        'description': _descController.text,
-        'vision_text': _visionController.text,
-        'mission_points': updatedMissions,
-        'image': _imageBase64,
-      });
+      await _supabase
+          .from('cms_foundation_profiles')
+          .update({
+            'title': _titleController.text.trim(),
+            'description': _descController.text.trim(),
+            'vision': _visionController.text.trim(),
+            'missions':
+                textMissions, // Supabase otomatis merubah List ke format JSONB Array
+            'image_url': finalImageUrl,
+          })
+          .eq('id', _profileId);
 
-      showSuccessSnackBar(context, 'Profil Yayasan berhasil diperbarui!');
-    } else {
-      showErrorSnackBar(context, 'Penyimpanan gagal. Masih ada form yang kosong!');
+      if (mounted) {
+        showSuccessSnackBar(context, 'Profil Yayasan berhasil diperbarui!');
+        setState(() {
+          _currentImageUrl = finalImageUrl;
+          _selectedImageBytes = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal menyimpan data: $e');
+    } finally {
+      setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Form(
@@ -161,7 +201,6 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-
             Card(
               color: Colors.white,
               elevation: 2,
@@ -173,9 +212,6 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ==========================================
-                    // 1. TENTANG KAMI & GAMBAR
-                    // ==========================================
                     const Text(
                       "Judul Utama (Apa itu VIP?)",
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -188,7 +224,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                       ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty
-                          ? 'Judul tidak boleh kosong'
+                          ? 'Judul utama tidak boleh kosong'
                           : null,
                     ),
                     const SizedBox(height: 20),
@@ -209,9 +245,8 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                           ? 'Deskripsi tidak boleh kosong'
                           : null,
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
 
-                    // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
                     Row(
                       children: [
                         const Text(
@@ -221,7 +256,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                         const SizedBox(width: 8),
                         Tooltip(
                           message:
-                              "Gambar akan ditampilkan di sebelah deskripsi pada layar Desktop.",
+                              "Rekomendasi ukuran: 800 x 600 piksel (Landscape 4:3) agar proporsional dan tidak terpotong.",
                           child: Icon(
                             Icons.info_outline,
                             size: 16,
@@ -230,22 +265,11 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Rekomendasi ukuran: 800 x 600 piksel (Landscape 4:3) agar proporsional dan tidak terpotong.",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
                     const SizedBox(height: 10),
-
-                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
                     InkWell(
                       onTap: _pickImage,
                       child: Container(
-                        height: 250,
+                        height: 200,
                         width: 400,
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
@@ -253,187 +277,171 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: _imageBase64.isEmpty
-                            ? const Center(
-                                child: Text("Klik untuk Unggah Gambar"),
-                              )
-                            : Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  _buildImageDisplay(_imageBase64),
-                                  Positioned(
-                                    top: 10,
-                                    right: 10,
-                                    child: CircleAvatar(
-                                      backgroundColor: Colors.black54,
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                        ),
-                                        onPressed: () =>
-                                            setState(() => _imageBase64 = ''),
-                                      ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _buildImageDisplay(),
+                            if (_currentImageUrl.isNotEmpty ||
+                                _selectedImageBytes != null)
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.black54,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
                                     ),
+                                    onPressed: () => setState(() {
+                                      _currentImageUrl = '';
+                                      _selectedImageBytes = null;
+                                    }),
                                   ),
-                                ],
+                                ),
                               ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    const Divider(),
-                    const SizedBox(height: 30),
 
-                    // ==========================================
-                    // 2. VISI & MISI
-                    // ==========================================
-                    const Row(
-                      children: [
-                        Text("✨ ", style: TextStyle(fontSize: 18)),
-                        Text(
-                          "Teks Visi (Vision)",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.amber,
-                          ),
-                        ),
-                      ],
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 25),
+                      child: Divider(),
+                    ),
+
+                    const Text(
+                      "✨ Teks Visi (Vision)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _visionController,
-                      maxLines: 3,
+                      maxLines: 2,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty
-                          ? 'Teks Visi tidak boleh kosong'
+                          ? 'Visi tidak boleh kosong'
                           : null,
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
 
+                    // ========================================================
+                    // BAGIAN LIST MISI DINAMIS (Sesuai Gambar Screenshot 4)
+                    // ========================================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
-                          children: [
-                            Text("🚀 ", style: TextStyle(fontSize: 18)),
-                            Text(
-                              "Poin Misi (Mission)",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
+                        const Text(
+                          "🚀 Poin Misi (Mission)",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
                         ),
                         TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _missionControllers.add(TextEditingController());
-                            });
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text("Tambah Misi"),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.primary,
+                          onPressed: _addMissionField,
+                          icon: const Icon(
+                            Icons.add,
+                            size: 18,
+                            color: Colors.red,
+                          ),
+                          label: const Text(
+                            "Tambah Misi",
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: List.generate(_missionControllers.length, (
-                          index,
-                        ) {
+
+                    if (_missionControllers.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20),
+                        child: Center(
+                          child: Text(
+                            "Belum ada poin misi. Klik 'Tambah Misi' untuk menambah.",
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _missionControllers.length,
+                        itemBuilder: (context, index) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.only(bottom: 12.0),
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  color: AppColors.primary,
-                                  size: 14,
+                                  Icons.chevron_right,
+                                  color: Colors.red,
                                 ),
-                                const SizedBox(width: 15),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: TextFormField(
                                     controller: _missionControllers[index],
-                                    decoration: const InputDecoration(
-                                      hintText: "Masukkan teks misi...",
-                                      isDense: true,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 12,
-                                      ),
-                                      border: OutlineInputBorder(),
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          "Tuliskan poin misi ke-${index + 1}",
+                                      border: const OutlineInputBorder(),
                                     ),
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                        ? 'Poin misi wajib diisi'
+                                    validator: (val) =>
+                                        val == null || val.trim().isEmpty
+                                        ? 'Poin misi tidak boleh kosong'
                                         : null,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.remove_circle,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () => _confirmDelete(
-                                    'Hapus Poin Misi?',
-                                    'Apakah Anda yakin ingin menghapus poin misi ini?',
-                                    () {
-                                      setState(() {
-                                        _missionControllers[index].dispose();
-                                        _missionControllers.removeAt(index);
-                                      });
-                                    },
+                                CircleAvatar(
+                                  backgroundColor: Colors.red.shade50,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _removeMissionField(index),
                                   ),
                                 ),
                               ],
                             ),
                           );
-                        }),
+                        },
                       ),
-                    ),
 
-                    const SizedBox(height: 30),
-                    const Divider(),
-                    const SizedBox(height: 30),
-
-                    // ==========================================
-                    // 3. TOMBOL SIMPAN
-                    // ==========================================
+                    const SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: _saveData,
+                        onPressed: _isSaving ? null : _saveProfileData,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          "SIMPAN PERUBAHAN",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: _isSaving
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "SIMPAN PERUBAHAN",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                   ],
