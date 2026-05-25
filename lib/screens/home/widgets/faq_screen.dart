@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
-import '../../../data/mock_database.dart';
 
 class FAQScreen extends StatefulWidget {
   const FAQScreen({super.key});
@@ -13,26 +14,7 @@ class FAQScreen extends StatefulWidget {
 
 class _FAQScreenState extends State<FAQScreen> {
   int expandedIndex = -1;
-  List<Map<String, String>> _faqList = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFaqData();
-  }
-
-  // 👇 PERBAIKAN: Fungsi untuk menarik data saat halaman dibuka
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadFaqData();
-  }
-
-  void _loadFaqData() {
-    setState(() {
-      _faqList = MockDatabase.getSemuaFaq();
-    });
-  }
+  final _supabase = Supabase.instance.client; // 👇 Inisialisasi Supabase
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +60,6 @@ class _FAQScreenState extends State<FAQScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
@@ -92,7 +73,6 @@ class _FAQScreenState extends State<FAQScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -124,93 +104,122 @@ class _FAQScreenState extends State<FAQScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // 👇 PERBAIKAN: Menggunakan _faqList dari MockDatabase
-                  if (_faqList.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text(
-                          "Belum ada pertanyaan saat ini.",
-                          style: TextStyle(color: Colors.grey, fontSize: 16),
-                        ),
-                      ),
-                    )
-                  else
-                    ...List.generate(_faqList.length, (index) {
-                      final faq = _faqList[index];
-                      final bool isExpanded = expandedIndex == index;
+                  // 👇 PERBAIKAN: Menggunakan StreamBuilder Real-time dari Supabase
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _supabase
+                        .from('faqs')
+                        .stream(primaryKey: ['id'])
+                        .order('created_at', ascending: false),
+                    builder: (context, snapshot) {
+                      // Tampilkan loading saat data sedang diambil
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
 
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isExpanded
-                                ? AppColors.primary.withValues(alpha: 0.5)
-                                : Colors.grey.shade200,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.02),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Theme(
-                          data: ThemeData().copyWith(
-                            dividerColor: Colors.transparent,
-                          ),
-                          child: ExpansionTile(
-                            key: Key(index.toString() + isExpanded.toString()),
-                            initiallyExpanded: isExpanded,
-                            iconColor: AppColors.primary,
-                            collapsedIconColor: Colors.grey,
-                            title: Text(
-                              faq["tanya"]!,
+                      final faqList = snapshot.data ?? [];
+
+                      if (faqList.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text(
+                              "Belum ada pertanyaan saat ini.",
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: isExpanded
-                                    ? AppColors.primary
-                                    : Colors.black87,
+                                color: Colors.grey,
+                                fontSize: 16,
                               ),
                             ),
-                            onExpansionChanged: (bool expanded) {
-                              setState(() {
-                                if (expanded) {
-                                  expandedIndex = index;
-                                } else {
-                                  expandedIndex = -1;
-                                }
-                              });
-                            },
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 16,
-                                  right: 16,
-                                  bottom: 20,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: List.generate(faqList.length, (index) {
+                          final faq = faqList[index];
+                          final bool isExpanded = expandedIndex == index;
+
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isExpanded
+                                    ? AppColors.primary.withValues(alpha: 0.5)
+                                    : Colors.grey.shade200,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
                                 ),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    faq["jawab"]!,
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                      height: 1.6,
-                                      fontSize: 15,
-                                    ),
+                              ],
+                            ),
+                            child: Theme(
+                              data: ThemeData().copyWith(
+                                dividerColor: Colors.transparent,
+                              ),
+                              child: ExpansionTile(
+                                key: Key(
+                                  index.toString() + isExpanded.toString(),
+                                ),
+                                initiallyExpanded: isExpanded,
+                                iconColor: AppColors.primary,
+                                collapsedIconColor: Colors.grey,
+                                title: Text(
+                                  faq["question"] ??
+                                      '', // 👇 Ubah jadi question
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: isExpanded
+                                        ? AppColors.primary
+                                        : Colors.black87,
                                   ),
                                 ),
+                                onExpansionChanged: (bool expanded) {
+                                  setState(() {
+                                    if (expanded) {
+                                      expandedIndex = index;
+                                    } else {
+                                      expandedIndex = -1;
+                                    }
+                                  });
+                                },
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 16,
+                                      right: 16,
+                                      bottom: 20,
+                                    ),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        faq["answer"] ??
+                                            '', // 👇 Ubah jadi answer
+                                        style: TextStyle(
+                                          color: Colors.grey[700],
+                                          height: 1.6,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        }),
                       );
-                    }),
+                    },
+                  ),
 
                   const SizedBox(height: 60),
                 ],

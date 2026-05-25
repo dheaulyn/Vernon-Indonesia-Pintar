@@ -1,15 +1,73 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../../../core/app_colors.dart';
 import '../../../../data/mock_database.dart';
+// 👇 Jika totalDonasiTerkumpul sudah pakai Supabase, pastikan import ini (sesuaikan path-nya)
+// import '../../../../services/supabase_donasi_service.dart';
 
-class LaporanView extends StatelessWidget {
+class LaporanView extends StatefulWidget {
   final bool isMobile;
   const LaporanView({super.key, required this.isMobile});
 
   @override
+  State<LaporanView> createState() => _LaporanViewState();
+}
+
+class _LaporanViewState extends State<LaporanView> {
+  final _supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _artikelTerbaru = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchArtikelTerbaru();
+  }
+
+  // 👇 MENGAMBIL 4 ARTIKEL TERBARU DARI TABEL ARTICLES
+  Future<void> _fetchArtikelTerbaru() async {
+    try {
+      final response = await _supabase
+          .from('articles')
+          .select()
+          .neq('category', 'Galeri') // Abaikan galeri
+          .order('created_at', ascending: false)
+          .limit(4); // Ambil 4 terbaru saja
+
+      if (mounted) {
+        setState(() {
+          _artikelTerbaru = response;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal mengambil artikel donatur: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Fungsi pintar untuk merender gambar (URL atau Base64)
+  Widget _buildImageDisplay(String imageSource) {
+    if (imageSource.isEmpty) {
+      return const Center(
+        child: Icon(Icons.image, color: Colors.grey, size: 40),
+      );
+    }
+    if (imageSource.startsWith('http')) {
+      return Image.network(imageSource, fit: BoxFit.cover);
+    }
+    try {
+      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover);
+    } catch (e) {
+      return const Center(child: Icon(Icons.broken_image, color: Colors.red));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final impactUpdates = MockDatabase.getImpactUpdates();
     final currencyFormat = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -18,15 +76,17 @@ class LaporanView extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 32,
+        horizontal: widget.isMobile ? 20 : 32,
         vertical: 20,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ========================================================
-          // 1. KARTU ALOKASI DANA REVISI (SINKRON DESIMAL REAL-TIME)
+          // 1. KARTU ALOKASI DANA REVISI
           // ========================================================
+          // Catatan: Jika total donasi sudah pindah ke SupabaseDonationService,
+          // ganti MockDatabase.totalDonasiTerkumpul di bawah ini.
           ValueListenableBuilder(
             valueListenable: MockDatabase.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
@@ -132,7 +192,7 @@ class LaporanView extends StatelessWidget {
           const SizedBox(height: 40),
 
           // ==========================================
-          // 2. TIMELINE DAMPAK / BERITA
+          // 2. TIMELINE DAMPAK / BERITA (DARI SUPABASE)
           // ==========================================
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -159,24 +219,38 @@ class LaporanView extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          isMobile
-              ? Column(
-                  children: impactUpdates
-                      .map((update) => _buildImpactCard(update, isMobile))
-                      .toList(),
-                )
-              : Wrap(
-                  spacing: 24,
-                  runSpacing: 24,
-                  children: impactUpdates
-                      .map(
-                        (update) => SizedBox(
-                          width: 400,
-                          child: _buildImpactCard(update, isMobile),
-                        ),
-                      )
-                      .toList(),
-                ),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_artikelTerbaru.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                "Belum ada update terbaru.",
+                style: TextStyle(color: Colors.grey),
+              ),
+            )
+          else
+            widget.isMobile
+                ? Column(
+                    children: _artikelTerbaru
+                        .map(
+                          (artikel) =>
+                              _buildImpactCard(artikel, widget.isMobile),
+                        )
+                        .toList(),
+                  )
+                : Wrap(
+                    spacing: 24,
+                    runSpacing: 24,
+                    children: _artikelTerbaru
+                        .map(
+                          (artikel) => SizedBox(
+                            width: 400,
+                            child: _buildImpactCard(artikel, widget.isMobile),
+                          ),
+                        )
+                        .toList(),
+                  ),
 
           const SizedBox(height: 40),
         ],
@@ -234,9 +308,8 @@ class LaporanView extends StatelessWidget {
     );
   }
 
-  Widget _buildImpactCard(ImpactUpdate update, bool isMobile) {
-    final dateFormat = DateFormat('dd MMM yyyy');
-
+  // 👇 UPDATE: Menerima data Map (JSON dari Supabase)
+  Widget _buildImpactCard(Map<String, dynamic> artikel, bool isMobile) {
     return Container(
       margin: EdgeInsets.only(bottom: isMobile ? 20 : 0),
       decoration: BoxDecoration(
@@ -258,12 +331,10 @@ class LaporanView extends StatelessWidget {
           Container(
             height: 200,
             width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(update.imageUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
+            color: Colors.grey.shade200,
+            child: _buildImageDisplay(
+              artikel['image_url'] ?? '',
+            ), // 👇 Render gambar Supabase
           ),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -279,7 +350,7 @@ class LaporanView extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      dateFormat.format(update.date),
+                      artikel['date'] ?? '-', // 👇 Format tanggal dari database
                       style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 12,
@@ -290,7 +361,7 @@ class LaporanView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  update.title,
+                  artikel['title'] ?? '',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -300,7 +371,8 @@ class LaporanView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  update.content,
+                  artikel['description'] ??
+                      '', // 👇 Tampilkan deskripsi singkat
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 14,
@@ -320,7 +392,8 @@ class LaporanView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    update.programName,
+                    artikel['category'] ??
+                        'Berita', // 👇 Tampilkan kategori sebagai tag
                     style: TextStyle(
                       color: Colors.blue.shade700,
                       fontSize: 12,

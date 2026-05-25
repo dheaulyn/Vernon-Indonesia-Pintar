@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../core/app_colors.dart';
-import '../../data/mock_database.dart'; // 👇 IMPORT DATABASE
 import 'shared/custom_navbar.dart';
 import 'shared/custom_footer.dart';
 
@@ -13,16 +14,38 @@ class ProgramDetailScreen extends StatefulWidget {
 }
 
 class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
-  late Map<String, dynamic> _detailData;
+  // 👇 Data sekarang bertipe dynamic
+  Map<String, dynamic>? _detailData;
+  bool _isLoading = true;
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    // 👇 Ambil data dinamis saat halaman dimuat
-    _detailData = MockDatabase.getProgramDetailData();
+    _fetchProgramData();
   }
 
-  // Fungsi bantuan untuk rotasi ikon otomatis berdasarkan index
+  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  Future<void> _fetchProgramData() async {
+    try {
+      final response = await _supabase
+          .from('programs')
+          .select()
+          .eq('id', 1) // Ambil program dengan ID 1
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() {
+          _detailData = response;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal memuat program: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   IconData _getIconForIndex(int index) {
     const icons = [
       Icons.person_outline,
@@ -40,89 +63,90 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 850;
 
-    // Ambil data array dari database
-    final List<dynamic> requirements = _detailData['requirements'] ?? [];
-    final List<dynamic> timeline = _detailData['timeline'] ?? [];
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: const CustomNavbar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeroSection(context, isMobile),
-            Container(
-              width: isMobile ? double.infinity : 1000,
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 20 : 0,
-                vertical: 50,
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _detailData == null
+          ? const Center(child: Text("Data program tidak ditemukan."))
+          : SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle(
-                    "Syarat & Ketentuan",
-                    "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
-                  ),
-                  const SizedBox(height: 30),
-
-                  // 👇 LOOP DATA SYARAT SECARA DINAMIS
-                  if (requirements.isEmpty)
-                    const Text("Belum ada data persyaratan.")
-                  else
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: List.generate(requirements.length, (index) {
-                        final req = requirements[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: _buildRequirementCard(
-                            req['title'] ?? '',
-                            _getIconForIndex(index),
-                            List<String>.from(req['points'] ?? []),
-                          ),
-                        );
-                      }),
+                  _buildHeroSection(context, isMobile),
+                  Container(
+                    width: isMobile ? double.infinity : 1000,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 0,
+                      vertical: 50,
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle(
+                          "Syarat & Ketentuan",
+                          "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
+                        ),
+                        const SizedBox(height: 30),
 
-                  const SizedBox(height: 80),
+                        // 👇 DATA SYARAT DINAMIS DARI SUPABASE
+                        ...List.generate(
+                          (_detailData!['syarat_ketentuan'] as List).length,
+                          (index) {
+                            final req =
+                                (_detailData!['syarat_ketentuan']
+                                    as List)[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: _buildRequirementCard(
+                                req['title'] ?? '',
+                                _getIconForIndex(index),
+                                List<String>.from(req['points'] ?? []),
+                              ),
+                            );
+                          },
+                        ),
 
-                  _buildSectionTitle(
-                    "Alur Pendaftaran & Seleksi",
-                    "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
-                  ),
-                  const SizedBox(height: 40),
+                        const SizedBox(height: 80),
 
-                  // 👇 LOOP DATA TIMELINE ALUR SECARA DINAMIS
-                  if (timeline.isEmpty)
-                    const Text("Belum ada data alur pendaftaran.")
-                  else
-                    Column(
-                      children: List.generate(timeline.length, (index) {
-                        final step = timeline[index];
-                        return _buildTimelineStep(
-                          index + 1,
-                          step['title'] ?? '',
-                          step['description'] ?? '',
-                          isLast: index == timeline.length - 1,
-                        );
-                      }),
+                        _buildSectionTitle(
+                          "Alur Pendaftaran & Seleksi",
+                          "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
+                        ),
+                        const SizedBox(height: 40),
+
+                        // 👇 DATA ALUR DINAMIS DARI SUPABASE
+                        ...List.generate(
+                          (_detailData!['alur_pendaftaran'] as List).length,
+                          (index) {
+                            final step =
+                                (_detailData!['alur_pendaftaran']
+                                    as List)[index];
+                            return _buildTimelineStep(
+                              index + 1,
+                              step['title'] ?? '',
+                              step['description'] ?? '',
+                              isLast:
+                                  index ==
+                                  (_detailData!['alur_pendaftaran'] as List)
+                                          .length -
+                                      1,
+                            );
+                          },
+                        ),
+                      ],
                     ),
+                  ),
+                  const CustomFooter(),
                 ],
               ),
             ),
-
-            const CustomFooter(),
-          ],
-        ),
-      ),
     );
   }
 
   // =====================================
-  // KUMPULAN WIDGET BANTUAN
+  // WIDGET-WIDGET HERO & SECTION (SAMA SEPERTI KODE LAMA)
   // =====================================
-
   Widget _buildHeroSection(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
@@ -144,9 +168,6 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
         child: SizedBox(
           width: isMobile ? double.infinity : 900,
           child: Column(
-            crossAxisAlignment: isMobile
-                ? CrossAxisAlignment.center
-                : CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -172,7 +193,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                "Program Karir Kurikulum\n10 Bulan VIP",
+                _detailData!['nama_program'] ?? "Program Karir",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 32 : 48,
@@ -183,7 +204,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                "Pelatihan intensif terpadu untuk membekali Anda dengan keterampilan praktis dan karakter profesional agar siap bersaing di dunia kerja.",
+                _detailData!['deskripsi'] ?? "",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
@@ -334,7 +355,6 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Garis dan Angka
           Column(
             children: [
               Container(
@@ -367,8 +387,6 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
             ],
           ),
           const SizedBox(width: 24),
-
-          // Konten Teks
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 40),

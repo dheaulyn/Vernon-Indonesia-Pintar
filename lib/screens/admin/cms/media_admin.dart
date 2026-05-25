@@ -1,11 +1,13 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart'; // 👇 Untuk format tanggal otomatis
 
 import '../../../core/app_colors.dart';
 import '../../../core/snackbar_helper.dart';
-import '../../../data/mock_database.dart';
 
 class KelolaMediaAdmin extends StatefulWidget {
   const KelolaMediaAdmin({super.key});
@@ -18,8 +20,12 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  List<Map<String, String>> _artikel = [];
-  List<Map<String, String>> _galeri = [];
+  // 👇 Ubah tipe data menjadi dynamic untuk menerima dari Supabase
+  List<Map<String, dynamic>> _artikel = [];
+  List<Map<String, dynamic>> _galeri = [];
+  bool _isLoading = true;
+
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -28,11 +34,27 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     _loadData();
   }
 
-  void _loadData() {
-    setState(() {
-      _artikel = MockDatabase.getSemuaArtikel();
-      _galeri = MockDatabase.getSemuaGaleri();
-    });
+  // =========================================================
+  // 1. MENGAMBIL DATA DARI TABEL ARTICLES TEMANMU
+  // =========================================================
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _supabase
+          .from('articles')
+          .select()
+          .order('created_at', ascending: false);
+
+      setState(() {
+        // Pisahkan data berdasarkan Kategori
+        _artikel = response.where((e) => e['category'] != 'Galeri').toList();
+        _galeri = response.where((e) => e['category'] == 'Galeri').toList();
+      });
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -41,51 +63,60 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     super.dispose();
   }
 
-
-  // FUNGSI PINTAR: Menampilkan gambar
-  Widget _buildImageDisplay(String imageSource, {BoxFit fit = BoxFit.cover}) {
-    if (imageSource.isEmpty) {
-      return const Center(
-        child: Icon(Icons.image, color: Colors.grey, size: 40),
-      );
+  // =========================================================
+  // FUNGSI PINTAR: Menampilkan Gambar (URL atau Bytes Lokal)
+  // =========================================================
+  Widget _buildImageDisplay({
+    String url = '',
+    Uint8List? bytes,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    if (bytes != null) {
+      return Image.memory(bytes, fit: fit);
     }
-    if (imageSource.startsWith('http')) {
-      return Image.network(imageSource, fit: fit);
+    if (url.isNotEmpty && url.startsWith('http')) {
+      return Image.network(url, fit: fit);
     }
-    try {
-      return Image.memory(base64Decode(imageSource), fit: fit);
-    } catch (e) {
-      return const Center(child: Icon(Icons.broken_image, color: Colors.red));
-    }
+    return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
   }
 
-  // FUNGSI UPLOAD
-  Future<void> _pickImage(Function(String) onImagePicked) async {
+  // =========================================================
+  // FUNGSI UPLOAD FILE KE DIALOG
+  // =========================================================
+  Future<void> _pickImageForDialog(
+    Function(Uint8List bytes, String ext) onPicked,
+  ) async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
       withData: true,
     );
 
     if (result != null && result.files.first.bytes != null) {
-      final bytes = result.files.first.bytes!;
-      final base64String = base64Encode(bytes);
-      onImagePicked(base64String);
+      onPicked(
+        result.files.first.bytes!,
+        result.files.first.extension ?? 'png',
+      );
     }
   }
 
   // =========================================================
   // FORM ARTIKEL (TAMBAH / EDIT)
   // =========================================================
-  void _showFormArtikel({Map<String, String>? artikelLama}) {
+  void _showFormArtikel({Map<String, dynamic>? artikelLama}) {
     final titleController = TextEditingController(
       text: artikelLama?['title'] ?? '',
     );
     final descController = TextEditingController(
-      text: artikelLama?['desc'] ?? '',
+      text: artikelLama?['description'] ?? '',
     );
 
-    String selectedKategori = artikelLama?['kategori'] ?? 'Berita';
-    String selectedImage = artikelLama?['image'] ?? '';
+    String selectedKategori = artikelLama?['category'] ?? 'Berita';
+    String currentImageUrl = artikelLama?['image_url'] ?? '';
+
+    // Variabel untuk menyimpan gambar baru jika admin memilih dari laptop
+    Uint8List? newImageBytes;
+    String? newImageExt;
+    bool isSaving = false;
 
     const List<String> kategoriOptions = [
       'Berita',
@@ -93,7 +124,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
       'Inspirasi',
       'Edukasi',
     ];
-    final formKey = GlobalKey<FormState>(); // Kunci form untuk validasi
+    final formKey = GlobalKey<FormState>();
 
     late quill.QuillController quillController;
     try {
@@ -110,9 +141,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
         );
       } else {
         final doc = quill.Document();
-        if (content != null && content.isNotEmpty) {
-          doc.insert(0, content);
-        }
+        if (content != null && content.isNotEmpty) doc.insert(0, content);
         quillController = quill.QuillController(
           document: doc,
           selection: const TextSelection.collapsed(offset: 0),
@@ -142,7 +171,6 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                 width: 900,
                 child: SingleChildScrollView(
                   child: Form(
-                    // Bungkus dengan Form
                     key: formKey,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -189,13 +217,11 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                               ),
                             ),
                             const SizedBox(width: 16),
-
                             Expanded(
                               flex: 2,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // 👇 PANDUAN UKURAN GAMBAR ARTIKEL
                                   Text(
                                     "Rekomendasi ukuran sampul: 1280 x 720 piksel (Rasio 16:9)",
                                     style: TextStyle(
@@ -207,9 +233,12 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                   const SizedBox(height: 4),
                                   InkWell(
                                     onTap: () {
-                                      _pickImage((base64Image) {
+                                      _pickImageForDialog((bytes, ext) {
                                         setStateDialog(() {
-                                          selectedImage = base64Image;
+                                          newImageBytes = bytes;
+                                          newImageExt = ext;
+                                          currentImageUrl =
+                                              ''; // Hapus preview gambar lama
                                         });
                                       });
                                     },
@@ -230,35 +259,43 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                             height: 55,
                                             color: Colors.grey.shade300,
                                             child: _buildImageDisplay(
-                                              selectedImage,
+                                              url: currentImageUrl,
+                                              bytes: newImageBytes,
                                             ),
                                           ),
                                           const SizedBox(width: 15),
                                           Expanded(
                                             child: Text(
-                                              selectedImage.isEmpty
+                                              (currentImageUrl.isEmpty &&
+                                                      newImageBytes == null)
                                                   ? "Klik untuk Upload Foto Sampul"
                                                   : "Foto Sampul Berhasil Terpilih",
                                               style: TextStyle(
-                                                color: selectedImage.isEmpty
+                                                color:
+                                                    (currentImageUrl.isEmpty &&
+                                                        newImageBytes == null)
                                                     ? Colors.grey.shade600
                                                     : AppColors.primary,
                                                 fontWeight:
-                                                    selectedImage.isEmpty
+                                                    (currentImageUrl.isEmpty &&
+                                                        newImageBytes == null)
                                                     ? FontWeight.normal
                                                     : FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                          if (selectedImage.isNotEmpty)
+                                          if (currentImageUrl.isNotEmpty ||
+                                              newImageBytes != null)
                                             IconButton(
                                               icon: const Icon(
                                                 Icons.close,
                                                 color: Colors.red,
                                               ),
-                                              onPressed: () => setStateDialog(
-                                                () => selectedImage = '',
-                                              ),
+                                              onPressed: () =>
+                                                  setStateDialog(() {
+                                                    currentImageUrl = '';
+                                                    newImageBytes = null;
+                                                  }),
                                             ),
                                         ],
                                       ),
@@ -361,41 +398,100 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () {
-                    // Validasi Form
-                    if (formKey.currentState!.validate()) {
-                      final contentJson = jsonEncode(
-                        quillController.document.toDelta().toJson(),
-                      );
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (formKey.currentState!.validate()) {
+                            setStateDialog(() => isSaving = true);
+                            try {
+                              String finalImageUrl = currentImageUrl;
 
-                      final newData = <String, String>{
-                        'title': titleController.text.trim(),
-                        'desc': descController.text.trim(),
-                        'content': contentJson,
-                        'image': selectedImage,
-                        'kategori': selectedKategori,
-                        'date': artikelLama?['date'] ?? 'Hari ini',
-                      };
+                              // Jika ada gambar baru, upload ke Storage
+                              if (newImageBytes != null) {
+                                final fileName =
+                                    'artikel_${DateTime.now().millisecondsSinceEpoch}.$newImageExt';
+                                await _supabase.storage
+                                    .from('cms_images')
+                                    .uploadBinary(
+                                      fileName,
+                                      newImageBytes!,
+                                      fileOptions: const FileOptions(
+                                        upsert: true,
+                                      ),
+                                    );
+                                finalImageUrl = _supabase.storage
+                                    .from('cms_images')
+                                    .getPublicUrl(fileName);
+                              }
 
-                      if (artikelLama == null) {
-                        MockDatabase.tambahArtikel(newData);
-                        showSuccessSnackBar(
-                          context,
-                          'Artikel baru berhasil ditambahkan!',
-                        );
-                      } else {
-                        MockDatabase.editArtikel(artikelLama['id']!, newData);
-                        showSuccessSnackBar(context, 'Artikel berhasil diperbarui!');
-                      }
+                              final contentJson = jsonEncode(
+                                quillController.document.toDelta().toJson(),
+                              );
+                              // Format tanggal hari ini cth: 10 Mei 2026
+                              final String todayDate = DateFormat(
+                                'dd MMM yyyy',
+                                'id_ID',
+                              ).format(DateTime.now());
 
-                      _loadData();
-                      Navigator.pop(dialogContext);
-                    }
-                  },
-                  child: const Text(
-                    'Simpan Artikel',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                              final newData = {
+                                'title': titleController.text.trim(),
+                                'description': descController.text.trim(),
+                                'content': contentJson,
+                                'image_url': finalImageUrl,
+                                'category': selectedKategori,
+                                'date': artikelLama?['date'] ?? todayDate,
+                              };
+
+                              if (artikelLama == null) {
+                                // Karena id adalah UUID text, kita generate ID unik memakai timestamp
+                                newData['id'] =
+                                    'art-${DateTime.now().millisecondsSinceEpoch}';
+                                await _supabase
+                                    .from('articles')
+                                    .insert(newData);
+                                if (mounted)
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Artikel baru berhasil ditambahkan!',
+                                  );
+                              } else {
+                                await _supabase
+                                    .from('articles')
+                                    .update(newData)
+                                    .eq('id', artikelLama['id']);
+                                if (mounted)
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Artikel berhasil diperbarui!',
+                                  );
+                              }
+
+                              _loadData();
+                              if (mounted) Navigator.pop(dialogContext);
+                            } catch (e) {
+                              if (mounted)
+                                showErrorSnackBar(
+                                  context,
+                                  'Terjadi kesalahan: $e',
+                                );
+                            } finally {
+                              setStateDialog(() => isSaving = false);
+                            }
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Simpan Artikel',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ],
             );
@@ -426,11 +522,16 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              MockDatabase.hapusArtikel(id);
-              _loadData();
-              Navigator.pop(context);
-              showSuccessSnackBar(context, 'Artikel berhasil dihapus!');
+            onPressed: () async {
+              try {
+                await _supabase.from('articles').delete().eq('id', id);
+                _loadData();
+                if (mounted) Navigator.pop(context);
+                if (mounted)
+                  showSuccessSnackBar(context, 'Artikel berhasil dihapus!');
+              } catch (e) {
+                if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
+              }
             },
             child: const Text(
               'Hapus',
@@ -448,11 +549,16 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
   // =========================================================
   // FORM GALERI (TAMBAH / EDIT)
   // =========================================================
-  void _showFormGaleri({Map<String, String>? galeriLama}) {
+  void _showFormGaleri({Map<String, dynamic>? galeriLama}) {
     final titleController = TextEditingController(
       text: galeriLama?['title'] ?? '',
     );
-    String selectedImage = galeriLama?['image'] ?? '';
+
+    String currentImageUrl = galeriLama?['image_url'] ?? '';
+    Uint8List? newImageBytes;
+    String? newImageExt;
+    bool isSaving = false;
+
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -474,12 +580,10 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
               content: SizedBox(
                 width: 400,
                 child: Form(
-                  // Bungkus dengan Form
                   key: formKey,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // 👇 Ubah agar teks rata kiri
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextFormField(
                         controller: titleController,
@@ -493,8 +597,6 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                             : null,
                       ),
                       const SizedBox(height: 20),
-
-                      // 👇 PANDUAN UKURAN GAMBAR GALERI
                       Text(
                         "Rekomendasi ukuran foto: 1080 x 1080 piksel (Square) atau 1200 x 800 piksel agar tampil rapi dalam grid.",
                         style: TextStyle(
@@ -504,12 +606,13 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                         ),
                       ),
                       const SizedBox(height: 6),
-
                       InkWell(
                         onTap: () {
-                          _pickImage((base64Image) {
+                          _pickImageForDialog((bytes, ext) {
                             setStateDialog(() {
-                              selectedImage = base64Image;
+                              newImageBytes = bytes;
+                              newImageExt = ext;
+                              currentImageUrl = '';
                             });
                           });
                         },
@@ -522,7 +625,8 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           clipBehavior: Clip.antiAlias,
-                          child: selectedImage.isEmpty
+                          child:
+                              (currentImageUrl.isEmpty && newImageBytes == null)
                               ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -543,7 +647,10 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                               : Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    _buildImageDisplay(selectedImage),
+                                    _buildImageDisplay(
+                                      url: currentImageUrl,
+                                      bytes: newImageBytes,
+                                    ),
                                     Positioned(
                                       top: 5,
                                       right: 5,
@@ -554,9 +661,10 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                             Icons.close,
                                             color: Colors.white,
                                           ),
-                                          onPressed: () => setStateDialog(
-                                            () => selectedImage = '',
-                                          ),
+                                          onPressed: () => setStateDialog(() {
+                                            currentImageUrl = '';
+                                            newImageBytes = null;
+                                          }),
                                         ),
                                       ),
                                     ),
@@ -584,34 +692,103 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      if (selectedImage.isEmpty) {
-                        showErrorSnackBar(context, 'Anda harus mengunggah foto!');
-                        return;
-                      }
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (formKey.currentState!.validate()) {
+                            if (currentImageUrl.isEmpty &&
+                                newImageBytes == null) {
+                              showErrorSnackBar(
+                                context,
+                                'Anda harus mengunggah foto!',
+                              );
+                              return;
+                            }
 
-                      final newData = {
-                        'title': titleController.text.trim(),
-                        'image': selectedImage,
-                      };
+                            setStateDialog(() => isSaving = true);
+                            try {
+                              String finalImageUrl = currentImageUrl;
+                              if (newImageBytes != null) {
+                                final fileName =
+                                    'galeri_${DateTime.now().millisecondsSinceEpoch}.$newImageExt';
+                                await _supabase.storage
+                                    .from('cms_images')
+                                    .uploadBinary(
+                                      fileName,
+                                      newImageBytes!,
+                                      fileOptions: const FileOptions(
+                                        upsert: true,
+                                      ),
+                                    );
+                                finalImageUrl = _supabase.storage
+                                    .from('cms_images')
+                                    .getPublicUrl(fileName);
+                              }
 
-                      if (galeriLama == null) {
-                        MockDatabase.tambahGaleri(newData);
-                        showSuccessSnackBar(context, 'Foto baru berhasil ditambahkan!');
-                      } else {
-                        MockDatabase.editGaleri(galeriLama['id']!, newData);
-                        showSuccessSnackBar(context, 'Foto berhasil diperbarui!');
-                      }
+                              final String todayDate = DateFormat(
+                                'dd MMM yyyy',
+                                'id_ID',
+                              ).format(DateTime.now());
 
-                      _loadData();
-                      Navigator.pop(dialogContext);
-                    }
-                  },
-                  child: const Text(
-                    'Simpan',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                              final newData = {
+                                'title': titleController.text.trim(),
+                                'image_url': finalImageUrl,
+                                'category':
+                                    'Galeri', // 👇 Paksa masuk kategori Galeri
+                                'description': '',
+                                'content': '',
+                                'date': galeriLama?['date'] ?? todayDate,
+                              };
+
+                              if (galeriLama == null) {
+                                newData['id'] =
+                                    'gal-${DateTime.now().millisecondsSinceEpoch}';
+                                await _supabase
+                                    .from('articles')
+                                    .insert(newData);
+                                if (mounted)
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Foto baru berhasil ditambahkan!',
+                                  );
+                              } else {
+                                await _supabase
+                                    .from('articles')
+                                    .update(newData)
+                                    .eq('id', galeriLama['id']);
+                                if (mounted)
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Foto berhasil diperbarui!',
+                                  );
+                              }
+
+                              _loadData();
+                              if (mounted) Navigator.pop(dialogContext);
+                            } catch (e) {
+                              if (mounted)
+                                showErrorSnackBar(
+                                  context,
+                                  'Terjadi kesalahan: $e',
+                                );
+                            } finally {
+                              setStateDialog(() => isSaving = false);
+                            }
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Simpan',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ],
             );
@@ -644,11 +821,16 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              MockDatabase.hapusGaleri(id);
-              _loadData();
-              Navigator.pop(context);
-              showSuccessSnackBar(context, 'Foto berhasil dihapus!');
+            onPressed: () async {
+              try {
+                await _supabase.from('articles').delete().eq('id', id);
+                _loadData();
+                if (mounted) Navigator.pop(context);
+                if (mounted)
+                  showSuccessSnackBar(context, 'Foto berhasil dihapus!');
+              } catch (e) {
+                if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
+              }
             },
             child: const Text(
               'Hapus',
@@ -732,52 +914,65 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.separated(
-                itemCount: _artikel.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final a = _artikel[index];
-
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 10,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _artikel.isEmpty
+                  ? const Center(child: Text("Belum ada artikel."))
+                  : ListView.separated(
+                      itemCount: _artikel.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final a = _artikel[index];
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 10,
+                          ),
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _buildImageDisplay(
+                              url: a['image_url'] ?? '',
+                            ),
+                          ),
+                          title: Text(
+                            a['title'] ?? '',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${a['date'] ?? ''} • Kategori: ${a['category'] ?? '-'}',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                tooltip: 'Edit',
+                                onPressed: () =>
+                                    _showFormArtikel(artikelLama: a),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                tooltip: 'Hapus',
+                                onPressed: () =>
+                                    _confirmDeleteArtikel(a['id']!),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    leading: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: _buildImageDisplay(a['image'] ?? ''),
-                    ),
-                    title: Text(
-                      a['title'] ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      '${a['date'] ?? ''} • Kategori: ${a['kategori'] ?? '-'}',
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
-                          tooltip: 'Edit',
-                          onPressed: () => _showFormArtikel(artikelLama: a),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          tooltip: 'Hapus',
-                          onPressed: () => _confirmDeleteArtikel(a['id']!),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -814,93 +1009,99 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                itemCount: _galeri.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 15,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final g = _galeri[index];
-
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildImageDisplay(g['image'] ?? ''),
-
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [Colors.black87, Colors.transparent],
-                              ),
-                            ),
-                            child: Text(
-                              g['title'] ?? '',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _galeri.isEmpty
+                  ? const Center(child: Text("Belum ada foto galeri."))
+                  : GridView.builder(
+                      itemCount: _galeri.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 15,
+                            mainAxisSpacing: 15,
+                            childAspectRatio: 1,
                           ),
-                        ),
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Row(
+                      itemBuilder: (context, index) {
+                        final g = _galeri[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            fit: StackFit.expand,
                             children: [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Colors.black54,
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    color: Colors.white,
-                                    size: 16,
+                              _buildImageDisplay(url: g['image_url'] ?? ''),
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black87,
+                                        Colors.transparent,
+                                      ],
+                                    ),
                                   ),
-                                  onPressed: () =>
-                                      _showFormGaleri(galeriLama: g),
+                                  child: Text(
+                                    g['title'] ?? '',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 5),
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: Colors.black54,
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    color: Colors.redAccent,
-                                    size: 16,
-                                  ),
-                                  onPressed: () =>
-                                      _confirmDeleteGaleri(g['id']!),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.black54,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        onPressed: () =>
+                                            _showFormGaleri(galeriLama: g),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.black54,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.redAccent,
+                                          size: 16,
+                                        ),
+                                        onPressed: () =>
+                                            _confirmDeleteGaleri(g['id']!),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

@@ -1,10 +1,10 @@
-import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
-import '../../../../data/mock_database.dart';
 
 class AboutSectionAdmin extends StatefulWidget {
   const AboutSectionAdmin({super.key});
@@ -14,26 +14,51 @@ class AboutSectionAdmin extends StatefulWidget {
 }
 
 class _AboutSectionAdminState extends State<AboutSectionAdmin> {
-  // 👇 Kunci form untuk validasi
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  String _imageBase64 = '';
+
+  // 👇 Variabel untuk menyimpan URL gambar dari DB, dan File gambar baru dari laptop
+  String _currentImageUrl = '';
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageExt;
+
+  int _sectionId = 1; // ID baris di tabel
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadDataFromSupabase();
   }
 
-  void _loadData() {
-    final data = MockDatabase.getAboutSectionData();
-    setState(() {
-      _titleController.text = data['title'] ?? '';
-      _descController.text = data['description'] ?? '';
-      _imageBase64 = data['image'] ?? '';
-    });
+  // 👇 1. MENGAMBIL DATA DARI SUPABASE
+  Future<void> _loadDataFromSupabase() async {
+    try {
+      final response = await _supabase
+          .from('cms_about_us')
+          .select()
+          .order('id', ascending: true)
+          .limit(1)
+          .maybeSingle();
+
+      if (response != null) {
+        setState(() {
+          _sectionId = response['id'];
+          _titleController.text = response['title'] ?? '';
+          _descController.text = response['description'] ?? '';
+          _currentImageUrl = response['image_url'] ?? '';
+        });
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -43,21 +68,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     super.dispose();
   }
 
-
-  Widget _buildImageDisplay(String imageSource) {
-    if (imageSource.isEmpty)
-      return const Center(
-        child: Icon(Icons.image, color: Colors.grey, size: 40),
-      );
-    if (imageSource.startsWith('http'))
-      return Image.network(imageSource, fit: BoxFit.cover);
-    try {
-      return Image.memory(base64Decode(imageSource), fit: BoxFit.cover);
-    } catch (e) {
-      return const Center(child: Icon(Icons.broken_image, color: Colors.red));
-    }
-  }
-
+  // 👇 2. FUNGSI UNTUK MEMILIH FILE GAMBAR DARI LOKAL
   Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
@@ -65,34 +76,97 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     );
 
     if (result != null && result.files.first.bytes != null) {
-      final bytes = result.files.first.bytes!;
       setState(() {
-        _imageBase64 = base64Encode(bytes);
+        _selectedImageBytes = result.files.first.bytes!;
+        _selectedImageExt = result.files.first.extension ?? 'png';
+        _currentImageUrl = ''; // Hapus gambar lama dari tampilan
       });
     }
   }
 
-  void _saveData() {
-    // 👇 Cek validasi sebelum menyimpan
-    if (_formKey.currentState!.validate()) {
-      MockDatabase.updateAboutSectionData({
-        'title': _titleController.text.trim(),
-        'description': _descController.text.trim(),
-        'image': _imageBase64,
-      });
+  // Menampilkan gambar (URL dari DB atau Bytes dari lokal)
+  Widget _buildImageDisplay() {
+    if (_selectedImageBytes != null) {
+      return Image.memory(_selectedImageBytes!, fit: BoxFit.cover);
+    } else if (_currentImageUrl.isNotEmpty) {
+      return Image.network(_currentImageUrl, fit: BoxFit.cover);
+    }
+    return const Center(child: Text("Klik untuk Unggah Gambar"));
+  }
 
-      showSuccessSnackBar(context, 'About Section Beranda berhasil diperbarui!');
-    } else {
-      showErrorSnackBar(context, 'Penyimpanan gagal. Masih ada form yang kosong!');
+  // 👇 3. FUNGSI SIMPAN KE STORAGE LALU KE DATABASE
+  Future<void> _saveData() async {
+    if (!_formKey.currentState!.validate()) {
+      showErrorSnackBar(
+        context,
+        'Penyimpanan gagal. Masih ada form yang kosong!',
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      String finalImageUrl = _currentImageUrl;
+
+      // Jika admin memilih gambar baru, upload ke Storage dulu!
+      if (_selectedImageBytes != null) {
+        final fileName =
+            'about_${DateTime.now().millisecondsSinceEpoch}.$_selectedImageExt';
+
+        // Upload ke bucket 'cms_images'
+        await _supabase.storage
+            .from('cms_images')
+            .uploadBinary(
+              fileName,
+              _selectedImageBytes!,
+              fileOptions: const FileOptions(upsert: true),
+            );
+
+        // Dapatkan URL Publiknya
+        finalImageUrl = _supabase.storage
+            .from('cms_images')
+            .getPublicUrl(fileName);
+      }
+
+      // Update tabel di database
+      await _supabase
+          .from('cms_about_us')
+          .update({
+            'title': _titleController.text.trim(),
+            'description': _descController.text.trim(),
+            'image_url': finalImageUrl,
+          })
+          .eq('id', _sectionId);
+
+      if (mounted) {
+        showSuccessSnackBar(
+          context,
+          'About Section Beranda berhasil diperbarui!',
+        );
+        setState(() {
+          _currentImageUrl = finalImageUrl;
+          _selectedImageBytes = null; // Reset file picker
+        });
+      }
+    } catch (e) {
+      if (mounted)
+        showErrorSnackBar(context, 'Gagal menyimpan: ${e.toString()}');
+    } finally {
+      setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Form(
-        key: _formKey, // 👇 Daftarkan form key
+        key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -113,9 +187,6 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ==========================================
-                    // 1. TEKS UTAMA
-                    // ==========================================
                     const Text(
                       "Judul Utama",
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -154,10 +225,6 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     ),
                     const SizedBox(height: 30),
 
-                    // ==========================================
-                    // 2. UPLOAD GAMBAR
-                    // ==========================================
-                    // 👇 PANDUAN UKURAN GAMBAR DITAMBAHKAN DI SINI
                     Row(
                       children: [
                         const Text(
@@ -187,7 +254,6 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 👆 SELESAI PANDUAN UKURAN GAMBAR
                     InkWell(
                       onTap: _pickImage,
                       child: Container(
@@ -199,57 +265,58 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: _imageBase64.isEmpty
-                            ? const Center(
-                                child: Text("Klik untuk Unggah Gambar"),
-                              )
-                            : Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  _buildImageDisplay(_imageBase64),
-                                  Positioned(
-                                    top: 10,
-                                    right: 10,
-                                    child: CircleAvatar(
-                                      backgroundColor: Colors.black54,
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                        ),
-                                        onPressed: () =>
-                                            setState(() => _imageBase64 = ''),
-                                      ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _buildImageDisplay(),
+                            if (_currentImageUrl.isNotEmpty ||
+                                _selectedImageBytes != null)
+                              Positioned(
+                                top: 10,
+                                right: 10,
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.black54,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
                                     ),
+                                    onPressed: () => setState(() {
+                                      _currentImageUrl = '';
+                                      _selectedImageBytes = null;
+                                    }),
                                   ),
-                                ],
+                                ),
                               ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
 
-                    // ==========================================
-                    // TOMBOL SIMPAN
-                    // ==========================================
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: _saveData,
+                        onPressed: _isSaving ? null : _saveData,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          "SIMPAN PERUBAHAN",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: _isSaving
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "SIMPAN PERUBAHAN",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                   ],

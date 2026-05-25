@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
-import '../../../../data/mock_database.dart';
 
 class PartnersAdmin extends StatefulWidget {
   const PartnersAdmin({super.key});
@@ -15,6 +16,8 @@ class PartnersAdmin extends StatefulWidget {
 
 class _PartnersAdminState extends State<PartnersAdmin> {
   List<Map<String, dynamic>> _partners = [];
+  bool _isLoading = true;
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
@@ -22,15 +25,29 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     _loadData();
   }
 
-  void _loadData() {
-    setState(() {
-      _partners = MockDatabase.getSemuaPartner();
-    });
+  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _supabase
+          .from('partners')
+          .select()
+          .order('created_at', ascending: false);
+
+      if (mounted) {
+        setState(() {
+          _partners = response;
+        });
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat partner: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-
-  // FUNGSI DIALOG KONFIRMASI HAPUS
-  void _confirmDeletePartner(String id) {
+  // 👇 FUNGSI MENGHAPUS DATA DARI SUPABASE
+  void _confirmDeletePartner(dynamic id) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -53,11 +70,16 @@ class _PartnersAdminState extends State<PartnersAdmin> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              MockDatabase.hapusPartner(id);
-              _loadData();
-              Navigator.pop(context);
-              showSuccessSnackBar(context, 'Partner berhasil dihapus!');
+            onPressed: () async {
+              try {
+                await _supabase.from('partners').delete().eq('id', id);
+                _loadData();
+                if (mounted) Navigator.pop(context);
+                if (mounted)
+                  showSuccessSnackBar(context, 'Partner berhasil dihapus!');
+              } catch (e) {
+                if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
+              }
             },
             child: const Text(
               'Hapus',
@@ -72,43 +94,37 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     );
   }
 
-  // FUNGSI MENAMPILKAN GAMBAR (MENDUKUNG BASE64 & URL)
-  // Dilengkapi errorBuilder agar tidak crash jika link gambar 404
-  Widget _buildImageDisplay(String imageSource) {
-    if (imageSource.isEmpty) {
-      return const Center(
-        child: Icon(Icons.image, color: Colors.grey, size: 40),
-      );
-    } else if (imageSource.startsWith('http')) {
+  // FUNGSI MENAMPILKAN GAMBAR (MENDUKUNG BYTES LOKAL & URL SUPABASE)
+  Widget _buildImageDisplay({String url = '', Uint8List? bytes}) {
+    if (bytes != null) {
+      return Image.memory(bytes, fit: BoxFit.contain);
+    }
+    if (url.isNotEmpty && url.startsWith('http')) {
       return Image.network(
-        imageSource,
+        url,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => const Center(
           child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
         ),
       );
-    } else {
-      try {
-        return Image.memory(base64Decode(imageSource), fit: BoxFit.contain);
-      } catch (e) {
-        return const Center(
-          child: Icon(Icons.broken_image, color: Colors.red, size: 40),
-        );
-      }
     }
+    return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
   }
 
-  // FUNGSI UPLOAD GAMBAR
-  Future<void> _pickImage(Function(String) onImagePicked) async {
+  // 👇 FUNGSI UPLOAD GAMBAR UNTUK SUPABASE STORAGE
+  Future<void> _pickImage(
+    Function(Uint8List bytes, String ext) onImagePicked,
+  ) async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
       withData: true,
     );
 
     if (result != null && result.files.first.bytes != null) {
-      final bytes = result.files.first.bytes!;
-      final base64String = base64Encode(bytes);
-      onImagePicked(base64String);
+      onImagePicked(
+        result.files.first.bytes!,
+        result.files.first.extension ?? 'png',
+      );
     }
   }
 
@@ -118,7 +134,13 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     final nameController = TextEditingController(
       text: isEdit ? partner['name'] : '',
     );
-    String selectedImage = isEdit ? (partner['image'] ?? '') : '';
+
+    // Sesuaikan dengan nama kolom di database 'image_url'
+    String currentImageUrl = isEdit ? (partner['image_url'] ?? '') : '';
+    Uint8List? newImageBytes;
+    String? newImageExt;
+    bool isSaving = false;
+
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -172,9 +194,11 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                   // KOTAK UPLOAD GAMBAR
                   InkWell(
                     onTap: () {
-                      _pickImage((base64Image) {
+                      _pickImage((bytes, ext) {
                         setModalState(() {
-                          selectedImage = base64Image;
+                          newImageBytes = bytes;
+                          newImageExt = ext;
+                          currentImageUrl = ''; // Hapus preview lama
                         });
                       });
                     },
@@ -188,7 +212,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                         border: Border.all(color: Colors.grey.shade300),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: selectedImage.isEmpty
+                      child: (currentImageUrl.isEmpty && newImageBytes == null)
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -207,7 +231,10 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                           : Stack(
                               fit: StackFit.expand,
                               children: [
-                                _buildImageDisplay(selectedImage),
+                                _buildImageDisplay(
+                                  url: currentImageUrl,
+                                  bytes: newImageBytes,
+                                ),
                                 Positioned(
                                   top: -5,
                                   right: -5,
@@ -221,9 +248,10 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                                         color: Colors.white,
                                         size: 16,
                                       ),
-                                      onPressed: () => setModalState(
-                                        () => selectedImage = '',
-                                      ),
+                                      onPressed: () => setModalState(() {
+                                        currentImageUrl = '';
+                                        newImageBytes = null;
+                                      }),
                                     ),
                                   ),
                                 ),
@@ -250,36 +278,92 @@ class _PartnersAdminState extends State<PartnersAdmin> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
               ),
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  if (selectedImage.isEmpty) {
-                    showErrorSnackBar(context, 'Harap upload logo perusahaan!');
-                    return;
-                  }
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      if (formKey.currentState!.validate()) {
+                        if (currentImageUrl.isEmpty && newImageBytes == null) {
+                          showErrorSnackBar(
+                            context,
+                            'Harap upload logo perusahaan!',
+                          );
+                          return;
+                        }
 
-                  final data = {
-                    'name': nameController.text.trim(),
-                    'image': selectedImage,
-                  };
+                        setModalState(() => isSaving = true);
 
-                  if (isEdit) {
-                    MockDatabase.editPartner(partner['id'], data);
-                    showSuccessSnackBar(context, 'Partner berhasil diperbarui');
-                  } else {
-                    MockDatabase.tambahPartner(data);
-                    showSuccessSnackBar(context, 'Partner berhasil ditambahkan');
-                  }
-                  _loadData();
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text(
-                'Simpan',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                        try {
+                          String finalImageUrl = currentImageUrl;
+
+                          // Upload ke Supabase Storage jika ada gambar baru
+                          if (newImageBytes != null) {
+                            final fileName =
+                                'partner_${DateTime.now().millisecondsSinceEpoch}.$newImageExt';
+                            await _supabase.storage
+                                .from('cms_images')
+                                .uploadBinary(
+                                  fileName,
+                                  newImageBytes!,
+                                  fileOptions: const FileOptions(upsert: true),
+                                );
+                            finalImageUrl = _supabase.storage
+                                .from('cms_images')
+                                .getPublicUrl(fileName);
+                          }
+
+                          final data = {
+                            'name': nameController.text.trim(),
+                            'image_url': finalImageUrl,
+                          };
+
+                          if (isEdit) {
+                            await _supabase
+                                .from('partners')
+                                .update(data)
+                                .eq('id', partner['id']);
+                            if (mounted)
+                              showSuccessSnackBar(
+                                context,
+                                'Partner berhasil diperbarui',
+                              );
+                          } else {
+                            await _supabase.from('partners').insert(data);
+                            if (mounted)
+                              showSuccessSnackBar(
+                                context,
+                                'Partner berhasil ditambahkan',
+                              );
+                          }
+
+                          _loadData();
+                          if (mounted) Navigator.pop(context);
+                        } catch (e) {
+                          if (mounted)
+                            showErrorSnackBar(
+                              context,
+                              'Gagal menyimpan data: $e',
+                            );
+                        } finally {
+                          setModalState(() => isSaving = false);
+                        }
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Simpan',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -324,7 +408,9 @@ class _PartnersAdminState extends State<PartnersAdmin> {
           ),
           const SizedBox(height: 25),
           Expanded(
-            child: _partners.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _partners.isEmpty
                 ? const Center(
                     child: Text("Belum ada partner. Silakan tambah baru."),
                   )
@@ -354,7 +440,9 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   width: double.infinity,
-                                  child: _buildImageDisplay(p['image'] ?? ''),
+                                  child: _buildImageDisplay(
+                                    url: p['image_url'] ?? '',
+                                  ), // 👇 Render dari Supabase URL
                                 ),
                               ),
                               const SizedBox(height: 10),

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
-
-// 👇 1. IMPORT SERVICE SUPABASE-MU
 import '../../services/supabase_donasi_service.dart';
 
 class FundPoolScreen extends StatelessWidget {

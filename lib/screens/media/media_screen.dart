@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../core/app_colors.dart';
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
-import '../../data/mock_database.dart';
 
 class MediaScreen extends StatefulWidget {
   const MediaScreen({super.key});
@@ -17,23 +18,44 @@ class _MediaScreenState extends State<MediaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Data diambil dari MockDatabase
-  List<Map<String, String>> _artikelList = [];
-  List<Map<String, String>> _galeriList = [];
+  // 👇 Ubah jadi dynamic untuk menerima data dari Supabase
+  List<Map<String, dynamic>> _artikelList = [];
+  List<Map<String, dynamic>> _galeriList = [];
+  bool _isLoading = true;
+
+  final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchMediaFromSupabase(); // 👇 Panggil fungsi fetch
 
-    // Menarik data saat halaman pertama kali dibuka
-    _artikelList = MockDatabase.getSemuaArtikel();
-    _galeriList = MockDatabase.getSemuaGaleri();
-
-    // Listener ini berguna agar layar ter-update saat tab diklik
     _tabController.addListener(() {
       setState(() {});
     });
+  }
+
+  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  Future<void> _fetchMediaFromSupabase() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _supabase
+          .from('articles')
+          .select()
+          .order('created_at', ascending: false);
+
+      setState(() {
+        _artikelList = response
+            .where((e) => e['category'] != 'Galeri')
+            .toList();
+        _galeriList = response.where((e) => e['category'] == 'Galeri').toList();
+      });
+    } catch (e) {
+      debugPrint('Gagal menarik data media: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -42,7 +64,6 @@ class _MediaScreenState extends State<MediaScreen>
     super.dispose();
   }
 
-  // 👇 FUNGSI PINTAR: Untuk merender gambar URL maupun Base64
   Widget _buildImageDisplay(String imageSource, {BoxFit fit = BoxFit.cover}) {
     if (imageSource.isEmpty) {
       return const Center(
@@ -65,14 +86,10 @@ class _MediaScreenState extends State<MediaScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
-      // MENGGUNAKAN SINGLE CHILD SCROLL VIEW AGAR NAVBAR & FOOTER IKUT TER-SCROLL
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // NAVBAR DI BAGIAN ATAS
             const CustomNavbar(),
-
-            // HEADER MEDIA PUBLIKASI
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 40),
@@ -94,29 +111,21 @@ class _MediaScreenState extends State<MediaScreen>
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
-
-                  // ==========================================
-                  // PERBAIKAN WIDGET TAB BAR (DI TENGAH)
-                  // ==========================================
                   Container(
                     width: isMobile ? double.infinity : 500,
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: Colors
-                          .white, // Gunakan putih agar bayangan lebih terlihat lembut
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(
-                            0.05,
-                          ), // Bayangan halus
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
-                          offset: const Offset(0, 4), // Bayangan jatuh ke bawah
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      // 👇 PENTING: Memastikan efek klik (splash) tidak berbentuk kotak di pojok
                       borderRadius: BorderRadius.circular(30),
                       child: TabBar(
                         controller: _tabController,
@@ -142,8 +151,6 @@ class _MediaScreenState extends State<MediaScreen>
                 ],
               ),
             ),
-
-            // KONTEN TAB (ARTIKEL ATAU GALERI)
             Container(
               constraints: const BoxConstraints(minHeight: 500),
               width: 1200,
@@ -151,15 +158,15 @@ class _MediaScreenState extends State<MediaScreen>
                 vertical: isMobile ? 20 : 40,
                 horizontal: isMobile ? 0 : 20,
               ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _tabController.index == 0
-                    ? _buildArtikelTab(isMobile)
-                    : _buildGaleriTab(isMobile),
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _tabController.index == 0
+                          ? _buildArtikelTab(isMobile)
+                          : _buildGaleriTab(isMobile),
+                    ),
             ),
-
-            // FOOTER DI BAGIAN BAWAH
             const CustomFooter(),
           ],
         ),
@@ -167,15 +174,11 @@ class _MediaScreenState extends State<MediaScreen>
     );
   }
 
-  // ==========================================
-  // WIDGET ARTIKEL
-  // ==========================================
   Widget _buildArtikelTab(bool isMobile) {
     int crossAxisCount = isMobile ? 1 : 3;
 
-    if (_artikelList.isEmpty) {
+    if (_artikelList.isEmpty)
       return const Center(child: Text("Belum ada artikel yang diterbitkan."));
-    }
 
     return Padding(
       key: const ValueKey('artikel'),
@@ -211,8 +214,9 @@ class _MediaScreenState extends State<MediaScreen>
                     child: Container(
                       width: double.infinity,
                       color: Colors.grey.shade200,
-                      // 👇 MENAMPILKAN GAMBAR ARTIKEL
-                      child: _buildImageDisplay(artikel['image'] ?? ''),
+                      child: _buildImageDisplay(
+                        artikel['image_url'] ?? '',
+                      ), // 👇 Sesuaikan nama kolom DB
                     ),
                   ),
                   Expanded(
@@ -237,7 +241,8 @@ class _MediaScreenState extends State<MediaScreen>
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  artikel['kategori'] ?? 'Berita',
+                                  artikel['category'] ??
+                                      'Berita', // 👇 Sesuaikan nama kolom DB
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontSize: 11,
@@ -268,7 +273,8 @@ class _MediaScreenState extends State<MediaScreen>
                           const SizedBox(height: 8),
                           Expanded(
                             child: Text(
-                              artikel['desc'] ?? '',
+                              artikel['description'] ??
+                                  '', // 👇 Sesuaikan nama kolom DB
                               style: TextStyle(
                                 color: Colors.grey.shade600,
                                 fontSize: 13,
@@ -310,15 +316,11 @@ class _MediaScreenState extends State<MediaScreen>
     );
   }
 
-  // ==========================================
-  // WIDGET GALERI DENGAN FITUR POP-UP (LIGHTBOX)
-  // ==========================================
   Widget _buildGaleriTab(bool isMobile) {
     int crossAxisCount = isMobile ? 2 : 4;
 
-    if (_galeriList.isEmpty) {
+    if (_galeriList.isEmpty)
       return const Center(child: Text("Belum ada foto galeri."));
-    }
 
     return Padding(
       key: const ValueKey('galeri'),
@@ -336,7 +338,8 @@ class _MediaScreenState extends State<MediaScreen>
         itemBuilder: (context, index) {
           final g = _galeriList[index];
           final judulFoto = g['title'] ?? '';
-          final imageSource = g['image'] ?? '';
+          final imageSource =
+              g['image_url'] ?? ''; // 👇 Sesuaikan nama kolom DB
 
           return Card(
             elevation: 2,
@@ -346,13 +349,11 @@ class _MediaScreenState extends State<MediaScreen>
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
-                // MEMUNCULKAN POP-UP (DIALOG) SAAT FOTO DIKLIK
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
                     return Dialog(
-                      backgroundColor: Colors
-                          .transparent, // Latar belakang transparan agar elegan
+                      backgroundColor: Colors.transparent,
                       insetPadding: EdgeInsets.all(isMobile ? 20 : 60),
                       child: Stack(
                         alignment: Alignment.center,
@@ -370,7 +371,6 @@ class _MediaScreenState extends State<MediaScreen>
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // AREA GAMBAR BESAR
                                 Flexible(
                                   child: Container(
                                     width: double.infinity,
@@ -380,13 +380,10 @@ class _MediaScreenState extends State<MediaScreen>
                                         top: Radius.circular(16),
                                       ),
                                     ),
-                                    clipBehavior: Clip
-                                        .antiAlias, // Wajib agar ujung gambar ikut melengkung
-                                    // 👇 MENAMPILKAN GAMBAR ASLI DI POPUP
+                                    clipBehavior: Clip.antiAlias,
                                     child: _buildImageDisplay(imageSource),
                                   ),
                                 ),
-                                // AREA TEKS DESKRIPSI DI BAWAH GAMBAR
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 25,
@@ -411,8 +408,6 @@ class _MediaScreenState extends State<MediaScreen>
                               ],
                             ),
                           ),
-
-                          // TOMBOL CLOSE (X) MELAYANG DI POJOK KANAN ATAS
                           Positioned(
                             top: 0,
                             right: 0,
@@ -443,7 +438,6 @@ class _MediaScreenState extends State<MediaScreen>
                 children: [
                   Container(
                     color: Colors.grey.shade200,
-                    // 👇 MENAMPILKAN THUMBNAIL FOTO GALERI
                     child: _buildImageDisplay(imageSource),
                   ),
                   Positioned(

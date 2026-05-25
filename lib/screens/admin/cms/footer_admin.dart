@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
-import '../../../../data/mock_database.dart';
 
 class FooterAdmin extends StatefulWidget {
   const FooterAdmin({super.key});
@@ -11,6 +12,39 @@ class FooterAdmin extends StatefulWidget {
 }
 
 class _FooterAdminState extends State<FooterAdmin> {
+  // 👇 Data dari Supabase
+  Map<String, dynamic> _footerData = {};
+  bool _isLoading = true;
+  final _supabase = Supabase.instance.client;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await _supabase
+          .from('cms_footer')
+          .select()
+          .limit(1)
+          .maybeSingle();
+
+      if (mounted && response != null) {
+        setState(() {
+          _footerData = response;
+        });
+      }
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, 'Gagal memuat data footer: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -52,136 +86,182 @@ class _FooterAdminState extends State<FooterAdmin> {
   }
 
   void _showEditForm() {
-    final currentData = MockDatabase.footerData.value;
-
+    // 👇 Ambil dari state _footerData dan sesuaikan nama kolom DB
     TextEditingController descCtrl = TextEditingController(
-      text: currentData['deskripsi'] ?? '',
+      text: _footerData['deskripsi_yayasan'] ?? '',
     );
     TextEditingController alamatCtrl = TextEditingController(
-      text: currentData['alamat'] ?? '',
+      text: _footerData['alamat'] ?? '',
     );
     TextEditingController waCtrl = TextEditingController(
-      text: currentData['whatsapp'] ?? '',
+      text: _footerData['whatsapp'] ?? '',
     );
     TextEditingController emailCtrl = TextEditingController(
-      text: currentData['email'] ?? '',
+      text: _footerData['email'] ?? '',
     );
     TextEditingController igCtrl = TextEditingController(
-      text: currentData['instagram'] ?? '',
+      text: _footerData['instagram'] ?? '',
     );
+
+    bool isSaving = false;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: const [
-                  Icon(Icons.edit_note_rounded, color: Colors.orange, size: 28),
-                  SizedBox(width: 10),
-                  Text(
-                    "Edit Footer & Kontak",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (context, setModalState) => AlertDialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(
+                      Icons.edit_note_rounded,
+                      color: Colors.orange,
+                      size: 28,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      "Edit Footer & Kontak",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20, thickness: 1),
+              ],
+            ),
+            content: SizedBox(
+              width: 500,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildInputField(
+                      controller: descCtrl,
+                      label: "Deskripsi Yayasan",
+                      maxLines: 3,
+                    ),
+                    _buildInputField(
+                      controller: alamatCtrl,
+                      label: "Alamat Lengkap",
+                      maxLines: 3,
+                      prefixIcon: Icons.location_on,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Tautan Ikon (Sosial Media)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInputField(
+                      controller: waCtrl,
+                      label: "Link WhatsApp (cth: https://wa.me/628...)",
+                      prefixIcon: Icons.phone,
+                    ),
+                    _buildInputField(
+                      controller: igCtrl,
+                      label: "Link Instagram (cth: https://instagram.com/...)",
+                      prefixIcon: Icons.camera_alt,
+                    ),
+                    _buildInputField(
+                      controller: emailCtrl,
+                      label: "Alamat Email",
+                      prefixIcon: Icons.email,
+                    ),
+                  ],
+                ),
               ),
-              const Divider(height: 20, thickness: 1),
+            ),
+            actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Batal",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 15,
+                  ),
+                ),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        setModalState(() => isSaving = true);
+
+                        final footerId =
+                            _footerData['id'] ?? 1; // Default ke 1 jika null
+
+                        final updateData = {
+                          'deskripsi_yayasan': descCtrl.text.trim(),
+                          'alamat': alamatCtrl.text.trim(),
+                          'whatsapp': waCtrl.text.trim(),
+                          'instagram': igCtrl.text.trim(),
+                          'email': emailCtrl.text.trim(),
+                          'updated_at': DateTime.now()
+                              .toIso8601String(), // Update waktu
+                        };
+
+                        try {
+                          await _supabase
+                              .from('cms_footer')
+                              .update(updateData)
+                              .eq('id', footerId);
+
+                          _loadData(); // Refresh layar admin
+                          if (mounted) Navigator.pop(context);
+                          if (mounted)
+                            showSuccessSnackBar(
+                              context,
+                              'Info Kontak & Footer berhasil diperbarui!',
+                            );
+                        } catch (e) {
+                          if (mounted)
+                            showErrorSnackBar(context, 'Gagal menyimpan: $e');
+                        } finally {
+                          setModalState(() => isSaving = false);
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        "Simpan Perubahan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
             ],
           ),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildInputField(
-                    controller: descCtrl,
-                    label: "Deskripsi Yayasan",
-                    maxLines: 3,
-                  ),
-                  _buildInputField(
-                    controller: alamatCtrl,
-                    label: "Alamat Lengkap",
-                    maxLines: 3,
-                    prefixIcon: Icons.location_on,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Tautan Ikon (Sosial Media)",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildInputField(
-                    controller: waCtrl,
-                    label: "Link WhatsApp (cth: https://wa.me/628...)",
-                    prefixIcon: Icons.phone,
-                  ),
-                  _buildInputField(
-                    controller: igCtrl,
-                    label: "Link Instagram (cth: https://instagram.com/...)",
-                    prefixIcon: Icons.camera_alt,
-                  ),
-                  _buildInputField(
-                    controller: emailCtrl,
-                    label: "Alamat Email",
-                    prefixIcon: Icons.email,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actionsPadding: const EdgeInsets.only(right: 20, bottom: 20),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Batal",
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                MockDatabase.footerData.value = {
-                  'deskripsi': descCtrl.text,
-                  'alamat': alamatCtrl.text,
-                  'whatsapp': waCtrl.text,
-                  'instagram': igCtrl.text,
-                  'email': emailCtrl.text,
-                };
-
-                Navigator.pop(context);
-                showSuccessSnackBar(context, 'Info Kontak & Footer berhasil diperbarui!');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 15,
-                ),
-              ),
-              child: const Text(
-                "Simpan Perubahan",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -242,60 +322,61 @@ class _FooterAdminState extends State<FooterAdmin> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(25.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Tampilan Data Saat Ini:",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                  child: _isLoading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Tampilan Data Saat Ini:",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildInfoTile(
+                                  Icons.info_outline,
+                                  "Deskripsi Yayasan",
+                                  _footerData['deskripsi_yayasan'] ?? '-',
+                                ),
+                                const Divider(),
+                                _buildInfoTile(
+                                  Icons.location_city,
+                                  "Alamat Tampil",
+                                  _footerData['alamat'] ?? '-',
+                                ),
+                                const Divider(),
+                                _buildInfoTile(
+                                  Icons.link,
+                                  "Tautan WhatsApp",
+                                  _footerData['whatsapp'] ?? '-',
+                                ),
+                                const Divider(),
+                                _buildInfoTile(
+                                  Icons.link,
+                                  "Tautan Instagram",
+                                  _footerData['instagram'] ?? '-',
+                                ),
+                                const Divider(),
+                                _buildInfoTile(
+                                  Icons.link,
+                                  "Alamat Email",
+                                  _footerData['email'] ?? '-',
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      ValueListenableBuilder<Map<String, String>>(
-                        valueListenable: MockDatabase.footerData,
-                        builder: (context, footerData, child) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildInfoTile(
-                                Icons.info_outline,
-                                "Deskripsi Yayasan",
-                                footerData['deskripsi'] ?? '-',
-                              ),
-                              const Divider(),
-                              _buildInfoTile(
-                                Icons.location_city,
-                                "Alamat Tampil",
-                                footerData['alamat'] ?? '-',
-                              ),
-                              const Divider(),
-                              _buildInfoTile(
-                                Icons.link,
-                                "Tautan WhatsApp",
-                                footerData['whatsapp'] ?? '-',
-                              ),
-                              const Divider(),
-                              _buildInfoTile(
-                                Icons.link,
-                                "Tautan Instagram",
-                                footerData['instagram'] ?? '-',
-                              ),
-                              const Divider(),
-                              _buildInfoTile(
-                                Icons.link,
-                                "Alamat Email",
-                                footerData['email'] ?? '-',
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),

@@ -5,13 +5,16 @@ import '../../core/app_colors.dart';
 import '../../data/mock_database.dart';
 import '../shared/stat_card.dart';
 
+// 👇 1. IMPORT SERVICE DONASI SUPABASE
+import '../../services/supabase_donasi_service.dart';
+
 class HomeDashboard extends StatelessWidget {
   const HomeDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     // ==========================================
-    // LOGIKA PENARIKAN DATA DINAMIS
+    // LOGIKA PENARIKAN DATA SISWA (SEMENTARA MOCK)
     // ==========================================
     final allSiswa = MockDatabase.getAllRegisteredSiswaFullData();
 
@@ -23,13 +26,6 @@ class HomeDashboard extends StatelessWidget {
     final int beasiswaAktif = allSiswa
         .where((s) => s['admin_status'] == 'Diterima')
         .length;
-
-    final int totalDonasi = MockDatabase.getTotalDonasi();
-    final String totalDonasiFormatted = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp',
-      decimalDigits: 0,
-    ).format(totalDonasi);
 
     // ==========================================
     // LOGIKA GRAFIK 6 BULAN TERAKHIR
@@ -135,11 +131,24 @@ class HomeDashboard extends StatelessWidget {
                       icon: Icons.school_rounded,
                     ),
                     const SizedBox(height: 15),
-                    StatCard(
-                      title: "Total Donasi",
-                      value: totalDonasiFormatted,
-                      color: Colors.purple,
-                      icon: Icons.volunteer_activism_rounded,
+                    // 👇 2. CARD DONASI REAL-TIME (MOBILE)
+                    ValueListenableBuilder<int>(
+                      valueListenable:
+                          SupabaseDonationService.totalDonasiTerkumpul,
+                      builder: (context, totalDonasi, _) {
+                        final String formattedDonasi = NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp',
+                          decimalDigits: 0,
+                        ).format(totalDonasi);
+
+                        return StatCard(
+                          title: "Total Donasi",
+                          value: formattedDonasi,
+                          color: Colors.purple,
+                          icon: Icons.volunteer_activism_rounded,
+                        );
+                      },
                     ),
                   ],
                 );
@@ -182,11 +191,25 @@ class HomeDashboard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: StatCard(
-                          title: "Total Donasi Terkumpul",
-                          value: totalDonasiFormatted,
-                          color: Colors.purple,
-                          icon: Icons.volunteer_activism_rounded,
+                        // 👇 3. CARD DONASI REAL-TIME (DESKTOP)
+                        child: ValueListenableBuilder<int>(
+                          valueListenable:
+                              SupabaseDonationService.totalDonasiTerkumpul,
+                          builder: (context, totalDonasi, _) {
+                            final String formattedDonasi =
+                                NumberFormat.currency(
+                                  locale: 'id_ID',
+                                  symbol: 'Rp',
+                                  decimalDigits: 0,
+                                ).format(totalDonasi);
+
+                            return StatCard(
+                              title: "Total Donasi Terkumpul",
+                              value: formattedDonasi,
+                              color: Colors.purple,
+                              icon: Icons.volunteer_activism_rounded,
+                            );
+                          },
                         ),
                       ),
                     ],

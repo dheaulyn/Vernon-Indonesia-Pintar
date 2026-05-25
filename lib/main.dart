@@ -157,7 +157,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/media/artikel',
       builder: (context, state) {
-        final artikelData = state.extra as Map<String, String>?;
+        final artikelData = state.extra as Map<String, dynamic>?;
         return artikelData != null
             ? ArtikelDetailScreen(artikel: artikelData)
             : const MediaScreen();
