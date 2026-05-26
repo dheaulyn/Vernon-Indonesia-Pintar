@@ -6,10 +6,7 @@ import '../../services/supabase_pendaftaran_service.dart';
 import '../../services/supabase_donasi_service.dart';
 import '../shared/stat_card.dart';
 
-// 👇 1. IMPORT SERVICE DONASI SUPABASE
-import '../../services/supabase_donasi_service.dart';
-
-class HomeDashboard extends StatelessWidget {
+class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
 
   @override
@@ -89,8 +86,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
       monthLabels.add(namaBulan[targetMonth - 1]);
 
       int jumlah = allSiswa.where((siswa) {
-        if (siswa['tgl_daftar'] == null || siswa['tgl_daftar'].isEmpty)
+        if (siswa['tgl_daftar'] == null || siswa['tgl_daftar'].isEmpty) {
           return false;
+        }
         try {
           DateTime tgl = DateTime.parse(siswa['tgl_daftar']);
           return tgl.month == targetMonth && tgl.year == targetYear;

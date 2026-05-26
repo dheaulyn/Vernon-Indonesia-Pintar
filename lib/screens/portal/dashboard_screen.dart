@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_colors.dart';
 import 'portal_layout.dart';
 import '../../services/supabase_auth_service.dart';
@@ -414,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '• Jika mengalami kendala teknis, silakan hubungi WhatsApp admin VIP di menu Bantuan.',
+                    '• Jika mengalami kendala teknis, silakan hubungi admin VIP di menu Bantuan.',
                     style: TextStyle(height: 1.5),
                   ),
                 ],
@@ -553,7 +554,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String stepNumber,
   }) {
     Color circleColor = Colors.grey.shade200;
-    Color lineAndTextColor = Colors.grey.shade500;
     Widget circleContent = Text(
       stepNumber,
       style: TextStyle(
@@ -564,11 +564,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (isDone) {
       circleColor = Colors.green;
-      lineAndTextColor = Colors.green;
       circleContent = const Icon(Icons.check, color: Colors.white, size: 16);
     } else if (isError) {
       circleColor = Colors.red;
-      lineAndTextColor = Colors.red;
       circleContent = const Icon(
         Icons.priority_high,
         color: Colors.white,
@@ -576,7 +574,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     } else if (isActive) {
       circleColor = AppColors.primary;
-      lineAndTextColor = AppColors.primary;
       circleContent = Text(
         stepNumber,
         style: const TextStyle(
@@ -771,8 +768,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFileRow(String label, String? fileName) {
-    bool hasFile = fileName != null && fileName.isNotEmpty;
+  String? _getFileNameFromUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    try {
+      final uri = Uri.parse(url);
+      if (uri.pathSegments.isNotEmpty) {
+        String fileName = Uri.decodeComponent(uri.pathSegments.last);
+        final parts = fileName.split('_');
+        if (parts.length > 3) {
+          return parts.sublist(3).join('_');
+        }
+        return fileName;
+      }
+    } catch (_) {}
+    return url;
+  }
+
+  Widget _buildFileRow(String label, String? fileUrl) {
+    bool hasFile = fileUrl != null && fileUrl.isNotEmpty;
+    String? fileName = _getFileNameFromUrl(fileUrl);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -797,16 +811,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    hasFile ? fileName : "Belum Diunggah",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: hasFile ? Colors.blue.shade700 : Colors.red,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: hasFile
+                      ? InkWell(
+                          onTap: () async {
+                            final uri = Uri.tryParse(fileUrl!);
+                            if (uri != null && await canLaunchUrl(uri)) {
+                              await launchUrl(uri);
+                            } else {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Tidak dapat membuka file.')),
+                                );
+                              }
+                            }
+                          },
+                          child: Text(
+                            fileName ?? fileUrl!,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                      : const Text(
+                          "Belum Diunggah",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
                 ),
               ],
             ),

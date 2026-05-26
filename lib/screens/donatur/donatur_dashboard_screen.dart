@@ -11,7 +11,9 @@ import 'data_diri.dart';
 import 'ganti_password.dart';
 
 class DonaturDashboardScreen extends StatefulWidget {
-  const DonaturDashboardScreen({super.key});
+  final int initialIndex;
+
+  const DonaturDashboardScreen({super.key, this.initialIndex = 0});
 
   @override
   State<DonaturDashboardScreen> createState() => _DonaturDashboardScreenState();
@@ -20,8 +22,7 @@ class DonaturDashboardScreen extends StatefulWidget {
 class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   late Map<String, dynamic> user;
 
-  int _selectedIndex = 0;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late int _selectedIndex;
 
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTopButton = false;
@@ -29,6 +30,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
     user = SupabaseAuthService.currentUserData ?? {};
 
     _scrollController.addListener(() {
@@ -38,6 +40,16 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
         setState(() => _showBackToTopButton = false);
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant DonaturDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      setState(() {
+        _selectedIndex = widget.initialIndex;
+      });
+    }
   }
 
   @override

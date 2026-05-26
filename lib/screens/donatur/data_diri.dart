@@ -53,8 +53,8 @@ class DataDiriView extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildProfileTextField(
-                      "No. WhatsApp",
-                      "081234567890",
+                      "No. Telepon",
+                      user['telepon'] ?? user['whatsapp'] ?? '-',
                       keyboardType: TextInputType.phone,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),

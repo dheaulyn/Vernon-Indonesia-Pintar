@@ -53,7 +53,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   List<Map<String, dynamic>> _regencies = [];
   List<Map<String, dynamic>> _districts = [];
   List<Map<String, dynamic>> _villages = [];
-  bool _isLoadingWilayah = true;
+
 
   @override
   void initState() {
@@ -91,7 +91,6 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   }
 
   Future<void> _initWilayahData(String domisili) async {
-    setState(() => _isLoadingWilayah = true);
     
     final provData = await ApiWilayahService.getProvinces();
     _provinces = provData;
@@ -155,33 +154,29 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
       _detailAlamatController.text = domisili;
     }
     
-    setState(() => _isLoadingWilayah = false);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadRegencies(String provinceId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getRegencies(provinceId);
     setState(() {
       _regencies = data;
-      _isLoadingWilayah = false;
     });
   }
 
   Future<void> _loadDistricts(String regencyId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getDistricts(regencyId);
     setState(() {
       _districts = data;
-      _isLoadingWilayah = false;
     });
   }
 
   Future<void> _loadVillages(String districtId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getVillages(districtId);
     setState(() {
       _villages = data;
-      _isLoadingWilayah = false;
     });
   }
 
@@ -207,8 +202,16 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     );
 
     if (result != null && result.files.isNotEmpty) {
+      PlatformFile file = result.files.first;
+
+      if (file.size > 2 * 1024 * 1024) {
+        if (mounted) {
+          showErrorSnackBar(context, 'Ukuran file maksimal 2MB. Silakan kompres atau pilih file lain.');
+        }
+        return;
+      }
+
       setState(() {
-        PlatformFile file = result.files.first;
         switch (type) {
           case 'ktp':
             _fileKtp = file;
@@ -555,7 +558,17 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                     const SizedBox(height: 20),
 
                     _buildTextField("Nama Lengkap", _nameController),
-                    _buildTextField("NIK", _nikController, isNumber: true),
+                    _buildTextField(
+                      "NIK", 
+                      _nikController, 
+                      isNumber: true,
+                      maxLength: 16,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'NIK tidak boleh kosong';
+                        if (v.length != 16) return 'NIK harus tepat 16 digit';
+                        return null;
+                      },
+                    ),
                     _buildTextField(
                       "Email Aktif",
                       _emailController,
@@ -565,6 +578,12 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       "Nomor HP",
                       _phoneController,
                       isNumber: true,
+                      maxLength: 14,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Nomor HP tidak boleh kosong';
+                        if (v.length < 10 || v.length > 14) return 'Nomor HP tidak valid (10-14 digit)';
+                        return null;
+                      },
                     ),
 
                     const Padding(
@@ -694,6 +713,12 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       "Tahun Lulus",
                       _tahunLulusController,
                       isNumber: true,
+                      maxLength: 4,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Tahun Lulus tidak boleh kosong';
+                        if (v.length != 4) return 'Tahun Lulus harus 4 digit';
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 30),
@@ -795,6 +820,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     TextEditingController controller, {
     bool isNumber = false,
     bool readOnly = false,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     bool isFieldReadOnly = _isReadOnly || readOnly;
 
@@ -812,9 +839,10 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             controller: controller,
             readOnly: isFieldReadOnly,
             keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-            inputFormatters: isNumber
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : null,
+            inputFormatters: [
+              if (isNumber) FilteringTextInputFormatter.digitsOnly,
+              if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+            ],
             style: TextStyle(
               color: isFieldReadOnly ? Colors.black54 : Colors.black87,
             ),
@@ -846,14 +874,14 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
               filled: true,
               fillColor: isFieldReadOnly ? Colors.grey.shade100 : Colors.white,
             ),
-            validator: isFieldReadOnly
+            validator: validator ?? (isFieldReadOnly
                 ? null
                 : (value) {
                     if (value == null || value.trim().isEmpty) {
                       return '$label tidak boleh kosong';
                     }
                     return null;
-                  },
+                  }),
           ),
         ],
       ),

@@ -332,7 +332,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                _buildStatCard("0", "Penerima Beasiswa"),
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _supabase.from('profiles').stream(primaryKey: ['id']).eq('role', 'siswa'),
+                  builder: (context, snapshot) {
+                    final profiles = snapshot.data ?? [];
+                    final count = profiles.where((p) => ['Diterima', 'Pelatihan', 'Lulus'].contains(p['admin_status'])).length;
+                    return _buildStatCard(count.toString(), "Penerima Beasiswa");
+                  },
+                ),
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Batch Aktif"),
                 const SizedBox(height: 20),
@@ -360,7 +367,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 25),
-                Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
+                Expanded(
+                  child: StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: _supabase.from('profiles').stream(primaryKey: ['id']).eq('role', 'siswa'),
+                    builder: (context, snapshot) {
+                      final profiles = snapshot.data ?? [];
+                      final count = profiles.where((p) => ['Diterima', 'Pelatihan', 'Lulus'].contains(p['admin_status'])).length;
+                      return _buildStatCard(count.toString(), "Penerima Beasiswa");
+                    },
+                  ),
+                ),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Batch Aktif")),
                 const SizedBox(width: 25),
@@ -1079,7 +1095,11 @@ class _TestimonialCardState extends State<TestimonialCard> {
         width: widget.isMobile ? 300 : 400,
         margin: const EdgeInsets.only(right: 24, bottom: 20, top: 10),
         padding: const EdgeInsets.all(30),
-        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+        transform: Matrix4.diagonal3Values(
+          _isHovered ? 1.03 : 1.0,
+          _isHovered ? 1.03 : 1.0,
+          1.0,
+        ),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFF2B2B2B),
@@ -1091,7 +1111,7 @@ class _TestimonialCardState extends State<TestimonialCard> {
           boxShadow: [
             if (_isHovered)
               BoxShadow(
-                color: Colors.red.withOpacity(0.15),
+                color: Colors.red.withValues(alpha: 0.15),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 10),

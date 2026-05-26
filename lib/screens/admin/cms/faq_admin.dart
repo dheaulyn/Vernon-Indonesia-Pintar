@@ -1,8 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
 
-import '../../../../../core/app_colors.dart';
-import '../../../../../core/snackbar_helper.dart';
+import '../../../../core/app_colors.dart';
+import '../../../../core/snackbar_helper.dart';
 
 class KelolaFAQPage extends StatefulWidget {
   const KelolaFAQPage({super.key});
@@ -145,25 +146,28 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                                   .from('faqs')
                                   .update(newData)
                                   .eq('id', faqToEdit['id']);
-                              if (mounted)
+                              if (mounted) {
                                 showSuccessSnackBar(
                                   context,
                                   'FAQ berhasil diperbarui!',
                                 );
+                              }
                             } else {
                               await _supabase.from('faqs').insert(newData);
-                              if (mounted)
+                              if (mounted) {
                                 showSuccessSnackBar(
                                   context,
                                   'FAQ baru berhasil ditambahkan!',
                                 );
+                              }
                             }
 
                             _loadData(); // Refresh layar
                             if (mounted) Navigator.pop(context);
                           } catch (e) {
-                            if (mounted)
+                            if (mounted) {
                               showErrorSnackBar(context, 'Gagal menyimpan: $e');
+                            }
                           } finally {
                             setModalState(() => isSaving = false);
                           }
@@ -222,8 +226,9 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                 await _supabase.from('faqs').delete().eq('id', id);
                 _loadData();
                 if (mounted) Navigator.pop(context);
-                if (mounted)
+                if (mounted) {
                   showSuccessSnackBar(context, 'FAQ berhasil dihapus!');
+                }
               } catch (e) {
                 if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
               }

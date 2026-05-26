@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -183,8 +182,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           })
           .eq('id', _programId);
 
-      if (mounted)
+      if (mounted) {
         showSuccessSnackBar(context, 'Detail Program berhasil diperbarui!');
+      }
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
     } finally {

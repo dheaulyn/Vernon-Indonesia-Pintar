@@ -266,6 +266,7 @@ class SupabasePendaftaranService {
             updateData['jadwal_wawancara'] = jadwalWawancara;
           }
         }
+        if (newStatus == 'Menunggu Pengumuman') updateData['current_step'] = 3;
         if (newStatus == 'Diterima') updateData['current_step'] = 4;
         if (newStatus == 'Pelatihan') updateData['current_step'] = 5;
         if (newStatus == 'Lulus') updateData['current_step'] = 6;

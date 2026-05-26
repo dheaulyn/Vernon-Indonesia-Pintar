@@ -177,8 +177,9 @@ class _MediaScreenState extends State<MediaScreen>
   Widget _buildArtikelTab(bool isMobile) {
     int crossAxisCount = isMobile ? 1 : 3;
 
-    if (_artikelList.isEmpty)
+    if (_artikelList.isEmpty) {
       return const Center(child: Text("Belum ada artikel yang diterbitkan."));
+    }
 
     return Padding(
       key: const ValueKey('artikel'),
@@ -319,8 +320,9 @@ class _MediaScreenState extends State<MediaScreen>
   Widget _buildGaleriTab(bool isMobile) {
     int crossAxisCount = isMobile ? 2 : 4;
 
-    if (_galeriList.isEmpty)
+    if (_galeriList.isEmpty) {
       return const Center(child: Text("Belum ada foto galeri."));
+    }
 
     return Padding(
       key: const ValueKey('galeri'),

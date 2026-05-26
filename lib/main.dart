@@ -12,6 +12,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/portal/dashboard_screen.dart';
 import 'screens/portal/status_beasiswa_screen.dart';
+import 'screens/portal/pengaturan_akun_screen.dart';
 import 'screens/program_detail_screen.dart';
 import 'screens/home/widgets/profil_yayasan.dart';
 import 'screens/portal/form_beasiswa.dart';
@@ -109,10 +110,14 @@ final GoRouter _router = GoRouter(
         if (role != 'donatur') return '/login-donatur';
         return null;
       },
-      builder: (context, state) => const DonaturDashboardScreen(),
+      builder: (context, state) {
+        final indexStr = state.uri.queryParameters['index'];
+        final index = int.tryParse(indexStr ?? '0') ?? 0;
+        return DonaturDashboardScreen(initialIndex: index);
+      },
     ),
     GoRoute(
-      path: '/admin-login',
+      path: '/login-admin',
       builder: (context, state) => const LoginAdminScreen(),
     ),
     GoRoute(
@@ -165,15 +170,29 @@ final GoRouter _router = GoRouter(
             : const MediaScreen();
       },
     ),
+    GoRoute(
+      path: '/pengaturan-akun',
+      builder: (context, state) {
+        final role = SupabaseAuthService.currentUserData?['role'];
+        if (role != 'siswa') {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.go('/login');
+          });
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+        return const PengaturanAkunScreen();
+      },
+    ),
 
     // --------------------------------------------------
     // 2. RUTE ADMIN (MENGGUNAKAN SHELL ROUTE)
     // --------------------------------------------------
     ShellRoute(
       redirect: (context, state) async {
-        if (!SupabaseAuthService.isLoggedIn) return '/admin-login';
+        if (!SupabaseAuthService.isLoggedIn) return '/login-admin';
         final role = SupabaseAuthService.currentUserData?['role'];
-        if (role != 'admin') return '/admin-login';
+        if (role != 'admin') return '/login-admin';
         return null;
       },
       builder: (context, state, child) {

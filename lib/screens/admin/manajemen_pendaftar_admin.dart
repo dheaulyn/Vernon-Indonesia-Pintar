@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import '../../../core/app_colors.dart';
 import '../../../core/snackbar_helper.dart';
@@ -135,6 +136,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         bgColor = Colors.blue.shade100;
         textColor = Colors.blue.shade800;
         break;
+      case 'Menunggu Pengumuman':
+        bgColor = Colors.indigo.shade100;
+        textColor = Colors.indigo.shade800;
+        break;
       case 'Diterima':
         bgColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
@@ -202,8 +207,25 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     );
   }
 
-  Widget _buildFileTile(String title, String? fileName) {
-    bool hasFile = fileName != null && fileName.isNotEmpty;
+  String? _getFileNameFromUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    try {
+      final uri = Uri.parse(url);
+      if (uri.pathSegments.isNotEmpty) {
+        String fileName = Uri.decodeComponent(uri.pathSegments.last);
+        final parts = fileName.split('_');
+        if (parts.length > 3) {
+          return parts.sublist(3).join('_');
+        }
+        return fileName;
+      }
+    } catch (_) {}
+    return url;
+  }
+
+  Widget _buildFileTile(String title, String? fileUrl) {
+    bool hasFile = fileUrl != null && fileUrl.isNotEmpty;
+    String? fileName = _getFileNameFromUrl(fileUrl);
 
     return ListTile(
       leading: Icon(
@@ -219,7 +241,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         ),
       ),
       subtitle: Text(
-        hasFile ? fileName : "Belum diunggah oleh siswa",
+        hasFile ? (fileName ?? fileUrl!) : "Belum diunggah oleh siswa",
         style: TextStyle(
           fontSize: 12,
           color: hasFile ? Colors.blue : Colors.grey,
@@ -230,7 +252,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
           : null,
       onTap: hasFile
           ? () async {
-              final uri = Uri.tryParse(fileName);
+              final uri = Uri.tryParse(fileUrl!);
               if (uri != null && await canLaunchUrl(uri)) {
                 await launchUrl(uri);
               } else {
@@ -247,7 +269,6 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
   // FUNGSI REVIEW & UBAH STATUS PENDAFTAR
   // ==========================================
   void _showReviewDialog(PendaftarModel pendaftar, int index) async {
-    // Ambil detail siswa dari Supabase
     final detailSiswa = await SupabasePendaftaranService.getDetailPendaftar(pendaftar.id);
     if (detailSiswa == null) {
       if (mounted) showErrorSnackBar(context, 'Gagal memuat data detail siswa.');
@@ -258,6 +279,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     final TextEditingController catatanController = TextEditingController(
       text: detailSiswa['catatan_revisi'] ?? '',
     );
+    
+    // ScrollController untuk auto-scroll modal
+    final ScrollController modalScrollController = ScrollController();
+    
     final TextEditingController jadwalDisplayController = TextEditingController(
       text: detailSiswa['jadwal_wawancara'] ?? '',
     );
@@ -272,10 +297,12 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     String savedJadwal = detailSiswa['jadwal_wawancara'] ?? '';
     if (savedJadwal.isNotEmpty) {
       try {
-        if (savedJadwal.contains('(Daring)'))
+        if (savedJadwal.contains('(Daring)')) {
           selectedMetodeWawancara = 'Daring';
-        if (savedJadwal.contains('(Luring)'))
+        }
+        if (savedJadwal.contains('(Luring)')) {
           selectedMetodeWawancara = 'Luring';
+        }
 
         if (savedJadwal.contains('\nLink: ')) {
           lokasiLinkController.text = savedJadwal.split('\nLink: ').last;
@@ -308,6 +335,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
       'Menunggu Review',
       'Revisi',
       'Wawancara',
+      'Menunggu Pengumuman',
       'Diterima',
       'Pelatihan',
       'Lulus',
@@ -455,6 +483,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                     // 👇 AREA KONTEN YANG BISA DI-SCROLL
                     Flexible(
                       child: SingleChildScrollView(
+                        controller: modalScrollController,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -629,9 +658,21 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                                 if (newValue != null) {
                                   setStateDialog(() {
                                     selectedStatus = newValue;
-                                    errorPesanWawancara =
-                                        ''; // Hilangkan error jika ganti status lain
+                                    errorPesanWawancara = ''; // Hilangkan error jika ganti status lain
                                   });
+
+                                  // Auto-scroll ke bawah agar kolom revisi/wawancara terlihat
+                                  if (newValue == 'Revisi' || newValue == 'Wawancara') {
+                                    Future.delayed(const Duration(milliseconds: 100), () {
+                                      if (modalScrollController.hasClients) {
+                                        modalScrollController.animateTo(
+                                          modalScrollController.position.maxScrollExtent,
+                                          duration: const Duration(milliseconds: 300),
+                                          curve: Curves.easeOut,
+                                        );
+                                      }
+                                    });
+                                  }
                                 }
                               },
                             ),

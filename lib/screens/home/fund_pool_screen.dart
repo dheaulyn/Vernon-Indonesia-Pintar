@@ -198,7 +198,7 @@ class FundPoolScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -292,7 +292,7 @@ class FundPoolScreen extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
             ],
           ),
           // 👇 Ganti MockDatabase dengan SupabaseDonationService

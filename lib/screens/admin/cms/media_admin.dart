@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -209,10 +210,11 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                     )
                                     .toList(),
                                 onChanged: (val) {
-                                  if (val != null)
+                                  if (val != null) {
                                     setStateDialog(
                                       () => selectedKategori = val,
                                     );
+                                  }
                                 },
                               ),
                             ),
@@ -449,31 +451,34 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                 await _supabase
                                     .from('articles')
                                     .insert(newData);
-                                if (mounted)
+                                if (mounted) {
                                   showSuccessSnackBar(
                                     context,
                                     'Artikel baru berhasil ditambahkan!',
                                   );
+                                }
                               } else {
                                 await _supabase
                                     .from('articles')
                                     .update(newData)
                                     .eq('id', artikelLama['id']);
-                                if (mounted)
+                                if (mounted) {
                                   showSuccessSnackBar(
                                     context,
                                     'Artikel berhasil diperbarui!',
                                   );
+                                }
                               }
 
                               _loadData();
                               if (mounted) Navigator.pop(dialogContext);
                             } catch (e) {
-                              if (mounted)
+                              if (mounted) {
                                 showErrorSnackBar(
                                   context,
                                   'Terjadi kesalahan: $e',
                                 );
+                              }
                             } finally {
                               setStateDialog(() => isSaving = false);
                             }
@@ -527,8 +532,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                 await _supabase.from('articles').delete().eq('id', id);
                 _loadData();
                 if (mounted) Navigator.pop(context);
-                if (mounted)
+                if (mounted) {
                   showSuccessSnackBar(context, 'Artikel berhasil dihapus!');
+                }
               } catch (e) {
                 if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
               }
@@ -746,31 +752,34 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                 await _supabase
                                     .from('articles')
                                     .insert(newData);
-                                if (mounted)
+                                if (mounted) {
                                   showSuccessSnackBar(
                                     context,
                                     'Foto baru berhasil ditambahkan!',
                                   );
+                                }
                               } else {
                                 await _supabase
                                     .from('articles')
                                     .update(newData)
                                     .eq('id', galeriLama['id']);
-                                if (mounted)
+                                if (mounted) {
                                   showSuccessSnackBar(
                                     context,
                                     'Foto berhasil diperbarui!',
                                   );
+                                }
                               }
 
                               _loadData();
                               if (mounted) Navigator.pop(dialogContext);
                             } catch (e) {
-                              if (mounted)
+                              if (mounted) {
                                 showErrorSnackBar(
                                   context,
                                   'Terjadi kesalahan: $e',
                                 );
+                              }
                             } finally {
                               setStateDialog(() => isSaving = false);
                             }
@@ -826,8 +835,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                 await _supabase.from('articles').delete().eq('id', id);
                 _loadData();
                 if (mounted) Navigator.pop(context);
-                if (mounted)
+                if (mounted) {
                   showSuccessSnackBar(context, 'Foto berhasil dihapus!');
+                }
               } catch (e) {
                 if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
               }

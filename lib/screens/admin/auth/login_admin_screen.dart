@@ -47,9 +47,9 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
       context.go('/admin-dashboard'); // Masuk ke dashboard Admin
     } else if (userRole != null) {
       // Jika siswa/donatur nyasar ke sini, tendang keluar
+      await SupabaseAuthService.logout();
       setState(() {
-        _errorMessage =
-            'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
+        _errorMessage = 'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
       });
     } else {
       setState(() {

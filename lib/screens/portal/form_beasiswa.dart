@@ -41,7 +41,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   List<Map<String, dynamic>> _regencies = [];
   List<Map<String, dynamic>> _districts = [];
   List<Map<String, dynamic>> _villages = [];
-  bool _isLoadingWilayah = true;
+
 
   // State untuk menyimpan objek file yang diunggah
   PlatformFile? _fileKtp;
@@ -74,38 +74,30 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   }
 
   Future<void> _loadProvinces() async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getProvinces();
     setState(() {
       _provinces = data;
-      _isLoadingWilayah = false;
     });
   }
 
   Future<void> _loadRegencies(String provinceId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getRegencies(provinceId);
     setState(() {
       _regencies = data;
-      _isLoadingWilayah = false;
     });
   }
 
   Future<void> _loadDistricts(String regencyId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getDistricts(regencyId);
     setState(() {
       _districts = data;
-      _isLoadingWilayah = false;
     });
   }
 
   Future<void> _loadVillages(String districtId) async {
-    setState(() => _isLoadingWilayah = true);
     final data = await ApiWilayahService.getVillages(districtId);
     setState(() {
       _villages = data;
-      _isLoadingWilayah = false;
     });
   }
 
@@ -129,8 +121,17 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
 
     if (result != null && result.files.isNotEmpty) {
+      PlatformFile file = result.files.first;
+
+      // VALIDASI UKURAN FILE MAKSIMAL 2MB (2 * 1024 * 1024 bytes)
+      if (file.size > 2 * 1024 * 1024) {
+        if (mounted) {
+          showErrorSnackBar(context, 'Ukuran file maksimal 2MB. Silakan kompres atau pilih file lain.');
+        }
+        return;
+      }
+
       setState(() {
-        PlatformFile file = result.files.first;
         switch (type) {
           case 'ktp':
             _fileKtp = file;
@@ -394,6 +395,12 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       "16 Digit NIK",
                       _nikController,
                       isNumber: true,
+                      maxLength: 16,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'NIK tidak boleh kosong';
+                        if (v.length != 16) return 'NIK harus tepat 16 digit';
+                        return null;
+                      },
                     ),
                     _buildTextField(
                       "Email Aktif",
@@ -403,10 +410,16 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       readOnly: true,
                     ),
                     _buildTextField(
-                      "Nomor HP / WhatsApp Aktif",
-                      "08xxxxxxxxxx",
+                      "Nomor Telepon",
+                      "Contoh: 08123456789",
                       _phoneController,
                       isPhone: true,
+                      maxLength: 14,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Nomor HP tidak boleh kosong';
+                        if (v.length < 10 || v.length > 14) return 'Nomor HP tidak valid (10-14 digit)';
+                        return null;
+                      },
                     ),
 
                     const Padding(
@@ -526,6 +539,12 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       "Contoh: 2024",
                       _tahunLulusController,
                       isNumber: true,
+                      maxLength: 4,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Tahun Lulus tidak boleh kosong';
+                        if (v.length != 4) return 'Tahun Lulus harus 4 digit';
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 40),
@@ -559,13 +578,13 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                       onTap: () => _pickFile('ijazah'),
                     ),
                     _buildFileUploadField(
-                      label: "Pas Foto 3x4 Terbaru (Wajib)",
+                      label: "Pas Foto 3x4 Terbaru (2 lembar) (Wajib)",
                       hint: "Pilih file Pas Foto...",
                       fileName: _fileFoto?.name,
                       onTap: () => _pickFile('foto'),
                     ),
                     _buildFileUploadField(
-                      label: "Surat Motivasi Tulis Tangan (Wajib)",
+                      label: "Surat Motivasi Tulis Tangan (1 halaman) (Wajib)",
                       hint: "Pilih file Surat Motivasi...",
                       fileName: _fileMotivasi?.name,
                       onTap: () => _pickFile('motivasi'),
@@ -666,6 +685,8 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     bool isPhone = false,
     bool isNumber = false,
     bool readOnly = false,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -685,9 +706,10 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                 : ((isPhone || isNumber)
                       ? TextInputType.number
                       : TextInputType.text),
-            inputFormatters: (isPhone || isNumber)
-                ? [FilteringTextInputFormatter.digitsOnly]
-                : null,
+            inputFormatters: [
+              if (isPhone || isNumber) FilteringTextInputFormatter.digitsOnly,
+              if (maxLength != null) LengthLimitingTextInputFormatter(maxLength),
+            ],
             style: TextStyle(
               color: readOnly ? Colors.grey.shade700 : Colors.black87,
             ),
@@ -730,7 +752,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               filled: true,
               fillColor: readOnly ? Colors.grey.shade200 : Colors.grey.shade50,
             ),
-            validator: (value) {
+            validator: validator ?? (value) {
               if (value == null || value.trim().isEmpty) {
                 return '$label tidak boleh kosong';
               }
@@ -992,39 +1014,39 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     final List<Map<String, String>> tahapan = [
       {
         "step": "1",
-        "title": "Pengisian Formulir Online",
+        "title": "Pengisian formulir pendaftaran online",
         "desc":
             "Isi data diri lengkap melalui website VIP. Lampirkan foto dokumen persyaratan.",
       },
       {
         "step": "2",
-        "title": "Verifikasi Dokumen & Kelayakan",
+        "title": "Verifikasi dokumen & kelayakan administrasi",
         "desc":
             "Tim VIP memverifikasi kelengkapan dokumen dan kesesuaian kriteria usia serta ekonomi.",
       },
       {
         "step": "3",
-        "title": "Wawancara Langsung",
+        "title": "Wawancara langsung dengan tim yayasan",
         "desc":
-            "Tahap penentu kelulusan. Tim yayasan menilai langsung kemampuan, karakter, dan kesungguhan calon.",
+            "Tahap penentu kelulusan seleksi. Tim yayasan menilai secara langsung kemampuan, karakter, dan kesungguhan calon penerima.",
       },
       {
         "step": "4",
-        "title": "Pengumuman Hasil Seleksi",
+        "title": "Pengumuman hasil seleksi",
         "desc":
-            "Hasil diumumkan melalui website. Calon yang lolos menerima Surat Penetapan Beasiswa resmi.",
+            "Hasil seleksi diumumkan melalui website VIP. Calon penerima yang lolos menerima Surat Penetapan Beasiswa resmi.",
       },
       {
         "step": "5",
-        "title": "Orientasi & Penandatanganan",
+        "title": "Orientasi & penandatanganan perjanjian",
         "desc":
-            "Sesi orientasi dan penandatanganan komitmen mengikuti pelatihan hingga penempatan kerja.",
+            "Penerima beasiswa menghadiri sesi orientasi dan menandatangani surat komitmen mengikuti pelatihan hingga penempatan kerja.",
       },
       {
         "step": "6",
-        "title": "Mulai Pelatihan Vokasi",
+        "title": "Mulai pelatihan vokasi di Vernon Edu",
         "desc":
-            "Pelatihan intensif 10 bulan di Vernon Edu (keterampilan barista, digital marketing, dll).",
+            "Program resmi dimulai. Pelatihan intensif 10 bulan mencakup keterampilan barista, digital marketing, administrasi, atau bidang lain sesuai minat & kebutuhan industri.",
       },
     ];
 

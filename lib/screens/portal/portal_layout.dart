@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../shared/shared_dashboard_layout.dart';
 
 class PortalLayout extends StatelessWidget {
@@ -34,6 +36,28 @@ class PortalLayout extends StatelessWidget {
     ];
 
     final bottomMenuItems = [
+      MenuModel(
+        icon: Icons.help_outline,
+        title: 'Bantuan',
+        isWebLink: true,
+        onTap: () async {
+          try {
+            final supabase = Supabase.instance.client;
+            final response = await supabase.from('cms_footer').select('whatsapp').limit(1).maybeSingle();
+            
+            String waLink = (response != null && response['whatsapp'] != null) 
+                ? response['whatsapp'].toString()
+                : "https://wa.me/";
+
+            final uri = Uri.parse(waLink);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          } catch (e) {
+            debugPrint("Error launching WhatsApp: \$e");
+          }
+        },
+      ),
       MenuModel(
         icon: Icons.logout,
         title: 'Keluar',

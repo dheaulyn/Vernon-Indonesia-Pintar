@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SupabaseAuthService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -42,6 +43,7 @@ class SupabaseAuthService {
     String email,
     String password, [
     String role = 'siswa',
+    String? telepon,
   ]) async {
     try {
       final res = await _client.auth.signUp(
@@ -50,12 +52,13 @@ class SupabaseAuthService {
       );
 
       if (res.user != null) {
-        // Insert data ke tabel profiles
-        await _client.from('profiles').insert({
+        // Upsert data ke tabel profiles untuk menghindari error jika trigger DB sudah membuat row
+        await _client.from('profiles').upsert({
           'id': res.user!.id,
           'email': email,
           'name': name.toUpperCase(),
           'role': role,
+          'telepon': telepon,
           'is_registered': false,
           'current_step': 0,
           'is_revisi': false,
@@ -139,5 +142,59 @@ class SupabaseAuthService {
       return 'Gagal mengupdate data: $e';
     }
   }
-}
 
+  /// Mengubah password user yang sedang login.
+  static Future<String?> changePassword(String newPassword) async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return 'User belum login.';
+
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      return null;
+    } on AuthException catch (e) {
+      debugPrint('changePassword AuthException: ${e.message}');
+      if (e.message.toLowerCase().contains('different')) {
+        return 'Password baru harus berbeda dengan password saat ini.';
+      }
+      return e.message;
+    } catch (e) {
+      debugPrint('changePassword Error: $e');
+      return 'Gagal mengubah password: $e';
+    }
+  }
+
+  /// Mengunggah foto profil ke bucket 'avatars' dan mengupdate field avatar_url
+  static Future<String?> uploadAvatar(PlatformFile file) async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) return 'User belum login.';
+      if (file.bytes == null) return 'File tidak valid.';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final safeOriginalName = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9.\-_]'), '_');
+      final fileName = '${user.id}_${timestamp}_$safeOriginalName';
+
+      // 1. Upload file ke bucket 'avatars'
+      await _client.storage.from('avatars').uploadBinary(
+            fileName,
+            file.bytes!,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      // 2. Dapatkan public URL
+      final avatarUrl = _client.storage.from('avatars').getPublicUrl(fileName);
+
+      // 3. Update field avatar_url di tabel profiles
+      final updateError = await updateProfileFields({'avatar_url': avatarUrl});
+      
+      if (updateError != null) {
+        return updateError;
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('uploadAvatar Error: $e');
+      return 'Gagal mengunggah foto profil: $e';
+    }
+  }
+}

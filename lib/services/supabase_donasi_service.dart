@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// 👇 1. Import file auth milik Nabila! (Sesuaikan path-nya jika perlu)
 import 'supabase_auth_service.dart';
+import 'supabase_notification_service.dart';
 
 class SupabaseDonationService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -56,7 +56,9 @@ class SupabaseDonationService {
     int nominal,
   ) async {
     // 👇 2. KUNCI KOLABORASI: Ambil email user yang sedang login dari file Nabila
-    final emailDonatur = SupabaseAuthService.currentUserData?['email'];
+    final user = SupabaseAuthService.currentUserData;
+    final emailDonatur = user?['email'];
+    final uid = Supabase.instance.client.auth.currentUser?.id;
 
     await _client.from('donations').insert({
       'donatur_email': emailDonatur,
@@ -64,6 +66,24 @@ class SupabaseDonationService {
       'program_name': program,
       'amount': nominal,
     });
+
+    // 🔔 Buat notifikasi untuk ADMIN
+    await SupabaseNotificationService.createNotification(
+      userId: null, // Global untuk admin
+      title: 'Donasi Masuk',
+      message: 'Donasi sebesar Rp $nominal berhasil diterima dari ${nama.isEmpty ? 'Hamba Allah' : nama} untuk program $program.',
+      type: 'donasi_masuk',
+    );
+
+    // 🔔 Buat notifikasi untuk DONATUR (jika login)
+    if (uid != null) {
+      await SupabaseNotificationService.createNotification(
+        userId: uid,
+        title: 'Donasi Berhasil',
+        message: 'Terima kasih! Donasi Anda sebesar Rp $nominal untuk program $program telah kami terima.',
+        type: 'donasi_sukses',
+      );
+    }
   }
 
   // Fungsi saat Admin mencatatkan pengeluaran
@@ -80,5 +100,13 @@ class SupabaseDonationService {
       'keterangan': kategori,
       'nominal': nominal,
     });
+
+    // Buat notifikasi ke admin (global)
+    await SupabaseNotificationService.createNotification(
+      userId: null,
+      title: 'Penyaluran Dana',
+      message: 'Penyaluran dana berhasil ke kategori $kategori sebesar Rp $nominal.',
+      type: 'donasi_keluar',
+    );
   }
 }

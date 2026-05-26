@@ -106,7 +106,7 @@ class LayoutDashboard extends StatelessWidget {
       MenuModel(
         icon: Icons.power_settings_new_rounded,
         title: "Keluar",
-        routePath: "/admin-login",
+        routePath: "/login-admin",
         isLogout: true,
       ),
     ];

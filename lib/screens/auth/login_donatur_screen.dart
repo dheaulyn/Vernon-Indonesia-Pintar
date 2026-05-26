@@ -48,16 +48,18 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
 
       if (userRole == 'donatur') {
         context.go('/dashboard-donatur');
-      } else if (userRole == 'admin') {
-        context.go('/admin-dashboard');
-      } else if (userRole == 'siswa') {
-        setState(() {
-          _errorMessage =
-              'Akun ini adalah akun siswa. Silakan login melalui halaman login siswa.';
-        });
       } else {
+        // Logout jika role tidak sesuai
+        await SupabaseAuthService.logout();
+        
         setState(() {
-          _errorMessage = 'Peran pengguna tidak dikenali.';
+          if (userRole == 'admin') {
+            _errorMessage = 'Akun ini adalah Administrator. Silakan login melalui halaman Admin.';
+          } else if (userRole == 'siswa') {
+            _errorMessage = 'Akun ini adalah akun siswa. Silakan login melalui halaman login siswa.';
+          } else {
+            _errorMessage = 'Peran pengguna tidak dikenali.';
+          }
         });
       }
     } else {

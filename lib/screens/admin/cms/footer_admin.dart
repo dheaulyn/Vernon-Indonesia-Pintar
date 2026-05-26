@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
 
@@ -231,14 +232,16 @@ class _FooterAdminState extends State<FooterAdmin> {
 
                           _loadData(); // Refresh layar admin
                           if (mounted) Navigator.pop(context);
-                          if (mounted)
+                          if (mounted) {
                             showSuccessSnackBar(
                               context,
                               'Info Kontak & Footer berhasil diperbarui!',
                             );
+                          }
                         } catch (e) {
-                          if (mounted)
+                          if (mounted) {
                             showErrorSnackBar(context, 'Gagal menyimpan: $e');
+                          }
                         } finally {
                           setModalState(() => isSaving = false);
                         }

@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
 
@@ -156,29 +157,32 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                                 .from('testimonials')
                                 .update(newData)
                                 .eq('id', testimoni['id']);
-                            if (mounted)
+                            if (mounted) {
                               showSuccessSnackBar(
                                 context,
                                 'Testimoni berhasil diperbarui!',
                               );
+                            }
                           } else {
                             await _supabase
                                 .from('testimonials')
                                 .insert(newData);
-                            if (mounted)
+                            if (mounted) {
                               showSuccessSnackBar(
                                 context,
                                 'Testimoni baru berhasil ditambahkan!',
                               );
+                            }
                           }
                           _loadData();
                           if (mounted) Navigator.pop(context);
                         } catch (e) {
-                          if (mounted)
+                          if (mounted) {
                             showErrorSnackBar(
                               context,
                               'Gagal menyimpan data: $e',
                             );
+                          }
                         } finally {
                           setModalState(() => isSaving = false);
                         }
@@ -234,8 +238,9 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                 await _supabase.from('testimonials').delete().eq('id', id);
                 _loadData();
                 if (mounted) Navigator.pop(context);
-                if (mounted)
+                if (mounted) {
                   showSuccessSnackBar(context, 'Testimoni berhasil dihapus!');
+                }
               } catch (e) {
                 if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
               }

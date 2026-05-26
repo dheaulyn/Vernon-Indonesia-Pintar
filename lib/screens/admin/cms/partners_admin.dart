@@ -1,4 +1,4 @@
-import 'dart:convert';
+// ignore_for_file: use_build_context_synchronously
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -75,8 +75,9 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                 await _supabase.from('partners').delete().eq('id', id);
                 _loadData();
                 if (mounted) Navigator.pop(context);
-                if (mounted)
+                if (mounted) {
                   showSuccessSnackBar(context, 'Partner berhasil dihapus!');
+                }
               } catch (e) {
                 if (mounted) showErrorSnackBar(context, 'Gagal menghapus: $e');
               }
@@ -321,28 +322,31 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                                 .from('partners')
                                 .update(data)
                                 .eq('id', partner['id']);
-                            if (mounted)
+                            if (mounted) {
                               showSuccessSnackBar(
                                 context,
                                 'Partner berhasil diperbarui',
                               );
+                            }
                           } else {
                             await _supabase.from('partners').insert(data);
-                            if (mounted)
+                            if (mounted) {
                               showSuccessSnackBar(
                                 context,
                                 'Partner berhasil ditambahkan',
                               );
+                            }
                           }
 
                           _loadData();
                           if (mounted) Navigator.pop(context);
                         } catch (e) {
-                          if (mounted)
+                          if (mounted) {
                             showErrorSnackBar(
                               context,
                               'Gagal menyimpan data: $e',
                             );
+                          }
                         } finally {
                           setModalState(() => isSaving = false);
                         }

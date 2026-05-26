@@ -150,8 +150,9 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         showErrorSnackBar(context, 'Gagal menyimpan: ${e.toString()}');
+      }
     } finally {
       setState(() => _isSaving = false);
     }

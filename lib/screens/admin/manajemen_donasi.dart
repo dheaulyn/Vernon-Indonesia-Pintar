@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../core/snackbar_helper.dart';
+import 'package:go_router/go_router.dart';
 
 // 👇 1. IMPORT SERVICE SUPABASE DONASI (Gantikan MockDatabase)
 import '../../../services/supabase_donasi_service.dart';
@@ -231,7 +233,8 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
   );
   final nominalController = TextEditingController();
   String? selectedKategori;
-  bool _isProcessing = false; // Tambahan indikator loading
+  bool _isProcessing = false;
+  final ValueNotifier<int> _inputNominal = ValueNotifier<int>(0);
 
   final List<String> kategoriList = [
     "Pendidikan & Vokasi",
@@ -240,8 +243,18 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    nominalController.addListener(() {
+      final raw = nominalController.text.replaceAll('.', '');
+      _inputNominal.value = int.tryParse(raw) ?? 0;
+    });
+  }
+
+  @override
   void dispose() {
     nominalController.dispose();
+    _inputNominal.dispose();
     super.dispose();
   }
 
@@ -291,13 +304,42 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                             valueListenable:
                                 SupabaseDonationService.danaTersalurkan,
                             builder: (context, tersalurkan, _) {
-                              int saldoAktif = total - tersalurkan;
-                              return Text(
-                                "Saldo Available: ${currencyFormat.format(saldoAktif)}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
+                              return ValueListenableBuilder<int>(
+                                valueListenable: _inputNominal,
+                                builder: (context, inputVal, _) {
+                                  int saldoAktif = total - tersalurkan;
+                                  int sisaSaldo = saldoAktif - inputVal;
+                                  bool isOver = sisaSaldo < 0;
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Saldo Tersedia: ${currencyFormat.format(saldoAktif)}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      if (inputVal > 0)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
+                                          child: Text(
+                                            "Sisa Saldo: ${currencyFormat.format(sisaSaldo)}",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: isOver
+                                                  ? Colors.red
+                                                  : Colors.green,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
                               );
                             },
                           );
@@ -310,9 +352,14 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                 TextField(
                   controller: nominalController,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    CurrencyFormat(),
+                  ],
                   decoration: const InputDecoration(
-                    labelText: "Nominal Pengeluaran (Rp)",
+                    labelText: "Nominal Pengeluaran",
                     border: OutlineInputBorder(),
+                    prefixText: "Rp ",
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -344,7 +391,9 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                                 selectedKategori != null) {
                               setState(() => _isProcessing = true);
                               try {
-                                int nominal = int.parse(nominalController.text);
+                                int nominal = int.parse(
+                                  nominalController.text.replaceAll('.', ''),
+                                );
 
                                 // 👇 EKSEKUSI KE CLOUD
                                 await SupabaseDonationService.catatPengeluaranKeCloud(
@@ -359,6 +408,7 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                                   );
                                   nominalController.clear();
                                   setState(() => selectedKategori = null);
+                                  context.go('/admin-donasi-keluar');
                                 }
                               } catch (e) {
                                 if (context.mounted) {
@@ -399,6 +449,32 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class CurrencyFormat extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue.copyWith(text: '');
+    String numericOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numericOnly.isEmpty) return newValue.copyWith(text: '');
+    String formatted = '';
+    int count = 0;
+    for (int i = numericOnly.length - 1; i >= 0; i--) {
+      if (count == 3) {
+        formatted = '.$formatted';
+        count = 0;
+      }
+      formatted = numericOnly[i] + formatted;
+      count++;
+    }
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

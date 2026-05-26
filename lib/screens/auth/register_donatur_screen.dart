@@ -71,6 +71,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _emailController.text,
       _passwordController.text,
       'donatur',
+      _phoneController.text,
     );
 
     if (!mounted) return;
@@ -240,17 +241,19 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildLabel('No. WhatsApp'),
+                                    _buildLabel('No. Telepon'),
                                     _buildTextField(
                                       controller: _phoneController,
-                                      hint: '08123456789',
+                                      hint: 'Contoh: 08123456789',
                                       keyboardType: TextInputType.phone,
                                       inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
+                                        FilteringTextInputFormatter.digitsOnly
                                       ],
-                                      validator: (val) => val!.isEmpty
-                                          ? 'No. WA wajib diisi'
-                                          : null,
+                                      validator: (val) {
+                                        if (val == null || val.trim().isEmpty) return 'Nomor Telepon tidak boleh kosong';
+                                        if (val.length < 10 || val.length > 14) return 'Nomor Telepon tidak valid (10-14 digit)';
+                                        return null;
+                                      },
                                     ),
                                   ],
                                 ),

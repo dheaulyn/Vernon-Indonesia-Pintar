@@ -340,6 +340,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                 ],
               ),
             ),
+            // ignore: deprecated_member_use
             Radio<String>(
               value: title,
               groupValue: groupValue,
@@ -589,11 +590,12 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                       ),
                       const SizedBox(height: 15),
                       TextFormField(
+                        initialValue: widget.user['whatsapp'] ?? widget.user['telepon'],
                         keyboardType: TextInputType.phone,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        decoration: _inputStyle("No. WhatsApp"),
+                        decoration: _inputStyle("No. Telepon"),
                         validator: _validatePhone,
                       ),
                     ],
@@ -612,11 +614,12 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                       const SizedBox(width: 15),
                       Expanded(
                         child: TextFormField(
+                          initialValue: widget.user['whatsapp'] ?? widget.user['telepon'],
                           keyboardType: TextInputType.phone,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                           ],
-                          decoration: _inputStyle("No. WhatsApp"),
+                          decoration: _inputStyle("No. Telepon"),
                           validator: _validatePhone,
                         ),
                       ),
@@ -718,10 +721,8 @@ class _FormDonasiViewState extends State<FormDonasiView> {
   }
 
   String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) return 'No WA wajib diisi';
-    final phoneRegex = RegExp(r'^[0-9]+$');
-    if (!phoneRegex.hasMatch(value)) return 'Hanya boleh berisi angka';
-    if (value.length < 9) return 'Nomor terlalu pendek';
+    if (value == null || value.trim().isEmpty) return 'Nomor Telepon tidak boleh kosong';
+    if (value.length < 10 || value.length > 14) return 'Nomor Telepon tidak valid (10-14 digit)';
     return null;
   }
 
@@ -737,6 +738,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
         highlightColor: Colors.transparent,
         child: Column(
           children: [
+            // ignore: deprecated_member_use
             Radio<int>(
               value: value,
               groupValue: _selectedNominal,
