@@ -205,6 +205,15 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           _buildTextField(
                             controller: _nameController,
                             hint: 'Masukkan nama lengkap Anda',
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [
+                              TextInputFormatter.withFunction((oldValue, newValue) {
+                                return newValue.copyWith(
+                                  text: newValue.text.toUpperCase(),
+                                  selection: newValue.selection,
+                                );
+                              }),
+                            ],
                             validator: (val) =>
                                 val!.isEmpty ? 'Nama tidak boleh kosong' : null,
                           ),
@@ -544,12 +553,14 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(

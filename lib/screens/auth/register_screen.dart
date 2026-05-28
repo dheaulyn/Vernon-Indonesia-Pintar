@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../core/snackbar_helper.dart';
@@ -259,6 +260,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _nameController,
+                          textCapitalization: TextCapitalization.characters,
+                          inputFormatters: [
+                            TextInputFormatter.withFunction((oldValue, newValue) {
+                              return newValue.copyWith(
+                                text: newValue.text.toUpperCase(),
+                                selection: newValue.selection,
+                              );
+                            }),
+                          ],
                           decoration: InputDecoration(
                             hintText: 'Sesuai KTP / Kartu Pelajar',
                             hintStyle: TextStyle(

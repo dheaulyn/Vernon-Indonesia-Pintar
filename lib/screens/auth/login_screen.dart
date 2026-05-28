@@ -290,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => context.go('/lupa-password'),
                             child: const Text(
                               'Lupa Password?',
                               style: TextStyle(

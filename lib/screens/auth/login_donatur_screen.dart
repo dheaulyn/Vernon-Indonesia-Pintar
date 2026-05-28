@@ -280,7 +280,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {},
+                            onPressed: () => context.go('/lupa-password?from=donatur'),
                             child: const Text(
                               'Lupa Password?',
                               style: TextStyle(

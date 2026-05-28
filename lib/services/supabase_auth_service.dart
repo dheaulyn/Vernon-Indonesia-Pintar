@@ -87,6 +87,50 @@ class SupabaseAuthService {
     }
   }
 
+  /// Mereset password dengan verifikasi data (email + nama lengkap).
+  /// Memanggil RPC function di Supabase yang memverifikasi identitas
+  /// dan langsung mengupdate password tanpa perlu email.
+  /// Mengembalikan null jika berhasil, atau pesan error jika gagal.
+  static Future<String?> verifyAndResetPassword(
+    String email,
+    String name,
+    String newPassword,
+  ) async {
+    try {
+      final result = await _client.rpc('reset_password_with_verification', params: {
+        'p_email': email.trim(),
+        'p_name': name.trim(),
+        'p_new_password': newPassword,
+      });
+
+      if (result == null) {
+        return 'Terjadi kesalahan. Silakan coba lagi.';
+      }
+
+      final Map<String, dynamic> response = result is Map<String, dynamic>
+          ? result
+          : Map<String, dynamic>.from(result as Map);
+
+      if (response['success'] == true) {
+        return null; // null = sukses
+      }
+
+      // Terjemahkan pesan error dari RPC
+      final message = response['message'] as String? ?? '';
+      switch (message) {
+        case 'EMAIL_NOT_FOUND':
+          return 'Email tidak ditemukan. Pastikan email yang Anda masukkan benar.';
+        case 'NAME_MISMATCH':
+          return 'Nama lengkap tidak cocok dengan data yang terdaftar.';
+        default:
+          return 'Terjadi kesalahan. Silakan coba lagi.';
+      }
+    } catch (e) {
+      debugPrint('verifyAndResetPassword Error: $e');
+      return 'Terjadi kesalahan. Silakan coba lagi.';
+    }
+  }
+
   /// Logout user
   static Future<void> logout() async {
     await _client.auth.signOut();
