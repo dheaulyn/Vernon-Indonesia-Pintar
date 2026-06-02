@@ -16,9 +16,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkRevisiStatus();
-    });
+    _refreshUserData();
+  }
+
+  Future<void> _refreshUserData() async {
+    try {
+      await SupabaseAuthService.restoreSession();
+      if (mounted) {
+        setState(() {});
+        _checkRevisiStatus();
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data: $e');
+    }
   }
 
   void _checkRevisiStatus() {

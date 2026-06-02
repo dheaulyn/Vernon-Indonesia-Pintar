@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/app_colors.dart';
 import 'shared/custom_navbar.dart';
@@ -193,7 +193,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                _detailData!['nama_program'] ?? "Program Karir",
+                "Program Karir Kurikulum 10 Bulan VIP",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 32 : 48,
@@ -204,7 +204,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                _detailData!['deskripsi'] ?? "",
+                "Pelatihan intensif terpadu untuk membekali generasi muda dengan keterampilan vokasional siap kerja, pembentukan karakter unggul, serta pendampingan karir hingga penempatan kerja.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
