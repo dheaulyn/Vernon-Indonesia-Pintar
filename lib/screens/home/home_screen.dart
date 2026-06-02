@@ -8,6 +8,7 @@ import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import 'widgets/about_section.dart';
 import '../../core/app_colors.dart';
+
 import '../../services/supabase_donasi_service.dart';
 import '../../services/supabase_cms_service.dart';
 
@@ -122,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET HERO BANNER
+  // HERO BANNER (Real-time via ValueListenableBuilder)
   // ==========================================
   Widget _buildNewHero(BuildContext context, bool isMobile) {
     return ValueListenableBuilder<Map<String, dynamic>>(
@@ -270,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET IMPACT SECTION
+  // IMPACT SECTION (Real-time Total Donasi)
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
     return Container(
@@ -332,14 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: _supabase.from('profiles').stream(primaryKey: ['id']).eq('role', 'siswa'),
-                  builder: (context, snapshot) {
-                    final profiles = snapshot.data ?? [];
-                    final count = profiles.where((p) => ['Diterima', 'Pelatihan', 'Lulus'].contains(p['admin_status'])).length;
-                    return _buildStatCard(count.toString(), "Penerima Beasiswa");
-                  },
-                ),
+                _buildStatCard("0", "Penerima Beasiswa"),
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Batch Aktif"),
                 const SizedBox(height: 20),
@@ -367,16 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 25),
-                Expanded(
-                  child: StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: _supabase.from('profiles').stream(primaryKey: ['id']).eq('role', 'siswa'),
-                    builder: (context, snapshot) {
-                      final profiles = snapshot.data ?? [];
-                      final count = profiles.where((p) => ['Diterima', 'Pelatihan', 'Lulus'].contains(p['admin_status'])).length;
-                      return _buildStatCard(count.toString(), "Penerima Beasiswa");
-                    },
-                  ),
-                ),
+                Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Batch Aktif")),
                 const SizedBox(width: 25),
@@ -433,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET PROGRAM UNGGULAN
+  // PROGRAM UNGGULAN (Single Card Preview untuk Beranda)
   // ==========================================
   Widget _buildProgramUnggulan(BuildContext context, {required bool isMobile}) {
     return Container(
@@ -447,47 +432,45 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Center(
         child: SizedBox(
           width: isMobile ? double.infinity : 1100,
-          child: Column(
-            children: [
-              const Text(
-                "PROGRAM UNGGULAN",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Wujudkan Perubahan Nyata",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isMobile ? 28 : 36,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 50),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade200),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: isMobile
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            height: 250,
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        height: 250,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: NetworkImage(
+                              'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                            ),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      _buildProgramCardContent(context, isMobile: true),
+                    ],
+                  )
+                : IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: Container(
                             decoration: const BoxDecoration(
                               image: DecorationImage(
                                 image: NetworkImage(
@@ -497,38 +480,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          _buildProgramCardContent(context, isMobile: true),
-                        ],
-                      )
-                    : IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  image: DecorationImage(
-                                    image: NetworkImage(
-                                      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 7,
-                              child: _buildProgramCardContent(
-                                context,
-                                isMobile: false,
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
-              ),
-            ],
+                        Expanded(
+                          flex: 7,
+                          child: _buildProgramCardContent(
+                            context,
+                            isMobile: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
           ),
         ),
       ),
@@ -655,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET TESTIMONIAL SECTION (SUDAH REALTIME)
+  // TESTIMONIAL SECTION (Real-time)
   // ==========================================
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
@@ -689,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
             stream: _supabase
                 .from('testimonials')
                 .stream(primaryKey: ['id'])
-                .order('created_at', ascending: false), // Update otomatis
+                .order('created_at', ascending: false),
             builder: (context, snapshot) {
               final testimonials = snapshot.data ?? [];
 
@@ -724,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET OUR PARTNER SECTION (SUDAH REALTIME)
+  // PARTNER SECTION (Real-time)
   // ==========================================
   Widget _buildPartnerSection(bool isMobile) {
     return Container(
@@ -754,7 +716,7 @@ class _HomeScreenState extends State<HomeScreen> {
             stream: _supabase
                 .from('partners')
                 .stream(primaryKey: ['id'])
-                .order('created_at', ascending: false), // Update otomatis
+                .order('created_at', ascending: false),
             builder: (context, snapshot) {
               final partners = snapshot.data ?? [];
 
@@ -842,14 +804,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // WIDGET FAQ SECTION (SUDAH REALTIME)
+  // FAQ SECTION (Real-time)
   // ==========================================
   Widget _buildFAQSection(BuildContext context, bool isMobile) {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase
           .from('faqs')
           .stream(primaryKey: ['id'])
-          .order('created_at', ascending: false), // Update otomatis
+          .order('created_at', ascending: false),
       builder: (context, snapshot) {
         final faqs = snapshot.data ?? [];
         final previewFaqs = faqs.take(4).toList();
@@ -887,7 +849,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
             ),
             SizedBox(height: isMobile ? 30 : 40),
-            FAQAccordion(faqs: previewFaqs), // Pass data FAQ Supabase
+            FAQAccordion(faqs: previewFaqs),
             SizedBox(height: isMobile ? 20 : 30),
             ElevatedButton(
               onPressed: () => context.go('/pusat-bantuan'),
@@ -1019,7 +981,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
               iconColor: AppColors.primary,
               collapsedIconColor: Colors.grey,
               title: Text(
-                faq["question"] ?? '',
+                faq["question"] ?? faq["tanya"] ?? '',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -1041,7 +1003,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      faq["answer"] ?? '',
+                      faq["answer"] ?? faq["jawab"] ?? '',
                       style: TextStyle(
                         color: Colors.grey.shade700,
                         height: 1.6,
@@ -1060,7 +1022,7 @@ class _FAQAccordionState extends State<FAQAccordion> {
 }
 
 // ==========================================
-// TestimonialCard WIDGET
+// TESTIMONIAL CARD WIDGET
 // ==========================================
 class TestimonialCard extends StatefulWidget {
   final String name;
@@ -1095,11 +1057,7 @@ class _TestimonialCardState extends State<TestimonialCard> {
         width: widget.isMobile ? 300 : 400,
         margin: const EdgeInsets.only(right: 24, bottom: 20, top: 10),
         padding: const EdgeInsets.all(30),
-        transform: Matrix4.diagonal3Values(
-          _isHovered ? 1.03 : 1.0,
-          _isHovered ? 1.03 : 1.0,
-          1.0,
-        ),
+        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFF2B2B2B),
@@ -1111,7 +1069,7 @@ class _TestimonialCardState extends State<TestimonialCard> {
           boxShadow: [
             if (_isHovered)
               BoxShadow(
-                color: Colors.red.withValues(alpha: 0.15),
+                color: Colors.red.withOpacity(0.15),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 10),

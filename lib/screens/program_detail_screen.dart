@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
-
-import '../../core/app_colors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'shared/custom_navbar.dart';
 import 'shared/custom_footer.dart';
+import '../../core/app_colors.dart';
 
 class ProgramDetailScreen extends StatefulWidget {
   const ProgramDetailScreen({super.key});
@@ -14,37 +13,7 @@ class ProgramDetailScreen extends StatefulWidget {
 }
 
 class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
-  // 👇 Data sekarang bertipe dynamic
-  Map<String, dynamic>? _detailData;
-  bool _isLoading = true;
   final _supabase = Supabase.instance.client;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchProgramData();
-  }
-
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
-  Future<void> _fetchProgramData() async {
-    try {
-      final response = await _supabase
-          .from('programs')
-          .select()
-          .eq('id', 1) // Ambil program dengan ID 1
-          .maybeSingle();
-
-      if (mounted) {
-        setState(() {
-          _detailData = response;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Gagal memuat program: $e');
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   IconData _getIconForIndex(int index) {
     const icons = [
@@ -61,185 +30,312 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final bool isMobile = screenWidth < 850;
+    final bool isMobile = screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _detailData == null
-          ? const Center(child: Text("Data program tidak ditemukan."))
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildHeroSection(context, isMobile),
-                  Container(
-                    width: isMobile ? double.infinity : 1000,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 20 : 0,
-                      vertical: 50,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle(
-                          "Syarat & Ketentuan",
-                          "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
-                        ),
-                        const SizedBox(height: 30),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // 1. HEADER TEKS, 3 FASE, FASILITAS & TOMBOL DAFTAR
+            _buildPhasesSection(context, isMobile),
 
-                        // 👇 DATA SYARAT DINAMIS DARI SUPABASE
-                        ...List.generate(
-                          (_detailData!['syarat_ketentuan'] as List).length,
-                          (index) {
-                            final req =
-                                (_detailData!['syarat_ketentuan']
-                                    as List)[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: _buildRequirementCard(
-                                req['title'] ?? '',
-                                _getIconForIndex(index),
-                                List<String>.from(req['points'] ?? []),
-                              ),
-                            );
-                          },
-                        ),
+            // 2. SYARAT, KETENTUAN & ALUR PENDAFTARAN (Real-time dari Supabase)
+            _buildDynamicRequirements(isMobile),
 
-                        const SizedBox(height: 80),
-
-                        _buildSectionTitle(
-                          "Alur Pendaftaran & Seleksi",
-                          "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
-                        ),
-                        const SizedBox(height: 40),
-
-                        // 👇 DATA ALUR DINAMIS DARI SUPABASE
-                        ...List.generate(
-                          (_detailData!['alur_pendaftaran'] as List).length,
-                          (index) {
-                            final step =
-                                (_detailData!['alur_pendaftaran']
-                                    as List)[index];
-                            return _buildTimelineStep(
-                              index + 1,
-                              step['title'] ?? '',
-                              step['description'] ?? '',
-                              isLast:
-                                  index ==
-                                  (_detailData!['alur_pendaftaran'] as List)
-                                          .length -
-                                      1,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const CustomFooter(),
-                ],
-              ),
-            ),
+            // 3. FOOTER
+            const CustomFooter(),
+          ],
+        ),
+      ),
     );
   }
 
-  // =====================================
-  // WIDGET-WIDGET HERO & SECTION (SAMA SEPERTI KODE LAMA)
-  // =====================================
-  Widget _buildHeroSection(BuildContext context, bool isMobile) {
+  Widget _buildPhasesSection(BuildContext context, bool isMobile) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 0,
-        vertical: isMobile ? 60 : 100,
-      ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E2329),
-        image: DecorationImage(
-          image: NetworkImage(
-            'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=2000&auto=format&fit=crop',
-          ),
-          fit: BoxFit.cover,
-          opacity: 0.15,
-        ),
+      color: Colors.white,
+      padding: EdgeInsets.only(
+        left: isMobile ? 24 : 80,
+        right: isMobile ? 24 : 80,
+        top: 100,
+        bottom: 80,
       ),
       child: Center(
-        child: SizedBox(
-          width: isMobile ? double.infinity : 900,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: const Text(
-                  "PROGRAM UNGGULAN",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    fontSize: 12,
-                  ),
+              // HEADER TEKS
+              const Text(
+                "PROGRAM KARIR",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               Text(
-                _detailData!['nama_program'] ?? "Program Karir",
+                "Kurikulum VIP (10 Bulan)",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 32 : 48,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  height: 1.2,
+                  color: Colors.black87,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
               Text(
-                _detailData!['deskripsi'] ?? "",
+                "Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
-                  color: Colors.white70,
-                  height: 1.5,
+                  color: Colors.grey.shade600,
                 ),
               ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () => context.go('/register'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
+              const SizedBox(height: 60),
+
+              // 3 FASE DENGAN ANIMASI DYNAMIC HOVER
+              if (isMobile)
+                Column(
+                  children: const [
+                    PhaseCard(
+                      phase: "FASE 1",
+                      title: "Pelatihan Intensif",
+                      desc:
+                          "Membangun fondasi karakter dan keahlian teknis dasar selama 3 bulan pertama.",
+                      items: [
+                        "Soft Skill & Komunikasi",
+                        "Literasi Digital & AI",
+                        "Peminatan Technical Track",
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    PhaseCard(
+                      phase: "FASE 2",
+                      title: "Pemagangan Industri",
+                      desc:
+                          "4 bulan terjun langsung ke dunia kerja melalui jaringan mitra perusahaan VIP.",
+                      items: [
+                        "On-the-Job Training",
+                        "Mentorship Profesional",
+                        "Project Berbasis Industri",
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    PhaseCard(
+                      phase: "FASE 3",
+                      title: "Penyaluran Kerja",
+                      desc:
+                          "3 bulan terakhir fokus pada penempatan kerja dan kemandirian finansial.",
+                      items: [
+                        "Job Readiness Workshop",
+                        "Interview Coaching",
+                        "Penempatan Kerja Permanen",
+                      ],
+                    ),
+                  ],
+                )
+              else
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: const [
+                      Expanded(
+                        child: PhaseCard(
+                          phase: "FASE 1",
+                          title: "Pelatihan Intensif",
+                          desc:
+                              "Membangun fondasi karakter dan keahlian teknis dasar selama 3 bulan pertama.",
+                          items: [
+                            "Soft Skill & Komunikasi",
+                            "Literasi Digital & AI",
+                            "Peminatan Technical Track",
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: PhaseCard(
+                          phase: "FASE 2",
+                          title: "Pemagangan Industri",
+                          desc:
+                              "4 bulan terjun langsung ke dunia kerja melalui jaringan mitra perusahaan VIP.",
+                          items: [
+                            "On-the-Job Training",
+                            "Mentorship Profesional",
+                            "Project Berbasis Industri",
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: PhaseCard(
+                          phase: "FASE 3",
+                          title: "Penyaluran Kerja",
+                          desc:
+                              "3 bulan terakhir fokus pada penempatan kerja dan kemandirian finansial.",
+                          items: [
+                            "Job Readiness Workshop",
+                            "Interview Coaching",
+                            "Penempatan Kerja Permanen",
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
                 ),
-                child: const Text(
-                  "DAFTAR SEKARANG",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                    fontSize: 15,
-                  ),
+
+              const SizedBox(height: 60),
+
+              // FASILITAS BANNER SEKALIGUS KOTAK CALL-TO-ACTION (CTA)
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  vertical: isMobile ? 40 : 60,
+                  horizontal: isMobile ? 30 : 50,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.accentBlack,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      "Fasilitas Beasiswa Penuh",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Wrap(
+                      spacing: 15,
+                      runSpacing: 15,
+                      alignment: WrapAlignment.center,
+                      children: const [
+                        FasilitasPill(text: "Laptop & Alat Belajar"),
+                        FasilitasPill(text: "Uang Saku Bulanan"),
+                        FasilitasPill(text: "Akomodasi (Mess)"),
+                        FasilitasPill(text: "Sertifikasi Industri"),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
+
+                    // 👇 TOMBOL DAFTAR SEKARANG DIARAHKAN KE LOGIN SISWA 👇
+                    ElevatedButton(
+                      onPressed: () => context.go(
+                        '/login',
+                      ), // Sesuaikan dengan route login pendaftarmu
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 50,
+                          vertical: 20,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 5,
+                        shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                      ),
+                      child: const Text(
+                        "DAFTAR SEKARANG",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildDynamicRequirements(bool isMobile) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _supabase.from('programs').stream(primaryKey: ['id']).eq('id', 1),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final programData = snapshot.data!.first;
+        final syaratList = (programData['syarat_ketentuan'] as List?) ?? [];
+        final alurList = (programData['alur_pendaftaran'] as List?) ?? [];
+
+        return Container(
+          width: double.infinity,
+          color: Colors.white,
+          padding: EdgeInsets.only(
+            left: isMobile ? 24 : 80,
+            right: isMobile ? 24 : 80,
+            bottom: 80,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // SYARAT & KETENTUAN
+                  _buildSectionTitle(
+                    "Syarat & Ketentuan",
+                    "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
+                  ),
+                  const SizedBox(height: 30),
+                  ...List.generate(syaratList.length, (index) {
+                    final req = syaratList[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _buildRequirementCard(
+                        req['title'] ?? '',
+                        _getIconForIndex(index),
+                        List<String>.from(req['points'] ?? []),
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 80),
+
+                  // ALUR PENDAFTARAN
+                  _buildSectionTitle(
+                    "Alur Pendaftaran & Seleksi",
+                    "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
+                  ),
+                  const SizedBox(height: 40),
+                  ...List.generate(alurList.length, (index) {
+                    final step = alurList[index];
+                    return _buildTimelineStep(
+                      index + 1,
+                      step['title'] ?? '',
+                      step['description'] ?? '',
+                      isLast: index == alurList.length - 1,
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -415,6 +511,168 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ==========================================
+// WIDGET CARD FASE (DENGAN ANIMASI HOVER)
+// ==========================================
+class PhaseCard extends StatefulWidget {
+  final String phase;
+  final String title;
+  final String desc;
+  final List<String> items;
+
+  const PhaseCard({
+    super.key,
+    required this.phase,
+    required this.title,
+    required this.desc,
+    required this.items,
+  });
+
+  @override
+  State<PhaseCard> createState() => _PhaseCardState();
+}
+
+class _PhaseCardState extends State<PhaseCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onHover: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(30),
+        transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9F9F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _isHovered ? AppColors.primary : Colors.transparent,
+            width: 1.5,
+          ),
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.10),
+                blurRadius: 20,
+                spreadRadius: 2,
+                offset: const Offset(0, 10),
+              )
+            else
+              const BoxShadow(color: Colors.transparent),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: _isHovered ? AppColors.primary : AppColors.accentBlack,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                widget.phase,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              widget.desc,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                height: 1.6,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 25),
+            ...widget.items
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// WIDGET PILL FASILITAS
+// ==========================================
+class FasilitasPill extends StatefulWidget {
+  final String text;
+  const FasilitasPill({super.key, required this.text});
+
+  @override
+  State<FasilitasPill> createState() => _FasilitasPillState();
+}
+
+class _FasilitasPillState extends State<FasilitasPill> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onHover: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          color: _isHovered ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Text(
+          widget.text,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: _isHovered ? Colors.white : Colors.black87,
+            fontSize: 15,
+          ),
+        ),
       ),
     );
   }
