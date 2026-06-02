@@ -249,8 +249,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           })
           .eq('id', _programId);
 
-      if (mounted)
+      if (mounted) {
         showSuccessSnackBar(context, 'Data Program VIP berhasil diperbarui!');
+      }
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
     } finally {
