@@ -32,7 +32,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
       final response = await _supabase
           .from('partners')
           .select()
-          .order('created_at', ascending: false);
+          .order('sort_order', ascending: true);
 
       if (mounted) {
         setState(() {
@@ -312,7 +312,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                                 .getPublicUrl(fileName);
                           }
 
-                          final data = {
+                          final Map<String, dynamic> data = {
                             'name': nameController.text.trim(),
                             'image_url': finalImageUrl,
                           };
@@ -329,6 +329,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                               );
                             }
                           } else {
+                            data['sort_order'] = _partners.length;
                             await _supabase.from('partners').insert(data);
                             if (mounted) {
                               showSuccessSnackBar(
@@ -418,72 +419,111 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                 ? const Center(
                     child: Text("Belum ada partner. Silakan tambah baru."),
                   )
-                : GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
-                          crossAxisSpacing: 20,
-                          mainAxisSpacing: 20,
-                          childAspectRatio: 1.1,
-                        ),
+                : ReorderableListView.builder(
+                    buildDefaultDragHandles: false,
+                    proxyDecorator: (child, index, animation) {
+                      return Material(
+                        elevation: 4,
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: child,
+                      );
+                    },
+                    onReorder: (oldIndex, newIndex) async {
+                      setState(() {
+                        if (oldIndex < newIndex) {
+                          newIndex -= 1;
+                        }
+                        final item = _partners.removeAt(oldIndex);
+                        _partners.insert(newIndex, item);
+                      });
+
+                      try {
+                        for (int i = 0; i < _partners.length; i++) {
+                          await _supabase
+                              .from('partners')
+                              .update({'sort_order': i})
+                              .eq('id', _partners[i]['id']);
+                        }
+                        if (mounted) {
+                          showSuccessSnackBar(
+                            context,
+                            'Urutan partner berhasil diperbarui!',
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          showErrorSnackBar(
+                            context,
+                            'Gagal menyimpan urutan: $e',
+                          );
+                        }
+                      }
+                    },
                     itemCount: _partners.length,
                     itemBuilder: (context, index) {
                       final p = _partners[index];
                       return Card(
+                        key: ValueKey(p['id']),
+                        margin: const EdgeInsets.only(bottom: 12),
                         color: Colors.white,
-                        elevation: 2,
+                        elevation: 1,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey.shade200),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: _buildImageDisplay(url: p['image_url'] ?? ''),
+                          ),
+                          title: Text(
+                            p['name'] ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  width: double.infinity,
-                                  child: _buildImageDisplay(
-                                    url: p['image_url'] ?? '',
-                                  ), // 👇 Render dari Supabase URL
+                              IconButton(
+                                tooltip: "Edit",
+                                onPressed: () => _showFormDialog(partner: p),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                  size: 20,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                p['name'] ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                              IconButton(
+                                tooltip: "Hapus",
+                                onPressed: () => _confirmDeletePartner(p['id']),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                  size: 20,
                                 ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 5),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    tooltip: "Edit",
-                                    onPressed: () =>
-                                        _showFormDialog(partner: p),
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      size: 18,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    tooltip: "Hapus",
-                                    onPressed: () =>
-                                        _confirmDeletePartner(p['id']),
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      size: 18,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(width: 8),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const Icon(
+                                  Icons.drag_handle_rounded,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),

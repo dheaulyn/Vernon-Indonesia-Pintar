@@ -159,11 +159,6 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                             TextFormField(
                               controller: _emailController,
                               decoration: InputDecoration(
-                                hintText: 'admin@yayasan.vip',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontSize: 14,
-                                ),
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                                 border: OutlineInputBorder(
@@ -205,11 +200,6 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                               controller: _passwordController,
                               obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
-                                hintText: '••••••••',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontSize: 14,
-                                ),
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                                 border: OutlineInputBorder(

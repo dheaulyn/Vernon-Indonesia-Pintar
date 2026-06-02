@@ -71,6 +71,27 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
         ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
       _selectedPendidikan = user['pendidikan'];
     }
+    _refreshUserData();
+  }
+
+  Future<void> _refreshUserData() async {
+    try {
+      await SupabaseAuthService.restoreSession();
+      final user = SupabaseAuthService.currentUserData ?? {};
+      if (mounted) {
+        setState(() {
+          _nameController.text = user['name'] ?? '';
+          _emailController.text = user['email'] ?? '';
+          _phoneController.text = user['telepon'] ?? user['whatsapp'] ?? '';
+          if (user['pendidikan'] != null &&
+              ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
+            _selectedPendidikan = user['pendidikan'];
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data: $e');
+    }
   }
 
   Future<void> _loadProvinces() async {
@@ -580,6 +601,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                     _buildFileUploadField(
                       label: "Pas Foto 3x4 Terbaru (2 lembar) (Wajib)",
                       hint: "Pilih file Pas Foto...",
+                      description: "* 2 lembar pas foto digabungkan menjadi 1 file PDF",
                       fileName: _fileFoto?.name,
                       onTap: () => _pickFile('foto'),
                     ),
@@ -913,6 +935,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     required String hint,
     required String? fileName,
     required VoidCallback onTap,
+    String? description,
   }) {
     // Cek apakah file kosong dan user sudah pernah klik "Kirim Pendaftaran"
     bool hasError =
@@ -927,6 +950,17 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
             label,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
+          if (description != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           InkWell(
             onTap: onTap,

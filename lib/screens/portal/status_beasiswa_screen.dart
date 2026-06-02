@@ -76,11 +76,6 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
       _selectedPendidikan = user['pendidikan'];
     }
 
-    if (user['pendidikan'] != null &&
-        ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
-      _selectedPendidikan = user['pendidikan'];
-    }
-
     _nikController = TextEditingController(text: user['nik'] ?? '');
     _asalSekolahController =
         TextEditingController(text: user['asal_sekolah'] ?? '');
@@ -88,6 +83,38 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
         TextEditingController(text: user['tahun_lulus']?.toString() ?? '');
 
     _initWilayahData(user['domisili'] ?? '');
+    _refreshUserData();
+  }
+
+  Future<void> _refreshUserData() async {
+    try {
+      await SupabaseAuthService.restoreSession();
+      final user = SupabaseAuthService.currentUserData ?? {};
+      if (mounted) {
+        setState(() {
+          _currentStep = user['current_step'] ?? 0;
+          _isRevisi = user['is_revisi'] == true;
+          _catatanRevisi = user['catatan_revisi'] ?? '';
+          _isReadOnly = !_isRevisi;
+
+          _nameController.text = user['name'] ?? '';
+          _emailController.text = user['email'] ?? '';
+          _phoneController.text = user['telepon'] ?? '';
+
+          if (user['pendidikan'] != null &&
+              ["SD", "SMP", "SMA"].contains(user['pendidikan'])) {
+            _selectedPendidikan = user['pendidikan'];
+          }
+
+          _nikController.text = user['nik'] ?? '';
+          _asalSekolahController.text = user['asal_sekolah'] ?? '';
+          _tahunLulusController.text = user['tahun_lulus']?.toString() ?? '';
+        });
+        _initWilayahData(user['domisili'] ?? '');
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data: $e');
+    }
   }
 
   Future<void> _initWilayahData(String domisili) async {
@@ -343,6 +370,8 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
       );
     }
 
+    final bool isDitolak = user['admin_status'] == 'Ditolak';
+
     return PortalLayout(
       activeMenu: 'status_beasiswa',
       content: SingleChildScrollView(
@@ -368,7 +397,10 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(
+                  color: isDitolak ? Colors.red.shade200 : Colors.blue.shade200,
+                  width: isDitolak ? 2 : 1,
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -386,30 +418,41 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _getStatusText(_currentStep),
+                    isDitolak ? 'Tidak Lolos Seleksi (Ditolak)' : _getStatusText(_currentStep),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade800,
+                      color: isDitolak ? Colors.red.shade800 : Colors.blue.shade800,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  LinearProgressIndicator(
-                    value: (_currentStep + 1) / 6.0,
-                    backgroundColor: Colors.grey.shade200,
-                    color: Colors.blue.shade700,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  if (isDitolak)
+                    Text(
+                      'Mohon maaf, pendaftaran Anda belum memenuhi kriteria seleksi beasiswa Vernon Indonesia Pintar (VIP) saat ini. Terima kasih atas partisipasi Anda dan tetap semangat!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade700,
+                        height: 1.5,
+                      ),
+                    )
+                  else
+                    LinearProgressIndicator(
+                      value: (_currentStep + 1) / 6.0,
+                      backgroundColor: Colors.grey.shade200,
+                      color: Colors.blue.shade700,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 30),
 
             // ==========================================
-            // 👇 KARTU JADWAL WAWANCARA (MUNCUL JIKA TAHAP 2)
+            // 👇 KARTU JADWAL WAWANCARA (MUNCUL JIKA TAHAP 2 & TIDAK DITOLAK)
             // ==========================================
-            if (_currentStep == 2 &&
+            if (!isDitolak &&
+                _currentStep == 2 &&
                 SupabaseAuthService.currentUserData?['jadwal_wawancara'] != null &&
                 SupabaseAuthService.currentUserData!['jadwal_wawancara']
                     .toString()
@@ -752,8 +795,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       onTap: () => _pickFile('ijazah'),
                     ),
                     _buildFileUploadField(
-                      label: "Pas Foto 3x4 Terbaru (Wajib)",
+                      label: "Pas Foto 3x4 Terbaru (2 lembar) (Wajib)",
                       hint: "Pilih file Pas Foto...",
+                      description: "* 2 lembar pas foto digabungkan menjadi 1 file PDF",
                       fileName: _fileFoto?.name ?? _getFileNameFromUrl(user['file_foto']),
                       fileUrl: _fileFoto == null ? user['file_foto'] : null,
                       onTap: () => _pickFile('foto'),
@@ -1043,6 +1087,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     required String? fileName,
     String? fileUrl,
     required VoidCallback onTap,
+    String? description,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -1053,6 +1098,17 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             label,
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
+          if (description != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

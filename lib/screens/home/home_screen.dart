@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey stepKey = GlobalKey();
 
   final _supabase = Supabase.instance.client;
+  bool _faqLoaded = false;
 
   @override
   void initState() {
@@ -693,7 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 24 : 80,
-        vertical: 60,
+        vertical: isMobile ? 80 : 100,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -701,22 +702,31 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            "Our Partners",
-            textAlign: TextAlign.center,
+          const Text(
+            "MITRA & PARTNER",
             style: TextStyle(
-              color: Colors.grey.shade500,
+              color: Colors.red,
               fontWeight: FontWeight.bold,
-              letterSpacing: 2,
+              letterSpacing: 1.5,
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 10),
+          Text(
+            "Didukung oleh Institusi & Perusahaan Terpercaya",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 24 : 32,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 50),
           StreamBuilder<List<Map<String, dynamic>>>(
             stream: _supabase
                 .from('partners')
                 .stream(primaryKey: ['id'])
-                .order('created_at', ascending: false),
+                .order('sort_order', ascending: true), // Update otomatis
             builder: (context, snapshot) {
               final partners = snapshot.data ?? [];
 
@@ -730,13 +740,14 @@ class _HomeScreenState extends State<HomeScreen> {
               return Wrap(
                 alignment: WrapAlignment.center,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: isMobile ? 30 : 60,
-                runSpacing: 30,
+                spacing: isMobile ? 20 : 30,
+                runSpacing: isMobile ? 20 : 30,
                 children: partners
                     .map(
-                      (p) => _buildPartnerLogo(
-                        p['image_url'] ?? '',
-                        p['name'] ?? '',
+                      (p) => PartnerCard(
+                        imageSource: p['image_url'] ?? '',
+                        name: p['name'] ?? '',
+                        isMobile: isMobile,
                       ),
                     )
                     .toList(),
@@ -745,61 +756,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPartnerLogo(String imageSource, String name) {
-    Widget imageWidget;
-    final double logoHeight = 60.0;
-
-    if (imageSource.isEmpty) {
-      imageWidget = Icon(
-        Icons.business,
-        color: Colors.grey.shade400,
-        size: logoHeight,
-      );
-    } else if (imageSource.startsWith('http')) {
-      imageWidget = Image.network(
-        imageSource,
-        height: logoHeight,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => Icon(
-          Icons.broken_image,
-          color: Colors.grey.shade400,
-          size: logoHeight,
-        ),
-      );
-    } else {
-      try {
-        imageWidget = Image.memory(
-          base64Decode(imageSource),
-          height: logoHeight,
-          fit: BoxFit.contain,
-        );
-      } catch (e) {
-        imageWidget = Icon(
-          Icons.broken_image,
-          color: Colors.grey.shade400,
-          size: logoHeight,
-        );
-      }
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Tooltip(message: name, child: imageWidget),
-        const SizedBox(height: 12),
-        Text(
-          name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-            fontSize: 14,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
     );
   }
 
@@ -813,6 +769,14 @@ class _HomeScreenState extends State<HomeScreen> {
           .stream(primaryKey: ['id'])
           .order('created_at', ascending: false),
       builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.waiting && !_faqLoaded) {
+          _faqLoaded = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (widget.targetSection == 'faq' && mounted) {
+              _autoScrollToTarget();
+            }
+          });
+        }
         final faqs = snapshot.data ?? [];
         final previewFaqs = faqs.take(4).toList();
 
@@ -882,8 +846,13 @@ class _HomeScreenState extends State<HomeScreen> {
               return const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.black, Colors.black, Colors.transparent],
-                stops: [0.0, 0.6, 1.0],
+                colors: [
+                  Colors.black,
+                  Colors.black,
+                  Colors.transparent,
+                  Colors.transparent,
+                ],
+                stops: [0.0, 0.6, 0.95, 1.0],
               ).createShader(bounds);
             },
             blendMode: BlendMode.dstIn,
@@ -1134,3 +1103,131 @@ class _TestimonialCardState extends State<TestimonialCard> {
     );
   }
 }
+
+// ==========================================
+// PartnerCard WIDGET
+// ==========================================
+class PartnerCard extends StatefulWidget {
+  final String imageSource;
+  final String name;
+  final bool isMobile;
+
+  const PartnerCard({
+    super.key,
+    required this.imageSource,
+    required this.name,
+    required this.isMobile,
+  });
+
+  @override
+  State<PartnerCard> createState() => _PartnerCardState();
+}
+
+class _PartnerCardState extends State<PartnerCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final double cardWidth = widget.isMobile ? 150.0 : 210.0;
+    final double cardHeight = widget.isMobile ? 110.0 : 150.0;
+    final double logoHeight = widget.isMobile ? 50.0 : 70.0;
+
+    Widget imageWidget;
+    if (widget.imageSource.isEmpty) {
+      imageWidget = Icon(
+        Icons.business,
+        color: Colors.grey.shade400,
+        size: logoHeight,
+      );
+    } else if (widget.imageSource.startsWith('http')) {
+      imageWidget = Image.network(
+        widget.imageSource,
+        height: logoHeight,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => Icon(
+          Icons.broken_image,
+          color: Colors.grey.shade400,
+          size: logoHeight,
+        ),
+      );
+    } else {
+      try {
+        imageWidget = Image.memory(
+          base64Decode(widget.imageSource),
+          height: logoHeight,
+          fit: BoxFit.contain,
+        );
+      } catch (e) {
+        imageWidget = Icon(
+          Icons.broken_image,
+          color: Colors.grey.shade400,
+          size: logoHeight,
+        );
+      }
+    }
+
+    return MouseRegion(
+      onHover: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        width: cardWidth,
+        height: cardHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        transform: Matrix4.diagonal3Values(
+          _isHovered ? 1.05 : 1.0,
+          _isHovered ? 1.05 : 1.0,
+          1.0,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _isHovered ? Colors.red : Colors.grey.shade200,
+            width: _isHovered ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            if (_isHovered)
+              BoxShadow(
+                color: Colors.red.withValues(alpha: 0.1),
+                blurRadius: 15,
+                spreadRadius: 1,
+                offset: const Offset(0, 6),
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Center(
+                child: imageWidget,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: _isHovered ? Colors.red.shade700 : Colors.black87,
+                fontSize: widget.isMobile ? 12 : 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

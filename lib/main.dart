@@ -20,6 +20,7 @@ import 'screens/home/fund_pool_screen.dart';
 import 'screens/donatur/donatur_dashboard_screen.dart';
 import 'screens/auth/login_donatur_screen.dart';
 import 'screens/auth/register_donatur_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/media/artikel/artikel_detail_screen.dart';
 
@@ -97,6 +98,13 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/login-donatur',
       builder: (context, state) => const LoginDonaturScreen(),
+    ),
+    GoRoute(
+      path: '/lupa-password',
+      builder: (context, state) {
+        final from = state.uri.queryParameters['from'];
+        return ForgotPasswordScreen(from: from);
+      },
     ),
     GoRoute(
       path: '/register-donatur',
