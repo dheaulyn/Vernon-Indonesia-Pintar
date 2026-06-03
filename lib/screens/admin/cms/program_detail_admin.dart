@@ -40,6 +40,8 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  final TextEditingController _namaProgramCtrl = TextEditingController();
+  final TextEditingController _deskripsiCtrl = TextEditingController();
   final List<TextEditingController> _fasilitasControllers = [];
   final List<PhaseController> _phaseControllers = [];
   final List<ReqController> _reqControllers = [];
@@ -54,8 +56,8 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   @override
   void initState() {
     super.initState();
-    // Sekarang ada 4 Tab.
-    _tabController = TabController(length: 4, vsync: this);
+    // Sekarang ada 5 Tab.
+    _tabController = TabController(length: 5, vsync: this);
     _loadDataFromSupabase();
   }
 
@@ -69,6 +71,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           .maybeSingle();
 
       if (response != null) {
+        _namaProgramCtrl.text = response['nama_program']?.toString() ?? '';
+        _deskripsiCtrl.text = response['deskripsi']?.toString() ?? '';
+
         // 1. Load Fasilitas.
         _fasilitasControllers.clear();
         final fasData = response['fasilitas'];
@@ -242,6 +247,8 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
       await _supabase
           .from('programs')
           .update({
+            'nama_program': _namaProgramCtrl.text.trim(),
+            'deskripsi': _deskripsiCtrl.text.trim(),
             'fasilitas': updatedFasilitas,
             'fase_program': updatedPhases,
             'syarat_ketentuan': updatedReqs,
@@ -326,6 +333,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
               indicatorColor: AppColors.primary,
               isScrollable: true,
               tabs: const [
+                Tab(text: 'Umum'),
                 Tab(text: 'Fasilitas'),
                 Tab(text: 'Fase Program'),
                 Tab(text: 'Syarat & Ketentuan'),
@@ -339,6 +347,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
             child: TabBarView(
               controller: _tabController,
               children: [
+                _buildUmumTab(),
                 _buildFasilitasTab(),
                 _buildFaseTab(),
                 _buildRequirementsTab(),
@@ -347,6 +356,48 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // UMUM
+  // =========================================================================
+  Widget _buildUmumTab() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(25),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Informasi Umum Program",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _namaProgramCtrl,
+              decoration: const InputDecoration(
+                labelText: "Judul Program",
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _deskripsiCtrl,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: "Deskripsi Program",
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
