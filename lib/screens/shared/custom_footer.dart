@@ -66,7 +66,7 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 15),
 
-            // 👇 Alamat (Bisa diklik untuk buka Maps, link sudah diperbaiki)
+            // Alamat (Bisa diklik untuk buka Maps, link sudah diperbaiki).
             InkWell(
               onTap: () {
                 final alamat = footerData['alamat'] ?? '';
@@ -89,7 +89,7 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 15),
 
-            // 👇 Email dengan Ikon Amplop Penanda
+            // Email dengan Ikon Amplop Penanda.
             Row(
               mainAxisAlignment: isMobile
                   ? MainAxisAlignment.center
@@ -115,7 +115,7 @@ class CustomFooter extends StatelessWidget {
             ),
             const SizedBox(height: 25),
 
-            // 👇 Ikon sosmed sisa WhatsApp dan Instagram
+            // Ikon sosmed sisa WhatsApp dan Instagram.
             Row(
               mainAxisAlignment: isMobile
                   ? MainAxisAlignment.center

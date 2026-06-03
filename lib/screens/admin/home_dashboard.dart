@@ -39,10 +39,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // ==========================================
+    // =========================================================================
     // LOGIKA PENARIKAN DATA SISWA (SEMENTARA MOCK)
-    // ==========================================
-    // Hitung statistik berdasarkan data asli
+    // =========================================================================
+    // Hitung statistik berdasarkan data asli.
 
     final int totalPendaftar = allSiswa.length;
     final int menungguReview = allSiswa
@@ -52,9 +52,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
         .where((s) => s['admin_status'] == 'Diterima')
         .length;
 
-    // ==========================================
+    // =========================================================================
     // LOGIKA GRAFIK 6 BULAN TERAKHIR
-    // ==========================================
+    // =========================================================================
     final DateTime now = DateTime.now();
     final List<FlSpot> chartSpots = [];
     final List<String> monthLabels = [];
@@ -110,7 +110,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       maxPendaftar += (5 - (maxPendaftar % 5));
     }
 
-    // Interval label kiri agar tidak terlalu rapat
+    // Interval label kiri agar tidak terlalu rapat.
     double leftInterval = (maxPendaftar / 5).ceil().toDouble();
     if (leftInterval < 1) leftInterval = 1;
 
@@ -129,10 +129,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ),
           const SizedBox(height: 25),
 
-          // 👇 LayoutBuilder untuk membuat kartu responsif
+          // LayoutBuilder untuk membuat kartu responsif.
           LayoutBuilder(
             builder: (context, constraints) {
-              // Jika dibuka di HP (layar sempit), tumpuk kartunya ke bawah
+              // Jika dibuka di HP (layar sempit), tumpuk kartunya ke bawah.
               if (constraints.maxWidth < 800) {
                 return Column(
                   children: [
@@ -157,7 +157,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                       icon: Icons.school_rounded,
                     ),
                     const SizedBox(height: 15),
-                    // 👇 2. CARD DONASI REAL-TIME (MOBILE)
+                    // 2. card donasi real-time (mobile).
                     ValueListenableBuilder<int>(
                       valueListenable:
                           SupabaseDonationService.totalDonasiTerkumpul,
@@ -180,7 +180,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 );
               }
 
-              // Jika dibuka di Laptop (layar lebar), jejerkan kartunya menyamping tapi donasi di bawah
+              // Jika dibuka di Laptop (layar lebar), jejerkan kartunya menyamping tapi donasi di bawah.
               return Column(
                 children: [
                   Row(
@@ -217,7 +217,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
                   Row(
                     children: [
                       Expanded(
-                        // 👇 3. CARD DONASI REAL-TIME (DESKTOP)
+                        // 3. card donasi real-time (desktop).
                         child: ValueListenableBuilder<int>(
                           valueListenable:
                               SupabaseDonationService.totalDonasiTerkumpul,

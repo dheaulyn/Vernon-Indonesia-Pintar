@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../core/app_colors.dart';
 import '../shared/stat_card.dart';
 
-// 👇 1. IMPORT SERVICE SUPABASE DONASI & AUTH
 import '../../services/supabase_donasi_service.dart';
 import '../../services/supabase_auth_service.dart';
 
@@ -25,23 +24,23 @@ class DashboardView extends StatelessWidget {
       decimalDigits: 0,
     );
 
-    // Format tanggal dari database
+
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
 
-    // 👇 2. AMBIL EMAIL USER YANG SEDANG LOGIN (Bukan nama)
+    // Ambil email user yang sedang login.
     final String? currentUserEmail =
         SupabaseAuthService.currentUserData?['email'];
 
     return ValueListenableBuilder(
       valueListenable:
-          SupabaseDonationService.riwayatDonasi, // Ambil dari Cloud
+          SupabaseDonationService.riwayatDonasi,
       builder: (context, List<Map<String, dynamic>> riwayatGlobal, _) {
-        // 👇 3. FILTER KHUSUS USER INI BERDASARKAN EMAIL
+        // Khusus user ini berdasarkan email.
         final riwayatPribadi = riwayatGlobal
             .where((donasi) => donasi['donatur_email'] == currentUserEmail)
             .toList();
 
-        // Kalkulasi matematika real-time (Sesuai nama kolom Supabase: 'amount')
+        // Kalkulasi matematika real-time (kolom Supabase: 'amount').
         final int totalUangPribadi = riwayatPribadi.fold(
           0,
           (sum, item) => sum + (item['amount'] as int? ?? 0),
@@ -164,7 +163,7 @@ class DashboardView extends StatelessWidget {
                     color: Colors.blue.shade600,
                     value: currencyFormatter.format(
                       totalUangPribadi,
-                    ), // 👈 Real-time Nominal
+                    ),
                     title: "Total Donasi",
                   ),
                 ),
@@ -173,7 +172,7 @@ class DashboardView extends StatelessWidget {
                   child: StatCard(
                     icon: Icons.repeat_rounded,
                     color: Colors.green.shade600,
-                    value: "$frekuensiDonasi Kali", // 👈 Real-time Frekuensi
+                    value: "$frekuensiDonasi Kali",
                     title: "Frekuensi Donasi",
                   ),
                 ),
@@ -263,9 +262,8 @@ class DashboardView extends StatelessWidget {
                     ...riwayatPribadi
                         .take(
                           3,
-                        ) // Tampilkan maksimal 3 donasi terakhir di beranda
+                        )
                         .map((history) {
-                          // Konversi tanggal dari database Supabase
                           String formattedDate = '-';
                           if (history['created_at'] != null) {
                             try {
@@ -299,7 +297,7 @@ class DashboardView extends StatelessWidget {
                                         flex: 4,
                                         child: Text(
                                           history['program_name'] ??
-                                              '-', // Sesuaikan kolom DB
+                                              '-',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
@@ -313,7 +311,7 @@ class DashboardView extends StatelessWidget {
                                       child: Text(
                                         currencyFormatter.format(
                                           history['amount'] ??
-                                              0, // Sesuaikan kolom DB
+                                              0,
                                         ),
                                         style: const TextStyle(fontSize: 14),
                                       ),

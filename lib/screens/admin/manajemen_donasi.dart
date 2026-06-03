@@ -4,12 +4,11 @@ import 'package:intl/intl.dart';
 import '../../../core/snackbar_helper.dart';
 import 'package:go_router/go_router.dart';
 
-// 👇 1. IMPORT SERVICE SUPABASE DONASI (Gantikan MockDatabase)
 import '../../../services/supabase_donasi_service.dart';
 
-// ========================================================
-// 1. VIEW: RIWAYAT DANA MASUK
-// ========================================================
+// =========================================================================
+// RIWAYAT DANA MASUK
+// =========================================================================
 class RiwayatDanaMasukView extends StatelessWidget {
   const RiwayatDanaMasukView({super.key});
 
@@ -39,7 +38,6 @@ class RiwayatDanaMasukView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
-              // 👇 Gunakan data asli dari Supabase
               valueListenable: SupabaseDonationService.riwayatDonasi,
               builder: (context, List<Map<String, dynamic>> donasiList, _) {
                 if (donasiList.isEmpty) {
@@ -55,7 +53,7 @@ class RiwayatDanaMasukView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = donasiList[index];
 
-                    // Format tanggal dari database
+
                     String tgl = '-';
                     if (item['created_at'] != null) {
                       try {
@@ -84,14 +82,14 @@ class RiwayatDanaMasukView extends StatelessWidget {
                         ),
                         title: Text(
                           item['nama_donatur']?.toString() ??
-                              'Donatur VIP', // Sesuai kolom DB
+                              'Donatur VIP',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          "${item['program_name'] ?? 'Program VIP'}\n$tgl", // Sesuai kolom DB
+                          "${item['program_name'] ?? 'Program VIP'}\n$tgl",
                         ),
                         trailing: Text(
-                          "+ ${currencyFormat.format(item['amount'] ?? 0)}", // Sesuai kolom DB
+                          "+ ${currencyFormat.format(item['amount'] ?? 0)}",
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -111,9 +109,9 @@ class RiwayatDanaMasukView extends StatelessWidget {
   }
 }
 
-// ========================================================
-// 2. VIEW: RIWAYAT DANA KELUAR
-// ========================================================
+// =========================================================================
+// RIWAYAT DANA KELUAR
+// =========================================================================
 class RiwayatDanaKeluarView extends StatelessWidget {
   const RiwayatDanaKeluarView({super.key});
 
@@ -143,7 +141,6 @@ class RiwayatDanaKeluarView extends StatelessWidget {
           const SizedBox(height: 25),
           Expanded(
             child: ValueListenableBuilder(
-              // 👇 Gunakan data asli dari Supabase
               valueListenable: SupabaseDonationService.riwayatPenyaluran,
               builder: (context, List<Map<String, dynamic>> pengeluaranList, _) {
                 if (pengeluaranList.isEmpty) {
@@ -159,7 +156,7 @@ class RiwayatDanaKeluarView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = pengeluaranList[index];
 
-                    // Format tanggal dari database
+
                     String tgl = '-';
                     if (item['created_at'] != null) {
                       try {
@@ -188,14 +185,14 @@ class RiwayatDanaKeluarView extends StatelessWidget {
                         ),
                         title: Text(
                           item['keterangan']?.toString() ??
-                              'Penyaluran Dana', // Sesuai DB
+                              'Penyaluran Dana',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           "Alokasi Program VIP\nTanggal pengeluaran: $tgl",
                         ),
                         trailing: Text(
-                          "- ${currencyFormat.format(item['nominal'] ?? 0)}", // Sesuai DB
+                          "- ${currencyFormat.format(item['nominal'] ?? 0)}",
                           style: const TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -215,9 +212,9 @@ class RiwayatDanaKeluarView extends StatelessWidget {
   }
 }
 
-// ========================================================
-// 3. VIEW: FORM PENYALURAN DANA
-// ========================================================
+// =========================================================================
+// FORM PENYALURAN DANA
+// =========================================================================
 class PenyaluranDanaView extends StatefulWidget {
   const PenyaluranDanaView({super.key});
 
@@ -295,7 +292,6 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                     children: [
                       const Icon(Icons.info_outline, color: Colors.blue),
                       const SizedBox(width: 10),
-                      // 👇 Gunakan data asli dari Supabase
                       ValueListenableBuilder(
                         valueListenable:
                             SupabaseDonationService.totalDonasiTerkumpul,
@@ -386,7 +382,6 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                     onPressed: _isProcessing
                         ? null
                         : () async {
-                            // 👇 Ubah jadi async
                             if (nominalController.text.isNotEmpty &&
                                 selectedKategori != null) {
                               setState(() => _isProcessing = true);
@@ -395,7 +390,7 @@ class _PenyaluranDanaViewState extends State<PenyaluranDanaView> {
                                   nominalController.text.replaceAll('.', ''),
                                 );
 
-                                // 👇 EKSEKUSI KE CLOUD
+                                // Eksekusi ke cloud.
                                 await SupabaseDonationService.catatPengeluaranKeCloud(
                                   nominal,
                                   selectedKategori!,

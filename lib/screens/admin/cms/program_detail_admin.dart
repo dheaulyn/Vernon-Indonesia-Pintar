@@ -54,7 +54,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   @override
   void initState() {
     super.initState();
-    // 👇 Sekarang ada 4 Tab
+    // Sekarang ada 4 Tab.
     _tabController = TabController(length: 4, vsync: this);
     _loadDataFromSupabase();
   }
@@ -69,7 +69,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           .maybeSingle();
 
       if (response != null) {
-        // 1. Load Fasilitas
+        // 1. Load Fasilitas.
         _fasilitasControllers.clear();
         final fasData = response['fasilitas'];
         if (fasData != null && fasData is List) {
@@ -80,7 +80,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           }
         }
 
-        // 2. Load Fase Program
+        // 2. Load Fase Program.
         _phaseControllers.clear();
         final phaseData = response['fase_program'];
         if (phaseData != null && phaseData is List) {
@@ -102,7 +102,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           }
         }
 
-        // 3. Load Syarat & Ketentuan
+        // 3. Load Syarat & Ketentuan.
         _reqControllers.clear();
         final reqData = response['syarat_ketentuan'];
         if (reqData != null && reqData is List) {
@@ -122,7 +122,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           }
         }
 
-        // 4. Load Alur Pendaftaran
+        // 4. Load Alur Pendaftaran.
         _timelineControllers.clear();
         final timelineData = response['alur_pendaftaran'];
         if (timelineData != null && timelineData is List) {
@@ -184,13 +184,13 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     setState(() => _isSaving = true);
 
     try {
-      // Data Fasilitas
+      // Data Fasilitas.
       List<String> updatedFasilitas = _fasilitasControllers
           .map((ctrl) => ctrl.text.trim())
           .where((text) => text.isNotEmpty)
           .toList();
 
-      // Data Fase
+      // Data Fase.
       List<Map<String, dynamic>> updatedPhases = _phaseControllers
           .map((phase) {
             return {
@@ -206,7 +206,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           .where((p) => p['title'].toString().isNotEmpty)
           .toList();
 
-      // Data Syarat
+      // Data Syarat.
       List<Map<String, dynamic>> updatedReqs = _reqControllers
           .map((reqCtrl) {
             return {
@@ -224,7 +224,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // Data Alur
+      // Data Alur.
       List<Map<String, String>> updatedTimeline = _timelineControllers
           .map((timeCtrl) {
             return {
@@ -238,7 +238,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // Update ke Supabase
+      // Update ke Supabase.
       await _supabase
           .from('programs')
           .update({
@@ -249,8 +249,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           })
           .eq('id', _programId);
 
-      if (mounted)
+      if (mounted) {
         showSuccessSnackBar(context, 'Data Program VIP berhasil diperbarui!');
+      }
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
     } finally {
@@ -350,9 +351,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 1: FASILITAS
-  // ==========================================
+  // =========================================================================
+  // FASILITAS
+  // =========================================================================
   Widget _buildFasilitasTab() {
     return Card(
       color: Colors.white,
@@ -413,9 +414,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 2: FASE PROGRAM
-  // ==========================================
+  // =========================================================================
+  // FASE PROGRAM
+  // =========================================================================
   Widget _buildFaseTab() {
     return Card(
       color: Colors.white,
@@ -577,9 +578,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 3: SYARAT & KETENTUAN
-  // ==========================================
+  // =========================================================================
+  // SYARAT & KETENTUAN
+  // =========================================================================
   Widget _buildRequirementsTab() {
     return Card(
       color: Colors.white,
@@ -701,9 +702,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 4: ALUR PENDAFTARAN
-  // ==========================================
+  // =========================================================================
+  // ALUR PENDAFTARAN
+  // =========================================================================
   Widget _buildTimelineTab() {
     return Card(
       color: Colors.white,

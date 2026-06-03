@@ -35,24 +35,47 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 1. HEADER TEKS, 3 FASE, FASILITAS & TOMBOL DAFTAR
-            _buildPhasesSection(context, isMobile),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _supabase.from('programs').stream(primaryKey: ['id']).eq('id', 1),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // 2. SYARAT, KETENTUAN & ALUR PENDAFTARAN (Real-time dari Supabase)
-            _buildDynamicRequirements(isMobile),
+          final programData = snapshot.data!.first;
 
-            // 3. FOOTER
-            const CustomFooter(),
-          ],
-        ),
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // 1. HEADER TEKS, FASE, FASILITAS
+                _buildPhasesSection(context, isMobile, programData),
+
+                // 2. SYARAT, KETENTUAN & ALUR PENDAFTARAN (Real-time dari Supabase)
+                _buildDynamicRequirements(isMobile, programData),
+
+                // 3. CTA SECTION (Siap Mengubah Nasib?)
+                _buildCTASection(context, isMobile),
+
+                // 4. FOOTER
+                const CustomFooter(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildPhasesSection(BuildContext context, bool isMobile) {
+  Widget _buildPhasesSection(
+    BuildContext context,
+    bool isMobile,
+    Map<String, dynamic> programData,
+  ) {
+    final String title = programData['nama_program'] ?? 'Kurikulum VIP (10 Bulan)';
+    final String description = programData['deskripsi'] ?? 'Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.';
+    final phaseData = (programData['fase_program'] as List?) ?? [];
+    final fasilitasData = (programData['fasilitas'] as List?) ?? [];
+
     return Container(
       width: double.infinity,
       color: Colors.white,
@@ -78,7 +101,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Kurikulum VIP (10 Bulan)",
+                title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 32 : 48,
@@ -88,7 +111,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 15),
               Text(
-                "Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.",
+                description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 18,
@@ -97,94 +120,42 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
               ),
               const SizedBox(height: 60),
 
-              // 3 FASE DENGAN ANIMASI DYNAMIC HOVER
+              // FASE DENGAN ANIMASI DYNAMIC HOVER
               if (isMobile)
                 Column(
-                  children: const [
-                    PhaseCard(
-                      phase: "FASE 1",
-                      title: "Pelatihan Intensif",
-                      desc:
-                          "Membangun fondasi karakter dan keahlian teknis dasar selama 3 bulan pertama.",
-                      items: [
-                        "Soft Skill & Komunikasi",
-                        "Literasi Digital & AI",
-                        "Peminatan Technical Track",
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    PhaseCard(
-                      phase: "FASE 2",
-                      title: "Pemagangan Industri",
-                      desc:
-                          "4 bulan terjun langsung ke dunia kerja melalui jaringan mitra perusahaan VIP.",
-                      items: [
-                        "On-the-Job Training",
-                        "Mentorship Profesional",
-                        "Project Berbasis Industri",
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    PhaseCard(
-                      phase: "FASE 3",
-                      title: "Penyaluran Kerja",
-                      desc:
-                          "3 bulan terakhir fokus pada penempatan kerja dan kemandirian finansial.",
-                      items: [
-                        "Job Readiness Workshop",
-                        "Interview Coaching",
-                        "Penempatan Kerja Permanen",
-                      ],
-                    ),
-                  ],
+                  children: phaseData.map<Widget>((phase) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: PhaseCard(
+                        phase: phase['phase']?.toString() ?? '',
+                        title: phase['title']?.toString() ?? '',
+                        desc: phase['desc']?.toString() ?? '',
+                        items: List<String>.from(phase['items'] ?? []),
+                      ),
+                    );
+                  }).toList(),
                 )
               else
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: const [
-                      Expanded(
-                        child: PhaseCard(
-                          phase: "FASE 1",
-                          title: "Pelatihan Intensif",
-                          desc:
-                              "Membangun fondasi karakter dan keahlian teknis dasar selama 3 bulan pertama.",
-                          items: [
-                            "Soft Skill & Komunikasi",
-                            "Literasi Digital & AI",
-                            "Peminatan Technical Track",
-                          ],
+                    children: phaseData.asMap().entries.map<Widget>((entry) {
+                      final index = entry.key;
+                      final phase = entry.value;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: index < phaseData.length - 1 ? 20.0 : 0.0,
+                          ),
+                          child: PhaseCard(
+                            phase: phase['phase']?.toString() ?? '',
+                            title: phase['title']?.toString() ?? '',
+                            desc: phase['desc']?.toString() ?? '',
+                            items: List<String>.from(phase['items'] ?? []),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 20),
-                      Expanded(
-                        child: PhaseCard(
-                          phase: "FASE 2",
-                          title: "Pemagangan Industri",
-                          desc:
-                              "4 bulan terjun langsung ke dunia kerja melalui jaringan mitra perusahaan VIP.",
-                          items: [
-                            "On-the-Job Training",
-                            "Mentorship Profesional",
-                            "Project Berbasis Industri",
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 20),
-                      Expanded(
-                        child: PhaseCard(
-                          phase: "FASE 3",
-                          title: "Penyaluran Kerja",
-                          desc:
-                              "3 bulan terakhir fokus pada penempatan kerja dan kemandirian finansial.",
-                          items: [
-                            "Job Readiness Workshop",
-                            "Interview Coaching",
-                            "Penempatan Kerja Permanen",
-                          ],
-                        ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                 ),
 
@@ -223,41 +194,9 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                       spacing: 15,
                       runSpacing: 15,
                       alignment: WrapAlignment.center,
-                      children: const [
-                        FasilitasPill(text: "Laptop & Alat Belajar"),
-                        FasilitasPill(text: "Uang Saku Bulanan"),
-                        FasilitasPill(text: "Akomodasi (Mess)"),
-                        FasilitasPill(text: "Sertifikasi Industri"),
-                      ],
-                    ),
-                    const SizedBox(height: 50),
-
-                    // 👇 TOMBOL DAFTAR SEKARANG DIARAHKAN KE LOGIN SISWA 👇
-                    ElevatedButton(
-                      onPressed: () => context.go(
-                        '/login',
-                      ), // Sesuaikan dengan route login pendaftarmu
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 20,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 5,
-                        shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                      ),
-                      child: const Text(
-                        "DAFTAR SEKARANG",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                      children: fasilitasData
+                          .map<Widget>((fas) => FasilitasPill(text: fas.toString()))
+                          .toList(),
                     ),
                   ],
                 ),
@@ -269,73 +208,66 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     );
   }
 
-  Widget _buildDynamicRequirements(bool isMobile) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _supabase.from('programs').stream(primaryKey: ['id']).eq('id', 1),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
-        }
+  Widget _buildDynamicRequirements(
+    bool isMobile,
+    Map<String, dynamic> programData,
+  ) {
+    final syaratList = (programData['syarat_ketentuan'] as List?) ?? [];
+    final alurList = (programData['alur_pendaftaran'] as List?) ?? [];
 
-        final programData = snapshot.data!.first;
-        final syaratList = (programData['syarat_ketentuan'] as List?) ?? [];
-        final alurList = (programData['alur_pendaftaran'] as List?) ?? [];
-
-        return Container(
-          width: double.infinity,
-          color: Colors.white,
-          padding: EdgeInsets.only(
-            left: isMobile ? 24 : 80,
-            right: isMobile ? 24 : 80,
-            bottom: 80,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1000),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SYARAT & KETENTUAN
-                  _buildSectionTitle(
-                    "Syarat & Ketentuan",
-                    "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
-                  ),
-                  const SizedBox(height: 30),
-                  ...List.generate(syaratList.length, (index) {
-                    final req = syaratList[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _buildRequirementCard(
-                        req['title'] ?? '',
-                        _getIconForIndex(index),
-                        List<String>.from(req['points'] ?? []),
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: 80),
-
-                  // ALUR PENDAFTARAN
-                  _buildSectionTitle(
-                    "Alur Pendaftaran & Seleksi",
-                    "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
-                  ),
-                  const SizedBox(height: 40),
-                  ...List.generate(alurList.length, (index) {
-                    final step = alurList[index];
-                    return _buildTimelineStep(
-                      index + 1,
-                      step['title'] ?? '',
-                      step['description'] ?? '',
-                      isLast: index == alurList.length - 1,
-                    );
-                  }),
-                ],
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: EdgeInsets.only(
+        left: isMobile ? 24 : 80,
+        right: isMobile ? 24 : 80,
+        bottom: 80,
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // SYARAT & KETENTUAN
+              _buildSectionTitle(
+                "Syarat & Ketentuan",
+                "Pastikan Anda memenuhi kriteria berikut sebelum mendaftar.",
               ),
-            ),
+              const SizedBox(height: 30),
+              ...List.generate(syaratList.length, (index) {
+                final req = syaratList[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _buildRequirementCard(
+                    req['title'] ?? '',
+                    _getIconForIndex(index),
+                    List<String>.from(req['points'] ?? []),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 80),
+
+              // ALUR PENDAFTARAN
+              _buildSectionTitle(
+                "Alur Pendaftaran & Seleksi",
+                "Langkah-langkah yang akan Anda lalui dari pendaftaran hingga penempatan.",
+              ),
+              const SizedBox(height: 40),
+              ...List.generate(alurList.length, (index) {
+                final step = alurList[index];
+                return _buildTimelineStep(
+                  index + 1,
+                  step['title'] ?? '',
+                  step['description'] ?? '',
+                  isLast: index == alurList.length - 1,
+                );
+              }),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -514,6 +446,66 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       ),
     );
   }
+
+  Widget _buildCTASection(BuildContext context, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(
+        vertical: isMobile ? 60 : 80,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Siap Mengubah Nasib?",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isMobile ? 28 : 36,
+              fontWeight: FontWeight.w900,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 25),
+          ElevatedButton(
+            onPressed: () => context.go('/login'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 40,
+                vertical: 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              elevation: 6,
+              shadowColor: AppColors.primary.withValues(alpha: 0.4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text(
+                  "DAFTAR SEKARANG",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_outward_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ==========================================
@@ -608,8 +600,7 @@ class _PhaseCardState extends State<PhaseCard> {
               ),
             ),
             const SizedBox(height: 25),
-            ...widget.items
-                .map(
+            ...widget.items.map(
                   (item) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
@@ -621,8 +612,7 @@ class _PhaseCardState extends State<PhaseCard> {
                       ),
                     ),
                   ),
-                )
-                .toList(),
+                ),
           ],
         ),
       ),

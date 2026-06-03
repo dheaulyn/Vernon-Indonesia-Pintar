@@ -58,7 +58,7 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
     super.dispose();
   }
 
-  // 👇 PERBAIKAN DI SINI: Mengarahkan ke rute login khusus donatur
+  // Mengarahkan ke rute login khusus donatur.
   void _handleLogout() {
     SupabaseAuthService.logout();
     context.go('/login-donatur');

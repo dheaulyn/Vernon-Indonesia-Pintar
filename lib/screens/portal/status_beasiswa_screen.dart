@@ -19,9 +19,9 @@ class StatusBeasiswaScreen extends StatefulWidget {
 class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // ==========================================
+  // =========================================================================
   // CONTROLLER FORM
-  // ==========================================
+  // =========================================================================
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -64,7 +64,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     _isRevisi = user['is_revisi'] == true;
     _catatanRevisi = user['catatan_revisi'] ?? '';
 
-    // Form bisa diedit JIKA dalam mode revisi
+    // Form bisa diedit JIKA dalam mode revisi.
     _isReadOnly = !_isRevisi;
 
     _nameController = TextEditingController(text: user['name'] ?? '');
@@ -137,7 +137,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
         _detailAlamatController.text = parts.sublist(0, parts.length - 3).join(', ');
       }
 
-      // Safe matching helper
+      // Safe matching helper.
       Map<String, dynamic>? findMatch(List<Map<String, dynamic>> list, String name) {
         try {
           return list.firstWhere((item) => (item['name'] as String).toUpperCase() == name.toUpperCase());
@@ -225,7 +225,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true, // IMPORTANT for web to get bytes
+      withData: true,
     );
 
     if (result != null && result.files.isNotEmpty) {
@@ -261,7 +261,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
   }
 
   void _submitRevisi() async {
-    // Validasi Wajib
+    // Validasi Wajib.
     if (!_formKey.currentState!.validate() ||
         _selectedProvinsi == null ||
         _selectedKota == null ||
@@ -284,11 +284,11 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     String kecName = getWilayahName(_selectedKecamatan);
     String kelName = getWilayahName(_selectedKelurahan);
 
-    // Menggabungkan kembali string domisili
+    // Menggabungkan kembali string domisili.
     String domisiliLengkap =
         '${_detailAlamatController.text}, Kel. $kelName, Kec. $kecName, $kotaName, $provName';
 
-    // Kirim revisi ke Supabase
+    // Kirim revisi ke Supabase.
     final error = await SupabasePendaftaranService.submitRevisi(
       nama: _nameController.text,
       nik: _nikController.text,
@@ -321,7 +321,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     }
   }
 
-  // --- WIDGET STATUS ---
+  // Widget status pendaftaran.
   String _getStatusText(int step) {
     switch (step) {
       case 0:
@@ -388,9 +388,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             ),
             const SizedBox(height: 30),
 
-            // ==========================================
+            // =========================================================================
             // KARTU STATUS
-            // ==========================================
+            // =========================================================================
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(isMobile ? 20 : 30),
@@ -448,9 +448,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
             ),
             const SizedBox(height: 30),
 
-            // ==========================================
-            // 👇 KARTU JADWAL WAWANCARA (MUNCUL JIKA TAHAP 2 & TIDAK DITOLAK)
-            // ==========================================
+            // =========================================================================
+            // KARTU JADWAL WAWANCARA (MUNCUL JIKA TAHAP 2 & TIDAK DITOLAK)
+            // =========================================================================
             if (!isDitolak &&
                 _currentStep == 2 &&
                 SupabaseAuthService.currentUserData?['jadwal_wawancara'] != null &&
@@ -531,9 +531,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                 ),
               ),
 
-            // ==========================================
+            // =========================================================================
             // ALERT REVISI (MUNCUL JIKA DIMINTA ADMIN)
-            // ==========================================
+            // =========================================================================
             if (_isRevisi)
               Container(
                 width: double.infinity,
@@ -576,9 +576,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                 ),
               ),
 
-            // ==========================================
+            // =========================================================================
             // FORM DATA (READ-ONLY ATAU REVISI)
-            // ==========================================
+            // =========================================================================
             Container(
               padding: EdgeInsets.all(isMobile ? 20 : 40),
               decoration: BoxDecoration(
@@ -616,7 +616,7 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                       "Email Aktif",
                       _emailController,
                       readOnly: true,
-                    ), // Email selalu read-only
+                    ),
                     _buildTextField(
                       "Nomor HP",
                       _phoneController,
@@ -768,9 +768,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 30),
 
-                    // ==========================================
+                    // =========================================================================
                     // BAGIAN DOKUMEN
-                    // ==========================================
+                    // =========================================================================
                     const Text(
                       "Dokumen Pendukung Tersimpan",
                       style: TextStyle(
@@ -855,9 +855,9 @@ class _StatusBeasiswaScreenState extends State<StatusBeasiswaScreen> {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET BANTUAN UI
-  // ==========================================
+  // =========================================================================
 
   Widget _buildTextField(
     String label,

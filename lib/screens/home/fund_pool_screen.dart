@@ -20,12 +20,12 @@ class FundPoolScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 50),
 
-            // 1. HEADER SEKSI
+            // 1. header seksi.
             _buildHeader(),
 
             const SizedBox(height: 50),
 
-            // 2. KARTU RINGKASAN REAL-TIME
+            // 2. kartu ringkasan real-time.
             Padding(
               padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 100),
               child: isMobile
@@ -51,7 +51,7 @@ class FundPoolScreen extends StatelessWidget {
 
             const SizedBox(height: 60),
 
-            // 3. KONTEN UTAMA (Tabel Riwayat & Grafik Alokasi Real-time)
+            // 3. KONTEN UTAMA (Tabel Riwayat & Grafik Alokasi Real-time).
             Padding(
               padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 100),
               child: isMobile
@@ -83,9 +83,9 @@ class FundPoolScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET: HEADER TEXT
-  // ==========================================
+  // =========================================================================
   Widget _buildHeader() {
     return Column(
       children: [
@@ -116,16 +116,15 @@ class FundPoolScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET PEMBANTU: KARTU HITUNGAN REAL-TIME
-  // ==========================================
+  // =========================================================================
   Widget _buildRealtimeMasukCard() {
     final formatRp = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
       valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
       builder: (context, total, _) {
@@ -145,7 +144,6 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
       valueListenable: SupabaseDonationService.danaTersalurkan,
       builder: (context, tersalurkan, _) {
@@ -165,7 +163,6 @@ class FundPoolScreen extends StatelessWidget {
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    // 👇 Ganti MockDatabase dengan SupabaseDonationService
     return ValueListenableBuilder(
       valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
       builder: (context, total, _) {
@@ -238,9 +235,9 @@ class FundPoolScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET: TABEL RIWAYAT DONATUR REAL-TIME
-  // ==========================================
+  // =========================================================================
   Widget _buildRiwayatDonatur(bool isMobile) {
     final formatRp = NumberFormat.currency(
       locale: 'id_ID',
@@ -295,7 +292,6 @@ class FundPoolScreen extends StatelessWidget {
               BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10),
             ],
           ),
-          // 👇 Ganti MockDatabase dengan SupabaseDonationService
           child: ValueListenableBuilder(
             valueListenable: SupabaseDonationService.riwayatDonasi,
             builder: (context, List<Map<String, dynamic>> riwayat, _) {
@@ -380,7 +376,7 @@ class FundPoolScreen extends StatelessWidget {
                   ),
                 ],
                 rows: riwayat.map((donasi) {
-                  // Format tanggal dari Supabase
+                  // Format tanggal dari Supabase.
                   String formattedDate = '-';
                   if (donasi['created_at'] != null) {
                     try {
@@ -427,9 +423,9 @@ class FundPoolScreen extends StatelessWidget {
     );
   }
 
-  // ========================================================
+  // =========================================================================
   // WIDGET: GRAFIK ALOKASI DANA DESIMAL
-  // ========================================================
+  // =========================================================================
   Widget _buildAlokasiDana() {
     return Container(
       padding: const EdgeInsets.all(30),
@@ -455,7 +451,6 @@ class FundPoolScreen extends StatelessWidget {
           ),
           const SizedBox(height: 40),
 
-          // 👇 Ganti MockDatabase dengan SupabaseDonationService
           ValueListenableBuilder(
             valueListenable: SupabaseDonationService.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {

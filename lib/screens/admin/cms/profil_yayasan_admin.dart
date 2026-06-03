@@ -20,7 +20,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
   final _descController = TextEditingController();
   final _visionController = TextEditingController();
 
-  // 👇 List controller dinamis untuk menampung banyak Misi
+  // List controller dinamis untuk menampung banyak Misi.
   List<TextEditingController> _missionControllers = [];
 
   String _currentImageUrl = '';
@@ -40,7 +40,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     _loadDataFromSupabase();
   }
 
-  // 👇 1. KONEKSI DATA FROM SUPABASE
+  // 1. Koneksi data dari Supabase.
   Future<void> _loadDataFromSupabase() async {
     try {
       final response = await _supabase
@@ -58,7 +58,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
           _visionController.text = response['vision'] ?? '';
           _currentImageUrl = response['image_url'] ?? '';
 
-          // Bongkar array JSONMisi menjadi List TextEditingController
+          // Bongkar array JSONMisi menjadi List TextEditingController.
           final List<dynamic> internalMissions = response['missions'] ?? [];
           _missionControllers = internalMissions
               .map((m) => TextEditingController(text: m.toString()))
@@ -83,7 +83,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     super.dispose();
   }
 
-  // 👇 2. MANAJEMEN MISI DINAMIS (TAMBAH / HAPUS BARIS)
+  // 2. manajemen misi dinamis (tambah / hapus baris).
   void _addMissionField() {
     setState(() {
       _missionControllers.add(TextEditingController());
@@ -121,7 +121,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
     return const Center(child: Text("Klik untuk Unggah Gambar"));
   }
 
-  // 👇 3. PROSES SAVE COMPREHENSIVE KONTEN KE CLOUD
+  // 3. Proses simpan konten ke cloud.
   Future<void> _saveProfileData() async {
     if (!_formKey.currentState!.validate()) {
       showErrorSnackBar(
@@ -151,7 +151,7 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
             .getPublicUrl(fileName);
       }
 
-      // Kumpulkan teks dari semua inputan misi yang diisi admin
+      // Kumpulkan teks dari semua inputan misi yang diisi admin.
       List<String> textMissions = _missionControllers
           .map((c) => c.text.trim())
           .where((text) => text.isNotEmpty)
@@ -331,9 +331,9 @@ class _ProfilYayasanAdminState extends State<ProfilYayasanAdmin> {
                     ),
                     const SizedBox(height: 25),
 
-                    // ========================================================
-                    // BAGIAN LIST MISI DINAMIS (Sesuai Gambar Screenshot 4)
-                    // ========================================================
+                    // =========================================================================
+                    // BAGIAN LIST MISI DINAMIS
+                    // =========================================================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

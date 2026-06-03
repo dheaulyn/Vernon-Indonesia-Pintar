@@ -19,9 +19,9 @@ class FormBeasiswaScreen extends StatefulWidget {
 class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // ==========================================
+  // =========================================================================
   // CONTROLLER FORM
-  // ==========================================
+  // =========================================================================
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -43,14 +43,14 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
   List<Map<String, dynamic>> _villages = [];
 
 
-  // State untuk menyimpan objek file yang diunggah
+  // State untuk menyimpan objek file yang diunggah.
   PlatformFile? _fileKtp;
   PlatformFile? _fileIjazah;
   PlatformFile? _fileSktm;
   PlatformFile? _fileFoto;
   PlatformFile? _fileMotivasi;
 
-  // 👇 VARIABEL STATE BARU UNTUK VALIDASI DOKUMEN
+  // Variabel state baru untuk validasi dokumen.
   bool _hasAttemptedSubmit = false;
 
   bool _isLoading = false;
@@ -138,13 +138,13 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true, // IMPORTANT for web to get bytes
+      withData: true,
     );
 
     if (result != null && result.files.isNotEmpty) {
       PlatformFile file = result.files.first;
 
-      // VALIDASI UKURAN FILE MAKSIMAL 2MB (2 * 1024 * 1024 bytes)
+      // VALIDASI UKURAN FILE MAKSIMAL 2MB (2 * 1024 * 1024 bytes).
       if (file.size > 2 * 1024 * 1024) {
         if (mounted) {
           showErrorSnackBar(context, 'Ukuran file maksimal 2MB. Silakan kompres atau pilih file lain.');
@@ -176,7 +176,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
 
   void _submitForm() async {
     setState(() {
-      _hasAttemptedSubmit = true; // Tandai bahwa user sudah mencoba submit
+      _hasAttemptedSubmit = true;
     });
 
     if (!_formKey.currentState!.validate() ||
@@ -208,11 +208,11 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     String kecName = getWilayahName(_selectedKecamatan);
     String kelName = getWilayahName(_selectedKelurahan);
 
-    // Gabungkan domisili lengkap
+    // Gabungkan domisili lengkap.
     String domisiliLengkap =
         '${_detailAlamatController.text}, Kel. $kelName, Kec. $kecName, $kotaName, $provName';
 
-    // Kirim data pendaftaran ke Supabase
+    // Kirim data pendaftaran ke Supabase.
     final error = await SupabasePendaftaranService.submitPendaftaran(
       nama: _nameController.text,
       nik: _nikController.text,
@@ -400,9 +400,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ==========================================
-                    // SECTION 1: DATA DIRI & KONTAK
-                    // ==========================================
+                    // =========================================================================
+                    // DATA DIRI & KONTAK
+                    // =========================================================================
                     _buildSectionTitle("1", "Data Diri & Kontak"),
                     const SizedBox(height: 20),
 
@@ -543,9 +543,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 40),
 
-                    // ==========================================
-                    // SECTION 2: RIWAYAT PENDIDIKAN
-                    // ==========================================
+                    // =========================================================================
+                    // RIWAYAT PENDIDIKAN
+                    // =========================================================================
                     _buildSectionTitle("2", "Riwayat Pendidikan"),
                     const SizedBox(height: 20),
 
@@ -572,9 +572,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
                     const Divider(color: Colors.black12),
                     const SizedBox(height: 40),
 
-                    // ==========================================
-                    // SECTION 3: UNGGAH BERKAS DOKUMEN
-                    // ==========================================
+                    // =========================================================================
+                    // UNGGAH BERKAS DOKUMEN
+                    // =========================================================================
                     _buildSectionTitle("3", "Unggah Berkas Dokumen"),
                     const SizedBox(height: 10),
                     Text(
@@ -620,9 +620,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
 
                     const SizedBox(height: 40),
 
-                    // ==========================================
+                    // =========================================================================
                     // TOMBOL SUBMIT
-                    // ==========================================
+                    // =========================================================================
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -665,9 +665,9 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET BANTUAN UI
-  // ==========================================
+  // =========================================================================
 
   Widget _buildSectionTitle(String number, String title) {
     return Row(
@@ -929,7 +929,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     );
   }
 
-  // 👇 PERBAIKAN WIDGET FILE UPLOAD DENGAN VALIDASI VISUAL
+  // Widget file upload dengan validasi visual.
   Widget _buildFileUploadField({
     required String label,
     required String hint,
@@ -937,7 +937,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
     required VoidCallback onTap,
     String? description,
   }) {
-    // Cek apakah file kosong dan user sudah pernah klik "Kirim Pendaftaran"
+    // Cek apakah file kosong dan user sudah pernah klik "Kirim Pendaftaran".
     bool hasError =
         _hasAttemptedSubmit && (fileName == null || fileName.isEmpty);
 
@@ -970,7 +970,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               decoration: BoxDecoration(
                 color: hasError ? Colors.red.shade50 : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(8),
-                // 👇 Border menjadi merah jika hasError true
+                // Border menjadi merah jika hasError true.
                 border: Border.all(
                   color: hasError ? Colors.redAccent : Colors.grey.shade300,
                   width: hasError ? 1.5 : 1.0,
@@ -1030,7 +1030,7 @@ class _FormBeasiswaScreenState extends State<FormBeasiswaScreen> {
               ),
             ),
           ),
-          // 👇 Munculkan pesan error (teks merah) di bawah box jika belum diisi
+          // Munculkan pesan error (teks merah) di bawah box jika belum diisi.
           if (hasError)
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 16),
