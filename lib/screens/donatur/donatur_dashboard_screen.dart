@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/supabase_auth_service.dart';
 import '../shared/shared_dashboard_layout.dart';
 
@@ -58,7 +59,25 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
     super.dispose();
   }
 
-  // Mengarahkan ke rute login khusus donatur.
+  Future<void> _refreshUserData() async {
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId != null) {
+        final data = await Supabase.instance.client
+            .from('profiles')
+            .select()
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (data != null && mounted) {
+          setState(() {
+            user = data;
+          });
+        }
+      }
+    } catch (e) {}
+  }
+
   void _handleLogout() {
     SupabaseAuthService.logout();
     context.go('/login-donatur');
@@ -101,7 +120,10 @@ class _DonaturDashboardScreenState extends State<DonaturDashboardScreen> {
             icon: Icons.chevron_right,
             title: "Data Diri",
             routePath: "/dashboard-donatur?index=4",
-            onTap: () => setState(() => _selectedIndex = 4),
+            onTap: () {
+              setState(() => _selectedIndex = 4);
+              _refreshUserData();
+            },
           ),
           MenuModel(
             icon: Icons.chevron_right,

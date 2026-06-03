@@ -1,19 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
 
-class DataDiriView extends StatelessWidget {
+class DataDiriView extends StatefulWidget {
   final bool isMobile;
   final Map<String, dynamic> user;
 
   const DataDiriView({super.key, required this.isMobile, required this.user});
 
   @override
+  State<DataDiriView> createState() => _DataDiriViewState();
+}
+
+class _DataDiriViewState extends State<DataDiriView> {
+  late TextEditingController _nameController;
+  late TextEditingController _teleponController;
+  late TextEditingController _pekerjaanController;
+  late TextEditingController _alamatController;
+
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.user['name'] ?? '');
+    _teleponController = TextEditingController(
+      text: widget.user['telepon'] ?? widget.user['whatsapp'] ?? '',
+    );
+    _pekerjaanController = TextEditingController(
+      text: widget.user['pekerjaan'] ?? '',
+    );
+    _alamatController = TextEditingController(
+      text: widget.user['domisili'] ?? '',
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant DataDiriView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.user != oldWidget.user) {
+      if (_nameController.text != (widget.user['name'] ?? '')) {
+        _nameController.text = widget.user['name'] ?? '';
+      }
+
+      final newPhone = widget.user['telepon'] ?? widget.user['whatsapp'] ?? '';
+      if (_teleponController.text != newPhone) {
+        _teleponController.text = newPhone;
+      }
+
+      if (_pekerjaanController.text != (widget.user['pekerjaan'] ?? '')) {
+        _pekerjaanController.text = widget.user['pekerjaan'] ?? '';
+      }
+
+      if (_alamatController.text != (widget.user['domisili'] ?? '')) {
+        _alamatController.text = widget.user['domisili'] ?? '';
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _teleponController.dispose();
+    _pekerjaanController.dispose();
+    _alamatController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _simpanPerubahan() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) throw 'Sesi login habis, silakan login kembali.';
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'name': _nameController.text.trim(),
+            'telepon': _teleponController.text.trim(),
+            'pekerjaan': _pekerjaanController.text.trim().isEmpty
+                ? null
+                : _pekerjaanController.text.trim(),
+            'domisili': _alamatController.text.trim().isEmpty
+                ? null
+                : _alamatController.text.trim(),
+          })
+          .eq('id', userId);
+
+      if (mounted) {
+        showSuccessSnackBar(context, 'Data berhasil diperbarui!');
+      }
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Gagal menyimpan: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 20 : 32,
+        horizontal: widget.isMobile ? 20 : 32,
         vertical: 8,
       ),
       children: [
@@ -36,8 +129,10 @@ class DataDiriView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-
-              _buildProfileTextField("Nama Lengkap", user['name']),
+              _buildProfileTextField(
+                "Nama Lengkap",
+                controller: _nameController,
+              ),
               const SizedBox(height: 24),
 
               Row(
@@ -46,7 +141,7 @@ class DataDiriView extends StatelessWidget {
                   Expanded(
                     child: _buildProfileTextField(
                       "Email (Tidak bisa diubah)",
-                      user['email'],
+                      initialValue: widget.user['email'],
                       isReadOnly: true,
                     ),
                   ),
@@ -54,7 +149,7 @@ class DataDiriView extends StatelessWidget {
                   Expanded(
                     child: _buildProfileTextField(
                       "No. Telepon",
-                      user['telepon'] ?? user['whatsapp'] ?? '-',
+                      controller: _teleponController,
                       keyboardType: TextInputType.phone,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
@@ -80,54 +175,61 @@ class DataDiriView extends StatelessWidget {
                 style: TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 20),
-
               _buildProfileTextField(
                 "Pekerjaan / Instansi",
-                "PT Karya Anak Bangsa",
+                controller: _pekerjaanController,
               ),
               const SizedBox(height: 24),
-
               _buildProfileTextField(
                 "Alamat Lengkap",
-                "Jl. Sudirman No. 45, Jakarta Selatan",
+                controller: _alamatController,
                 maxLines: 3,
               ),
 
               const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  showSuccessSnackBar(context, 'Data berhasil diperbarui!');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+              SizedBox(
+                height: 45,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _simpanPerubahan,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                child: const Text(
-                  "Simpan Perubahan",
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "Simpan Perubahan",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(
-          height: 40,
-        ), // Ruang ekstra agar tombol panah tidak menabrak batas konten
+        const SizedBox(height: 40),
       ],
     );
   }
 
   Widget _buildProfileTextField(
-    String label,
-    String initialValue, {
+    String label, {
+    TextEditingController? controller,
+    String? initialValue,
     bool isReadOnly = false,
     int maxLines = 1,
     TextInputType? keyboardType,
@@ -146,6 +248,7 @@ class DataDiriView extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: controller,
           initialValue: initialValue,
           readOnly: isReadOnly,
           maxLines: maxLines,
