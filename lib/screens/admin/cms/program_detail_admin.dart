@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -16,6 +16,19 @@ class TimelineController {
   TimelineController(this.titleCtrl, this.descCtrl);
 }
 
+class PhaseController {
+  TextEditingController phaseCtrl; // Cth: "FASE 1"
+  TextEditingController titleCtrl; // Cth: "Pelatihan Intensif"
+  TextEditingController descCtrl; // Cth: "Membangun fondasi..."
+  List<TextEditingController> itemsCtrl; // Poin-poin di dalamnya
+  PhaseController(
+    this.phaseCtrl,
+    this.titleCtrl,
+    this.descCtrl,
+    this.itemsCtrl,
+  );
+}
+
 class ProgramDetailAdmin extends StatefulWidget {
   const ProgramDetailAdmin({super.key});
 
@@ -27,37 +40,69 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  final List<TextEditingController> _fasilitasControllers = [];
+  final List<PhaseController> _phaseControllers = [];
   final List<ReqController> _reqControllers = [];
   final List<TimelineController> _timelineControllers = [];
 
   bool _isLoading = true;
   bool _isSaving = false;
-  int _programId = 1; // ID baris di tabel programs
+  final int _programId = 1;
 
   final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // Sekarang ada 4 Tab.
+    _tabController = TabController(length: 4, vsync: this);
     _loadDataFromSupabase();
   }
 
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
   Future<void> _loadDataFromSupabase() async {
     setState(() => _isLoading = true);
     try {
       final response = await _supabase
           .from('programs')
           .select()
-          .order('id', ascending: true)
-          .limit(1)
+          .eq('id', _programId)
           .maybeSingle();
 
       if (response != null) {
-        _programId = response['id'];
+        // 1. Load Fasilitas.
+        _fasilitasControllers.clear();
+        final fasData = response['fasilitas'];
+        if (fasData != null && fasData is List) {
+          for (var fas in fasData) {
+            _fasilitasControllers.add(
+              TextEditingController(text: fas.toString()),
+            );
+          }
+        }
 
-        // Load Requirements (Syarat & Ketentuan)
+        // 2. Load Fase Program.
+        _phaseControllers.clear();
+        final phaseData = response['fase_program'];
+        if (phaseData != null && phaseData is List) {
+          for (var phase in phaseData) {
+            List<TextEditingController> items = [];
+            if (phase['items'] != null && phase['items'] is List) {
+              for (var item in phase['items']) {
+                items.add(TextEditingController(text: item.toString()));
+              }
+            }
+            _phaseControllers.add(
+              PhaseController(
+                TextEditingController(text: phase['phase']?.toString() ?? ''),
+                TextEditingController(text: phase['title']?.toString() ?? ''),
+                TextEditingController(text: phase['desc']?.toString() ?? ''),
+                items,
+              ),
+            );
+          }
+        }
+
+        // 3. Load Syarat & Ketentuan.
         _reqControllers.clear();
         final reqData = response['syarat_ketentuan'];
         if (reqData != null && reqData is List) {
@@ -77,7 +122,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           }
         }
 
-        // Load Timeline (Alur Pendaftaran)
+        // 4. Load Alur Pendaftaran.
         _timelineControllers.clear();
         final timelineData = response['alur_pendaftaran'];
         if (timelineData != null && timelineData is List) {
@@ -100,7 +145,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     }
   }
 
-  // FUNGSI DIALOG KONFIRMASI HAPUS
   void _confirmDelete(String title, String content, VoidCallback onConfirm) {
     showDialog(
       context: context,
@@ -136,19 +180,40 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // 👇 FUNGSI MENYIMPAN DATA KE SUPABASE
   Future<void> _saveData() async {
     setState(() => _isSaving = true);
 
     try {
-      // 1. Kumpulkan data Requirements dan bungkus ke format yang pas
+      // Data Fasilitas.
+      List<String> updatedFasilitas = _fasilitasControllers
+          .map((ctrl) => ctrl.text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+
+      // Data Fase.
+      List<Map<String, dynamic>> updatedPhases = _phaseControllers
+          .map((phase) {
+            return {
+              "phase": phase.phaseCtrl.text.trim(),
+              "title": phase.titleCtrl.text.trim(),
+              "desc": phase.descCtrl.text.trim(),
+              "items": phase.itemsCtrl
+                  .map((i) => i.text.trim())
+                  .where((t) => t.isNotEmpty)
+                  .toList(),
+            };
+          })
+          .where((p) => p['title'].toString().isNotEmpty)
+          .toList();
+
+      // Data Syarat.
       List<Map<String, dynamic>> updatedReqs = _reqControllers
           .map((reqCtrl) {
             return {
               "title": reqCtrl.titleCtrl.text.trim(),
               "points": reqCtrl.pointsCtrl
                   .map((p) => p.text.trim())
-                  .where((text) => text.isNotEmpty)
+                  .where((t) => t.isNotEmpty)
                   .toList(),
             };
           })
@@ -159,7 +224,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // 2. Kumpulkan data Timeline
+      // Data Alur.
       List<Map<String, String>> updatedTimeline = _timelineControllers
           .map((timeCtrl) {
             return {
@@ -173,17 +238,19 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // 3. Tembak ke Supabase (Otomatis menjadi tipe data JSONB di database)
+      // Update ke Supabase.
       await _supabase
           .from('programs')
           .update({
+            'fasilitas': updatedFasilitas,
+            'fase_program': updatedPhases,
             'syarat_ketentuan': updatedReqs,
             'alur_pendaftaran': updatedTimeline,
           })
           .eq('id', _programId);
 
       if (mounted) {
-        showSuccessSnackBar(context, 'Detail Program berhasil diperbarui!');
+        showSuccessSnackBar(context, 'Data Program VIP berhasil diperbarui!');
       }
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
@@ -194,9 +261,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     return Padding(
       padding: const EdgeInsets.all(30),
@@ -206,9 +271,19 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Kelola Detail Program',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Kelola Konten Program',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Program Karir VIP (10 Bulan)',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ],
               ),
               ElevatedButton.icon(
                 onPressed: _isSaving ? null : _saveData,
@@ -223,7 +298,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                       )
                     : const Icon(Icons.save, color: Colors.white),
                 label: Text(
-                  _isSaving ? "MENYIMPAN..." : "SIMPAN SEMUA",
+                  _isSaving ? "MENYIMPAN..." : "SIMPAN PERUBAHAN",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -240,7 +315,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
 
           Container(
             color: Colors.white,
@@ -249,7 +324,10 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
               labelColor: AppColors.primary,
               unselectedLabelColor: Colors.grey,
               indicatorColor: AppColors.primary,
+              isScrollable: true,
               tabs: const [
+                Tab(text: 'Fasilitas'),
+                Tab(text: 'Fase Program'),
                 Tab(text: 'Syarat & Ketentuan'),
                 Tab(text: 'Alur Pendaftaran'),
               ],
@@ -260,7 +338,12 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [_buildRequirementsTab(), _buildTimelineTab()],
+              children: [
+                _buildFasilitasTab(),
+                _buildFaseTab(),
+                _buildRequirementsTab(),
+                _buildTimelineTab(),
+              ],
             ),
           ),
         ],
@@ -268,9 +351,236 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 1: SYARAT & KETENTUAN
-  // ==========================================
+  // =========================================================================
+  // FASILITAS
+  // =========================================================================
+  Widget _buildFasilitasTab() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListView.separated(
+        padding: const EdgeInsets.all(25),
+        itemCount: _fasilitasControllers.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(height: 15),
+        itemBuilder: (context, index) {
+          if (index == _fasilitasControllers.length) {
+            return Center(
+              child: ElevatedButton.icon(
+                onPressed: () => setState(
+                  () => _fasilitasControllers.add(TextEditingController()),
+                ),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text(
+                  "Tambah Fasilitas Baru",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: const StadiumBorder(),
+                ),
+              ),
+            );
+          }
+          return Row(
+            children: [
+              const Icon(Icons.check_circle, color: AppColors.primary),
+              const SizedBox(width: 15),
+              Expanded(
+                child: TextField(
+                  controller: _fasilitasControllers[index],
+                  decoration: const InputDecoration(
+                    labelText: "Nama Fasilitas (Cth: Uang Saku Bulanan)",
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _confirmDelete(
+                  'Hapus Fasilitas?',
+                  'Yakin ingin menghapus fasilitas ini?',
+                  () => setState(() => _fasilitasControllers.removeAt(index)),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // =========================================================================
+  // FASE PROGRAM
+  // =========================================================================
+  Widget _buildFaseTab() {
+    return Card(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListView.separated(
+        padding: const EdgeInsets.all(25),
+        itemCount: _phaseControllers.length + 1,
+        separatorBuilder: (_, _) => const Divider(height: 40),
+        itemBuilder: (context, index) {
+          if (index == _phaseControllers.length) {
+            return Center(
+              child: ElevatedButton.icon(
+                onPressed: () => setState(
+                  () => _phaseControllers.add(
+                    PhaseController(
+                      TextEditingController(),
+                      TextEditingController(),
+                      TextEditingController(),
+                      [TextEditingController()],
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text(
+                  "Tambah Fase Baru",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: const StadiumBorder(),
+                ),
+              ),
+            );
+          }
+          final phase = _phaseControllers[index];
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Detail Fase",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _confirmDelete(
+                        'Hapus Fase?',
+                        'Yakin ingin menghapus fase ini?',
+                        () => setState(() => _phaseControllers.removeAt(index)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: TextField(
+                        controller: phase.phaseCtrl,
+                        decoration: const InputDecoration(
+                          labelText: "Label (Cth: FASE 1)",
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: phase.titleCtrl,
+                        decoration: const InputDecoration(
+                          labelText: "Judul Fase (Cth: Pelatihan Intensif)",
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: phase.descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: "Deskripsi Singkat",
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Materi / Poin Fase:",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                ...List.generate(phase.itemsCtrl.length, (pIndex) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.circle,
+                          size: 8,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: phase.itemsCtrl[pIndex],
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () => _confirmDelete(
+                            'Hapus Poin?',
+                            'Yakin ingin menghapus poin materi ini?',
+                            () => setState(
+                              () => phase.itemsCtrl.removeAt(pIndex),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                TextButton.icon(
+                  onPressed: () => setState(
+                    () => phase.itemsCtrl.add(TextEditingController()),
+                  ),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text("Tambah Poin Materi"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // =========================================================================
+  // SYARAT & KETENTUAN
+  // =========================================================================
   Widget _buildRequirementsTab() {
     return Card(
       color: Colors.white,
@@ -293,7 +603,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                 ),
                 icon: const Icon(Icons.add, color: Colors.white),
                 label: const Text(
-                  "Tambah Kategori Syarat Baru",
+                  "Tambah Kategori Syarat",
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -306,7 +616,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
               ),
             );
           }
-
           final req = _reqControllers[index];
           return Container(
             padding: const EdgeInsets.all(20),
@@ -328,12 +637,12 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                         ),
                       ),
                     ),
+                    const SizedBox(width: 15),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
-                      tooltip: "Hapus Kategori",
                       onPressed: () => _confirmDelete(
-                        'Hapus Kategori Syarat?',
-                        'Apakah Anda yakin ingin menghapus kategori ini beserta seluruh poin syarat di dalamnya?',
+                        'Hapus Kategori?',
+                        'Yakin menghapus kategori ini?',
                         () => setState(() => _reqControllers.removeAt(index)),
                       ),
                     ),
@@ -367,10 +676,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                         ),
                         IconButton(
                           icon: const Icon(Icons.close, color: Colors.red),
-                          tooltip: "Hapus Poin",
                           onPressed: () => _confirmDelete(
-                            'Hapus Poin Persyaratan?',
-                            'Apakah Anda yakin ingin menghapus poin persyaratan ini?',
+                            'Hapus Poin?',
+                            'Yakin menghapus poin ini?',
                             () =>
                                 setState(() => req.pointsCtrl.removeAt(pIndex)),
                           ),
@@ -394,9 +702,9 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
     );
   }
 
-  // ==========================================
-  // TAB 2: ALUR PENDAFTARAN
-  // ==========================================
+  // =========================================================================
+  // ALUR PENDAFTARAN
+  // =========================================================================
   Widget _buildTimelineTab() {
     return Card(
       color: Colors.white,
@@ -433,7 +741,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
               ),
             );
           }
-
           final step = _timelineControllers[index];
           return Container(
             padding: const EdgeInsets.all(20),
@@ -480,12 +787,12 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                     ],
                   ),
                 ),
+                const SizedBox(width: 10),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  tooltip: "Hapus Langkah",
                   onPressed: () => _confirmDelete(
-                    'Hapus Langkah Alur?',
-                    'Apakah Anda yakin ingin menghapus langkah ini dari alur pendaftaran?',
+                    'Hapus Langkah?',
+                    'Yakin menghapus langkah ini?',
                     () => setState(() => _timelineControllers.removeAt(index)),
                   ),
                 ),

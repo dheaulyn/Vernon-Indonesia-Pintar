@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/app_colors.dart';
 import '../../services/supabase_auth_service.dart';
 import '../../services/supabase_pendaftaran_service.dart';
-import '../../services/supabase_donasi_service.dart';
 import '../../services/supabase_notification_service.dart';
 
 class MenuModel {
@@ -68,6 +67,18 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
     super.initState();
     SupabaseNotificationService.listenToNotifications();
     SupabaseNotificationService.notifications.addListener(_onNotifChanged);
+    _refreshUserData();
+  }
+
+  Future<void> _refreshUserData() async {
+    try {
+      await SupabaseAuthService.restoreSession();
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('Error refreshing user data in layout: $e');
+    }
   }
 
   void _onNotifChanged() {

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // 👇 Untuk format tanggal otomatis
+import 'package:intl/intl.dart';
 
 import '../../../core/app_colors.dart';
 import '../../../core/snackbar_helper.dart';
@@ -21,7 +21,6 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // 👇 Ubah tipe data menjadi dynamic untuk menerima dari Supabase
   List<Map<String, dynamic>> _artikel = [];
   List<Map<String, dynamic>> _galeri = [];
   bool _isLoading = true;
@@ -35,9 +34,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     _loadData();
   }
 
-  // =========================================================
-  // 1. MENGAMBIL DATA DARI TABEL ARTICLES TEMANMU
-  // =========================================================
+  // =========================================================================
+  // 1. MENGAMBIL DATA DARI TABEL ARTIKEL
+  // =========================================================================
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -47,7 +46,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
           .order('created_at', ascending: false);
 
       setState(() {
-        // Pisahkan data berdasarkan Kategori
+        // Pisahkan data berdasarkan Kategori.
         _artikel = response.where((e) => e['category'] != 'Galeri').toList();
         _galeri = response.where((e) => e['category'] == 'Galeri').toList();
       });
@@ -64,9 +63,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     super.dispose();
   }
 
-  // =========================================================
-  // FUNGSI PINTAR: Menampilkan Gambar (URL atau Bytes Lokal)
-  // =========================================================
+  // =========================================================================
+  // FUNGSI: MENAMPILKAN GAMBAR (URL ATAU BYTES LOKAL)
+  // =========================================================================
   Widget _buildImageDisplay({
     String url = '',
     Uint8List? bytes,
@@ -81,9 +80,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
   }
 
-  // =========================================================
+  // =========================================================================
   // FUNGSI UPLOAD FILE KE DIALOG
-  // =========================================================
+  // =========================================================================
   Future<void> _pickImageForDialog(
     Function(Uint8List bytes, String ext) onPicked,
   ) async {
@@ -100,9 +99,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     }
   }
 
-  // =========================================================
+  // =========================================================================
   // FORM ARTIKEL (TAMBAH / EDIT)
-  // =========================================================
+  // =========================================================================
   void _showFormArtikel({Map<String, dynamic>? artikelLama}) {
     final titleController = TextEditingController(
       text: artikelLama?['title'] ?? '',
@@ -114,7 +113,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     String selectedKategori = artikelLama?['category'] ?? 'Berita';
     String currentImageUrl = artikelLama?['image_url'] ?? '';
 
-    // Variabel untuk menyimpan gambar baru jika admin memilih dari laptop
+    // Variabel untuk menyimpan gambar baru jika admin memilih dari penyimpanan lokal.
     Uint8List? newImageBytes;
     String? newImageExt;
     bool isSaving = false;
@@ -240,7 +239,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                           newImageBytes = bytes;
                                           newImageExt = ext;
                                           currentImageUrl =
-                                              ''; // Hapus preview gambar lama
+                                              '';
                                         });
                                       });
                                     },
@@ -408,7 +407,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                             try {
                               String finalImageUrl = currentImageUrl;
 
-                              // Jika ada gambar baru, upload ke Storage
+                              // Jika ada gambar baru, upload ke Storage.
                               if (newImageBytes != null) {
                                 final fileName =
                                     'artikel_${DateTime.now().millisecondsSinceEpoch}.$newImageExt';
@@ -429,7 +428,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                               final contentJson = jsonEncode(
                                 quillController.document.toDelta().toJson(),
                               );
-                              // Format tanggal hari ini cth: 10 Mei 2026
+                              // Format tanggal hari ini cth: 10 Mei 2026.
                               final String todayDate = DateFormat(
                                 'dd MMM yyyy',
                                 'id_ID',
@@ -445,7 +444,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                               };
 
                               if (artikelLama == null) {
-                                // Karena id adalah UUID text, kita generate ID unik memakai timestamp
+                                // Karena id adalah UUID text, kita generate ID unik memakai timestamp.
                                 newData['id'] =
                                     'art-${DateTime.now().millisecondsSinceEpoch}';
                                 await _supabase
@@ -552,9 +551,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     );
   }
 
-  // =========================================================
+  // =========================================================================
   // FORM GALERI (TAMBAH / EDIT)
-  // =========================================================
+  // =========================================================================
   void _showFormGaleri({Map<String, dynamic>? galeriLama}) {
     final titleController = TextEditingController(
       text: galeriLama?['title'] ?? '',
@@ -740,7 +739,7 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
                                 'title': titleController.text.trim(),
                                 'image_url': finalImageUrl,
                                 'category':
-                                    'Galeri', // 👇 Paksa masuk kategori Galeri
+                                    'Galeri',
                                 'description': '',
                                 'content': '',
                                 'date': galeriLama?['date'] ?? todayDate,
@@ -855,9 +854,9 @@ class _KelolaMediaAdminState extends State<KelolaMediaAdmin>
     );
   }
 
-  // =========================================================
+  // =========================================================================
   // BUILD UTAMA
-  // =========================================================
+  // =========================================================================
   @override
   Widget build(BuildContext context) {
     return Padding(

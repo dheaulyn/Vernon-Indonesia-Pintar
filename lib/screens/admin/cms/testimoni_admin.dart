@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -13,7 +13,6 @@ class TestimoniAdmin extends StatefulWidget {
 }
 
 class _TestimoniAdminState extends State<TestimoniAdmin> {
-  // 👇 Ubah jadi dynamic untuk menampung data Supabase
   List<Map<String, dynamic>> _testimoniList = [];
   bool _isLoading = true;
   final _supabase = Supabase.instance.client;
@@ -24,7 +23,7 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
     _loadData();
   }
 
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  // Fungsi menarik data dari Supabase.
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -211,7 +210,7 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
     );
   }
 
-  // 👇 FUNGSI MENGHAPUS DATA DARI SUPABASE
+  // Fungsi menghapus data dari Supabase.
   void _hapusTestimoni(dynamic id) {
     showDialog(
       context: context,

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -19,12 +19,12 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
 
-  // 👇 Variabel untuk menyimpan URL gambar dari DB, dan File gambar baru dari laptop
+  // Variabel untuk menyimpan URL gambar dari DB, dan File gambar baru dari penyimpanan lokal.
   String _currentImageUrl = '';
   Uint8List? _selectedImageBytes;
   String? _selectedImageExt;
 
-  int _sectionId = 1; // ID baris di tabel
+  int _sectionId = 1;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -36,7 +36,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     _loadDataFromSupabase();
   }
 
-  // 👇 1. MENGAMBIL DATA DARI SUPABASE
+  // 1. mengambil data dari Supabase.
   Future<void> _loadDataFromSupabase() async {
     try {
       final response = await _supabase
@@ -68,7 +68,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     super.dispose();
   }
 
-  // 👇 2. FUNGSI UNTUK MEMILIH FILE GAMBAR DARI LOKAL
+  // 2. fungsi untuk memilih file gambar dari lokal.
   Future<void> _pickImage() async {
     FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.image,
@@ -79,12 +79,12 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
       setState(() {
         _selectedImageBytes = result.files.first.bytes!;
         _selectedImageExt = result.files.first.extension ?? 'png';
-        _currentImageUrl = ''; // Hapus gambar lama dari tampilan
+        _currentImageUrl = '';
       });
     }
   }
 
-  // Menampilkan gambar (URL dari DB atau Bytes dari lokal)
+  // Menampilkan gambar (URL dari DB atau Bytes dari lokal).
   Widget _buildImageDisplay() {
     if (_selectedImageBytes != null) {
       return Image.memory(_selectedImageBytes!, fit: BoxFit.cover);
@@ -94,7 +94,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     return const Center(child: Text("Klik untuk Unggah Gambar"));
   }
 
-  // 👇 3. FUNGSI SIMPAN KE STORAGE LALU KE DATABASE
+  // 3. fungsi simpan ke storage lalu ke database.
   Future<void> _saveData() async {
     if (!_formKey.currentState!.validate()) {
       showErrorSnackBar(
@@ -109,12 +109,12 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
     try {
       String finalImageUrl = _currentImageUrl;
 
-      // Jika admin memilih gambar baru, upload ke Storage dulu!
+      // Jika admin memilih gambar baru, upload ke Storage dulu.
       if (_selectedImageBytes != null) {
         final fileName =
             'about_${DateTime.now().millisecondsSinceEpoch}.$_selectedImageExt';
 
-        // Upload ke bucket 'cms_images'
+        // Upload ke bucket 'cms_images'.
         await _supabase.storage
             .from('cms_images')
             .uploadBinary(
@@ -123,13 +123,13 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
               fileOptions: const FileOptions(upsert: true),
             );
 
-        // Dapatkan URL Publiknya
+        // Dapatkan URL Publiknya.
         finalImageUrl = _supabase.storage
             .from('cms_images')
             .getPublicUrl(fileName);
       }
 
-      // Update tabel di database
+      // Update tabel di database.
       await _supabase
           .from('cms_about_us')
           .update({
@@ -146,7 +146,7 @@ class _AboutSectionAdminState extends State<AboutSectionAdmin> {
         );
         setState(() {
           _currentImageUrl = finalImageUrl;
-          _selectedImageBytes = null; // Reset file picker
+          _selectedImageBytes = null;
         });
       }
     } catch (e) {

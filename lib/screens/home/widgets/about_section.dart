@@ -3,18 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_colors.dart';
 
-// 👇 1. HAPUS MOCK DATABASE, GANTI DENGAN SERVICE SUPABASE
 import '../../../services/supabase_cms_service.dart';
 
 class AboutSection extends StatelessWidget {
   const AboutSection({super.key});
 
-  // Fungsi pintar untuk merender gambar (URL, Base64, atau Fallback lokal)
+  // Fungsi untuk merender gambar (URL, Base64, atau Fallback lokal).
   Widget _buildImageDisplay(String imageSource, bool isMobile) {
     final double? height = isMobile ? 250 : null;
 
     if (imageSource.isEmpty) {
-      // Fallback ke gambar dari URL unsplash (atau lokal assets/tentang.png) jika kosong
+      // Fallback ke gambar dari URL unsplash (atau lokal assets/tentang.PNG) jika kosong.
       return Image.network(
         'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
         fit: BoxFit.cover,
@@ -28,7 +27,7 @@ class AboutSection extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: height,
-        // Tambahkan loading builder biar halus pas gambar di-load
+        // Tambahkan loading builder agar lebih halus saat gambar di-load.
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return Container(
@@ -68,11 +67,10 @@ class AboutSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 900;
 
-    // 👇 2. BUNGKUS DENGAN VALUELISTENABLEBUILDER
     return ValueListenableBuilder<Map<String, dynamic>>(
       valueListenable: SupabaseCmsService.aboutUs,
       builder: (context, data, _) {
-        // Siapkan variabel aman (fallback) jika data internet belum masuk
+        // Siapkan variabel aman (fallback) jika data internet belum masuk.
         String title = data['title'] ?? "Membantu Anak Bangsa Meraih Mimpi";
         String description =
             data['description'] ??

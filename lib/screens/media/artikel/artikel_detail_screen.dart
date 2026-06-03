@@ -8,7 +8,6 @@ import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
 
 class ArtikelDetailScreen extends StatefulWidget {
-  // 👇 UBAH JADI dynamic KARENA DATA DARI SUPABASE ADALAH DYNAMIC
   final Map<String, dynamic> artikel;
 
   const ArtikelDetailScreen({super.key, required this.artikel});
@@ -75,7 +74,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
-    // 👇 Ubah 'image' menjadi 'image_url' sesuai nama kolom DB
+    // Ubah 'image' menjadi 'image_url' sesuai nama kolom DB.
     final String imageSource = widget.artikel['image_url'] ?? '';
 
     return Scaffold(
@@ -127,7 +126,7 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                           ),
                           child: Text(
                             widget.artikel['category'] ??
-                                'Berita', // 👇 'kategori' jadi 'category'
+                                'Berita',
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 13,
@@ -191,7 +190,6 @@ class _ArtikelDetailScreenState extends State<ArtikelDetailScreen> {
                       )
                     else
                       Text(
-                        // 👇 'desc' jadi 'description'
                         widget.artikel['content'] ??
                             widget.artikel['description'] ??
                             '',

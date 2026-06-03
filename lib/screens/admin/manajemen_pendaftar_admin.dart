@@ -5,9 +5,9 @@ import '../../../core/snackbar_helper.dart';
 import '../../services/supabase_pendaftaran_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// ==========================================
+// =========================================================================
 // 1. MODEL DATA
-// ==========================================
+// =========================================================================
 class PendaftarModel {
   final String id;
   final String nama;
@@ -116,9 +116,9 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     return index != -1 ? index + 1 : 1;
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET BANTUAN UI
-  // ==========================================
+  // =========================================================================
   Widget _buildStatusBadge(String status) {
     Color bgColor;
     Color textColor;
@@ -241,7 +241,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
         ),
       ),
       subtitle: Text(
-        hasFile ? (fileName ?? fileUrl!) : "Belum diunggah oleh siswa",
+        hasFile ? (fileName ?? fileUrl) : "Belum diunggah oleh siswa",
         style: TextStyle(
           fontSize: 12,
           color: hasFile ? Colors.blue : Colors.grey,
@@ -252,7 +252,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
           : null,
       onTap: hasFile
           ? () async {
-              final uri = Uri.tryParse(fileUrl!);
+              final uri = Uri.tryParse(fileUrl);
               if (uri != null && await canLaunchUrl(uri)) {
                 await launchUrl(uri);
               } else {
@@ -265,9 +265,9 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // FUNGSI REVIEW & UBAH STATUS PENDAFTAR
-  // ==========================================
+  // =========================================================================
   void _showReviewDialog(PendaftarModel pendaftar, int index) async {
     final detailSiswa = await SupabasePendaftaranService.getDetailPendaftar(pendaftar.id);
     if (detailSiswa == null) {
@@ -280,7 +280,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
       text: detailSiswa['catatan_revisi'] ?? '',
     );
     
-    // ScrollController untuk auto-scroll modal
+    // ScrollController untuk auto-scroll modal.
     final ScrollController modalScrollController = ScrollController();
     
     final TextEditingController jadwalDisplayController = TextEditingController(
@@ -439,14 +439,14 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                   Divider(height: 10, thickness: 1),
                 ],
               ),
-              // 👇 PERUBAHAN: Memisahkan Error agar Sticky di bagian atas Modal
+              // Memisahkan Error agar Sticky di bagian atas Modal.
               content: SizedBox(
                 width: 600,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min, // Menyesuaikan tinggi
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 👇 WIDGET ERROR STICKY (Tidak ikut terscroll)
+                    // WIDGET ERROR STICKY (Tidak ikut terscroll).
                     if (errorPesanWawancara.isNotEmpty) ...[
                       Container(
                         width: double.infinity,
@@ -480,7 +480,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                       ),
                     ],
 
-                    // 👇 AREA KONTEN YANG BISA DI-SCROLL
+                    // Area konten yang bisa di-scroll.
                     Flexible(
                       child: SingleChildScrollView(
                         controller: modalScrollController,
@@ -658,10 +658,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                                 if (newValue != null) {
                                   setStateDialog(() {
                                     selectedStatus = newValue;
-                                    errorPesanWawancara = ''; // Hilangkan error jika ganti status lain
+                                    errorPesanWawancara = '';
                                   });
 
-                                  // Auto-scroll ke bawah agar kolom revisi/wawancara terlihat
+                                  // Auto-scroll ke bawah agar kolom revisi/wawancara terlihat.
                                   if (newValue == 'Revisi' || newValue == 'Wawancara') {
                                     Future.delayed(const Duration(milliseconds: 100), () {
                                       if (modalScrollController.hasClients) {
@@ -953,7 +953,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // 👇 CEK VALIDASI ERROR
+                    // Cek validasi error.
                     if (selectedStatus == 'Wawancara' &&
                         (selectedDate == null ||
                             selectedTime == null ||
@@ -965,7 +965,7 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                       return;
                     }
 
-                    // Kirim update status ke Supabase
+                    // Kirim update status ke Supabase.
                     final error = await SupabasePendaftaranService.updateStatusPendaftar(
                       email: pendaftar.id,
                       newStatus: selectedStatus,

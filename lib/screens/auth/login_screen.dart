@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validasi kosong
+    // Validasi kosong.
     if (email.isEmpty || password.isEmpty) {
       setState(() {
         _errorMessage = 'Email dan password tidak boleh kosong!';
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Panggil loginRole untuk mendapatkan peran (hanya cek admin / siswa)
+    // Panggil loginRole untuk mendapatkan peran (hanya cek admin / siswa).
     final String? userRole = await SupabaseAuthService.loginRole(email, password);
 
     setState(() {
@@ -47,9 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (userRole == 'siswa') {
-        context.go('/portal'); // Masuk ke dashboard Siswa
+        context.go('/portal');
       } else {
-        // Logout jika role tidak sesuai
+        // Logout jika role tidak sesuai.
         await SupabaseAuthService.logout();
         
         setState(() {
@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(
         0xFFFBFBFB,
-      ), // Background layar abu-abu sangat terang
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -91,14 +91,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 40,
-                  ), // Jarak atas-bawah saat di-scroll
+                  ),
                   child: Container(
                     width: 450,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
                       vertical: 40,
                     ),
-                    // 👇 PERUBAHAN: Menambahkan dekorasi Card dengan Shadow yang elegan
+                    // Menambahkan dekorasi Card dengan Shadow yang elegan.
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -116,17 +116,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tombol Kembali & Logo
+                        // Tombol Kembali & Logo.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // 👇 PERUBAHAN: Gunakan Transform.translate untuk menggeser ke kiri
-                            // tanpa merusak posisi lingkaran hover/splash
+                            // Gunakan Transform.translate untuk menggeser ke kiri.
+                            // Tanpa merusak posisi lingkaran hover/splash.
                             Transform.translate(
                               offset: const Offset(
                                 -8,
                                 0,
-                              ), // Geser 8px ke kiri agar rata dengan teks di bawahnya
+                              ),
                               child: IconButton(
                                 icon: const Icon(
                                   Icons.arrow_back,
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context.go('/');
                                 },
                                 tooltip: 'Kembali ke Beranda',
-                                // padding dan alignment yang bikin error sudah dihapus
+                                // Padding dan alignment yang menyebabkan error sudah dihapus.
                               ),
                             ),
                             Image.asset('assets/logo.png', height: 40),
@@ -180,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
 
-                        // Form Email
+                        // Form Email.
                         const Text(
                           'Email',
                           style: TextStyle(
@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: Colors
                                 .grey
-                                .shade50, // Dibuat sedikit abu-abu agar kontras dengan form putih
+                                .shade50,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(
@@ -228,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Form Password
+                        // Form Password.
                         const Text(
                           'Password',
                           style: TextStyle(
@@ -286,7 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 10),
 
-                        // Lupa Password
+                        // Lupa Password.
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -302,7 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Tombol Masuk
+                        // Tombol Masuk.
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -337,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 25),
 
-                        // Navigasi ke Daftar Siswa
+                        // Navigasi ke Daftar Siswa.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -363,14 +363,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Divider(color: Colors.black12),
                         const SizedBox(height: 15),
 
-                        // Pintu Khusus Donatur
+                        // Pintu Khusus Donatur.
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors
                                 .grey
-                                .shade50, // Sedikit di-highlight agar terpisah dari form
+                                .shade50,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade200),
                           ),

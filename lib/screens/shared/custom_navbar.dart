@@ -8,9 +8,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(80);
 
-  // ==========================================
+  // =========================================================================
   // MENU HP (MOBILE)
-  // ==========================================
+  // =========================================================================
   Widget _buildMobileMenu(BuildContext context, String currentPath) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu, color: Colors.black87, size: 30),
@@ -33,7 +33,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           child: Text(
             'Donasi',
             style: TextStyle(
-              color: AppColors.primary, // 👇 Sekarang merah solid
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -70,9 +70,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // MENU DESKTOP / LAPTOP
-  // ==========================================
+  // =========================================================================
   Widget _buildDesktopMenu(BuildContext context, String currentPath) {
     final bool isDonasiActive = currentPath == '/donasi';
 
@@ -94,14 +94,14 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _navbarItem(context, "Kontak", '/kontak', currentPath),
         const SizedBox(width: 40),
 
-        // ==========================================
+        // =========================================================================
         // TOMBOL DONASI (OUTLINE MERAH SOLID)
-        // ==========================================
+        // =========================================================================
         OutlinedButton(
           onPressed: () => context.go('/login-donatur'),
           style: OutlinedButton.styleFrom(
             side: BorderSide(
-              color: AppColors.primary, // 👇 Sekarang merah solid
+              color: AppColors.primary,
               width: isDonasiActive ? 2.0 : 1.5,
             ),
             backgroundColor: isDonasiActive
@@ -115,7 +115,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
           child: const Text(
             "Donasi",
             style: TextStyle(
-              color: AppColors.primary, // 👇 Sekarang merah solid
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -123,7 +123,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
 
         const SizedBox(width: 15),
 
-        // TOMBOL LOGIN (FILLED)
+        // Tombol login (filled).
         ElevatedButton(
           onPressed: () => context.go('/login'),
           style: ElevatedButton.styleFrom(

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
 
-// 👇 1. IMPORT SERVICE SUPABASE BARUMU (MockDatabase dihapus)
 import '../../../../services/supabase_donasi_service.dart';
 
 class FormDonasiView extends StatefulWidget {
@@ -36,9 +35,9 @@ class _FormDonasiViewState extends State<FormDonasiView> {
     super.dispose();
   }
 
-  // ==========================================
+  // =========================================================================
   // FUNGSI POPUP METODE PEMBAYARAN
-  // ==========================================
+  // =========================================================================
   void _showPaymentMethodDialog(int nominal) {
     final currencyFormatter = NumberFormat.currency(
       locale: 'id_ID',
@@ -75,7 +74,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1. HEADER DIALOG
+                    // 1. header dialog.
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -98,13 +97,13 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // 2. KONTEN TENGAH
+                    // 2. konten tengah.
                     Flexible(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Ringkasan Donasi
+                            // Ringkasan Donasi.
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(20),
@@ -160,7 +159,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                             ),
                             const SizedBox(height: 25),
 
-                            // Pilihan Metode
+                            // Pilihan Metode.
                             const Text(
                               "Metode Pembayaran",
                               style: TextStyle(
@@ -201,7 +200,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
 
                     const SizedBox(height: 20),
 
-                    // 3. TOMBOL BAYAR
+                    // 3. tombol bayar.
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -211,40 +210,40 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                             : () async {
                                 setStateDialog(() => isProcessing = true);
 
-                                // Simulasi loading Payment Gateway
+                                // Simulasi loading Payment Gateway.
                                 await Future.delayed(
                                   const Duration(seconds: 2),
                                 );
 
-                                // 👇 2. INI DIA EKSEKUSI KE SUPABASE CLOUD
+                                // Eksekusi ke Supabase cloud.
                                 try {
-                                  // Tentukan nama donatur
+                                  // Tentukan nama donatur.
                                   String namaDonatur = _isAnonymous
                                       ? 'tanpa nama'
                                       : (widget.user['name'] ?? 'Donatur VIP');
 
-                                  // Kirim ke database!
+                                  // Kirim ke database.
                                   await SupabaseDonationService.kirimDonasiKeCloud(
                                     namaDonatur,
-                                    'Program Karir Kurikulum 10 Bulan VIP', // Nama program
+                                    'Program Karir Kurikulum 10 Bulan VIP',
                                     nominal,
                                   );
 
-                                  // Jika sukses
+                                  // Jika sukses.
                                   if (context.mounted) {
                                     Navigator.pop(
                                       dialogContext,
-                                    ); // Tutup dialog
+                                    );
                                     showSuccessSnackBar(
                                       context,
                                       'Pembayaran berhasil dikonfirmasi!',
                                     );
 
-                                    // Pindah ke halaman riwayat atau reset form
+                                    // Pindah ke halaman riwayat atau reset form.
                                     widget.onDonasiSuccess();
                                   }
                                 } catch (e) {
-                                  // Jika terjadi error (misal internet mati)
+                                  // Jika terjadi error (misal internet mati).
                                   if (context.mounted) {
                                     setStateDialog(() => isProcessing = false);
                                     showErrorSnackBar(
@@ -669,7 +668,7 @@ class _FormDonasiViewState extends State<FormDonasiView> {
                       finalNominal = int.parse(rawStr);
                     }
 
-                    // Panggil dialog pilihan metode pembayaran
+                    // Panggil dialog pilihan metode pembayaran.
                     _showPaymentMethodDialog(finalNominal);
                   } else {
                     showErrorSnackBar(
