@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/app_colors.dart';
 import '../../shared/custom_navbar.dart';
@@ -14,19 +14,19 @@ class FAQScreen extends StatefulWidget {
 
 class _FAQScreenState extends State<FAQScreen> {
   int expandedIndex = -1;
-  final _supabase = Supabase.instance.client; // 👇 Inisialisasi Supabase
+  final _supabase = Supabase.instance.client;
 
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Latar belakang abu-abu terang
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: const CustomNavbar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // HEADER BANNER
+            // Header banner.
             Container(
               width: double.infinity,
               height: isMobile ? 250 : 320,
@@ -79,7 +79,7 @@ class _FAQScreenState extends State<FAQScreen> {
               ),
             ),
 
-            // KONTEN DAFTAR PERTANYAAN
+            // Konten daftar pertanyaan.
             Padding(
               padding: EdgeInsets.only(
                 top: 50,
@@ -104,14 +104,14 @@ class _FAQScreenState extends State<FAQScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // 👇 PERBAIKAN: Menggunakan StreamBuilder Real-time dari Supabase
+                  // Menggunakan StreamBuilder Real-time dari Supabase.
                   StreamBuilder<List<Map<String, dynamic>>>(
                     stream: _supabase
                         .from('faqs')
                         .stream(primaryKey: ['id'])
                         .order('created_at', ascending: false),
                     builder: (context, snapshot) {
-                      // Tampilkan loading saat data sedang diambil
+                      // Tampilkan loading saat data sedang diambil.
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return const Padding(
@@ -174,7 +174,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                 collapsedIconColor: Colors.grey,
                                 title: Text(
                                   faq["question"] ??
-                                      '', // 👇 Ubah jadi question
+                                      '',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
@@ -203,7 +203,7 @@ class _FAQScreenState extends State<FAQScreen> {
                                       alignment: Alignment.centerLeft,
                                       child: Text(
                                         faq["answer"] ??
-                                            '', // 👇 Ubah jadi answer
+                                            '',
                                         style: TextStyle(
                                           color: Colors.grey[700],
                                           height: 1.6,
@@ -226,7 +226,7 @@ class _FAQScreenState extends State<FAQScreen> {
               ),
             ),
 
-            // PANGGIL CUSTOM FOOTER
+            // Panggil custom footer.
             const CustomFooter(),
           ],
         ),

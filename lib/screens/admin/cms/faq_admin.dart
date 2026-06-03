@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -16,7 +16,6 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
   final TextEditingController _tanyaController = TextEditingController();
   final TextEditingController _jawabController = TextEditingController();
 
-  // 👇 Ubah jadi dynamic untuk menampung data Supabase
   List<Map<String, dynamic>> _faqList = [];
   bool _isLoading = true;
   final _supabase = Supabase.instance.client;
@@ -27,7 +26,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
     _loadData();
   }
 
-  // 👇 FUNGSI UNTUK MENARIK DATA DARI DATABASE SUPABASE
+  // Fungsi untuk menarik data dari database Supabase.
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -48,12 +47,12 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
     }
   }
 
-  // FUNGSI POP-UP FORM (TAMBAH / EDIT)
+  // Fungsi pop-up form (tambah / edit).
   void _showFormDialog({Map<String, dynamic>? faqToEdit}) {
     final isEdit = faqToEdit != null;
 
     if (isEdit) {
-      // 👇 Sesuaikan dengan nama kolom di Supabase ('question' & 'answer')
+      // Sesuaikan dengan nama kolom di Supabase ('question' & 'answer').
       _tanyaController.text = faqToEdit["question"] ?? '';
       _jawabController.text = faqToEdit["answer"] ?? '';
     } else {
@@ -162,7 +161,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                               }
                             }
 
-                            _loadData(); // Refresh layar
+                            _loadData();
                             if (mounted) Navigator.pop(context);
                           } catch (e) {
                             if (mounted) {
@@ -197,7 +196,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
     );
   }
 
-  // FUNGSI HAPUS (DENGAN KONFIRMASI)
+  // Fungsi hapus (dengan konfirmasi).
   void _hapusFaq(dynamic id) {
     showDialog(
       context: context,
@@ -303,7 +302,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                           contentPadding: const EdgeInsets.all(20),
                           title: Text(
                             item["question"] ??
-                                '', // 👇 Ubah dari "tanya" jadi "question"
+                                '',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -313,7 +312,7 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
                             padding: const EdgeInsets.only(top: 10),
                             child: Text(
                               item["answer"] ??
-                                  '', // 👇 Ubah dari "jawab" jadi "answer"
+                                  '',
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 height: 1.5,

@@ -181,7 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final int currentStep = user['current_step'] ?? (isRegistered ? 1 : 0);
     final bool isRevisi = user['is_revisi'] == true;
 
-    // 👇 LOGIKA BARU PENGECEKAN STATUS DITOLAK
+    // Logika baru pengecekan status ditolak.
     final bool isDitolak = user['admin_status'] == 'Ditolak';
 
     final currentName = user['name'] ?? 'Siswa VIP';
@@ -208,9 +208,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 30),
 
-            // ==========================================
+            // =========================================================================
             // BANNER JADWAL WAWANCARA (SEMBUNYIKAN JIKA DITOLAK)
-            // ==========================================
+            // =========================================================================
             if (!isDitolak &&
                 currentStep == 2 &&
                 user['jadwal_wawancara'] != null &&
@@ -338,9 +338,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 30),
             ],
 
-            // ==========================================
+            // =========================================================================
             // 1. KARTU STATUS PENDAFTARAN
-            // ==========================================
+            // =========================================================================
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(isMobile ? 20 : 30),
@@ -348,7 +348,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  // 👇 BORDER MERAH JIKA DITOLAK ATAU REVISI
+                  // Border merah jika ditolak atau revisi.
                   color: isDitolak
                       ? Colors.red.shade200
                       : (isRevisi
@@ -366,25 +366,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               child: isDitolak
-                  ? _buildStatusDitolak() // 👇 PANGGIL WIDGET DITOLAK
+                  ? _buildStatusDitolak()
                   : (isMobile
                         ? _buildStatusMobile(currentStep, isRevisi)
                         : _buildStatusDesktop(currentStep, isRevisi)),
             ),
             const SizedBox(height: 30),
 
-            // ==========================================
+            // =========================================================================
             // 2. COLLAPSE DATA PENDAFTAR
-            // ==========================================
+            // =========================================================================
             if (currentStep > 0) ...[
               _buildDataPendaftarCollapse(user),
               const SizedBox(height: 30),
             ],
 
-            // ==========================================
+            // =========================================================================
             // 3. ALUR PENDAFTARAN BEASISWA (TIMELINE)
-            // ==========================================
-            // 👇 SEMBUNYIKAN TIMELINE JIKA DITOLAK KARENA PROGRES BERHENTI
+            // =========================================================================
+            // Sembunyikan timeline jika ditolak karena progres berhenti.
             if (!isDitolak) ...[
               const Text(
                 'Alur Seleksi Beasiswa',
@@ -395,9 +395,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 30),
             ],
 
-            // ==========================================
+            // =========================================================================
             // 4. KARTU INFORMASI PENTING
-            // ==========================================
+            // =========================================================================
             const Text(
               'Informasi Penting',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -437,9 +437,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ==========================================
-  // 👇 WIDGET BARU KHUSUS STATUS DITOLAK
-  // ==========================================
+  // =========================================================================
+  // WIDGET BARU KHUSUS STATUS DITOLAK
+  // =========================================================================
   Widget _buildStatusDitolak() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,9 +499,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET TIMELINE ALUR PENDAFTARAN
-  // ==========================================
+  // =========================================================================
   Widget _buildAlurPendaftaran(int currentStep, bool isRevisi) {
     final List<String> stages = [
       "Pengisian Formulir Online",
@@ -666,9 +666,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // ==========================================
+  // =========================================================================
   // WIDGET BANTUAN UI LAINNYA
-  // ==========================================
+  // =========================================================================
 
   Widget _buildDataPendaftarCollapse(Map<String, dynamic> user) {
     final tglDaftar = _formatDate(user['tgl_daftar']);
@@ -824,7 +824,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: hasFile
                       ? InkWell(
                           onTap: () async {
-                            final uri = Uri.tryParse(fileUrl!);
+                            final uri = Uri.tryParse(fileUrl);
                             if (uri != null && await canLaunchUrl(uri)) {
                               await launchUrl(uri);
                             } else {
@@ -836,7 +836,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             }
                           },
                           child: Text(
-                            fileName ?? fileUrl!,
+                            fileName ?? fileUrl,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,

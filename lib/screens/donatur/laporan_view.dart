@@ -25,15 +25,15 @@ class _LaporanViewState extends State<LaporanView> {
     _fetchArtikelTerbaru();
   }
 
-  // 👇 MENGAMBIL 4 ARTIKEL TERBARU DARI TABEL ARTICLES
+  // Mengambil 4 artikel terbaru dari tabel articles.
   Future<void> _fetchArtikelTerbaru() async {
     try {
       final response = await _supabase
           .from('articles')
           .select()
-          .neq('category', 'Galeri') // Abaikan galeri
+          .neq('category', 'Galeri')
           .order('created_at', ascending: false)
-          .limit(4); // Ambil 4 terbaru saja
+          .limit(4);
 
       if (mounted) {
         setState(() {
@@ -47,7 +47,7 @@ class _LaporanViewState extends State<LaporanView> {
     }
   }
 
-  // Fungsi pintar untuk merender gambar (URL atau Base64)
+  // Fungsi untuk merender gambar (URL atau Base64).
   Widget _buildImageDisplay(String imageSource) {
     if (imageSource.isEmpty) {
       return const Center(
@@ -80,11 +80,11 @@ class _LaporanViewState extends State<LaporanView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========================================================
+          // =========================================================================
           // 1. KARTU ALOKASI DANA REVISI
-          // ========================================================
-          // Catatan: Jika total donasi sudah pindah ke SupabaseDonationService,
-          // ganti MockDatabase.totalDonasiTerkumpul di bawah ini.
+          // =========================================================================
+          // Catatan: Jika total donasi sudah pindah ke SupabaseDonationService,.
+          // Ganti MockDatabase.totalDonasiTerkumpul di bawah ini.
           ValueListenableBuilder(
             valueListenable: SupabaseDonationService.riwayatPenyaluran,
             builder: (context, List<Map<String, dynamic>> pengeluaran, _) {
@@ -189,9 +189,9 @@ class _LaporanViewState extends State<LaporanView> {
 
           const SizedBox(height: 40),
 
-          // ==========================================
+          // =========================================================================
           // 2. TIMELINE DAMPAK / BERITA (DARI SUPABASE)
-          // ==========================================
+          // =========================================================================
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -306,7 +306,7 @@ class _LaporanViewState extends State<LaporanView> {
     );
   }
 
-  // 👇 UPDATE: Menerima data Map (JSON dari Supabase)
+  // Menerima data Map (JSON dari Supabase).
   Widget _buildImpactCard(Map<String, dynamic> artikel, bool isMobile) {
     return Container(
       margin: EdgeInsets.only(bottom: isMobile ? 20 : 0),
@@ -332,7 +332,7 @@ class _LaporanViewState extends State<LaporanView> {
             color: Colors.grey.shade200,
             child: _buildImageDisplay(
               artikel['image_url'] ?? '',
-            ), // 👇 Render gambar Supabase
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -348,7 +348,7 @@ class _LaporanViewState extends State<LaporanView> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      artikel['date'] ?? '-', // 👇 Format tanggal dari database
+                      artikel['date'] ?? '-',
                       style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 12,
@@ -370,7 +370,7 @@ class _LaporanViewState extends State<LaporanView> {
                 const SizedBox(height: 12),
                 Text(
                   artikel['description'] ??
-                      '', // 👇 Tampilkan deskripsi singkat
+                      '',
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 14,
@@ -391,7 +391,7 @@ class _LaporanViewState extends State<LaporanView> {
                   ),
                   child: Text(
                     artikel['category'] ??
-                        'Berita', // 👇 Tampilkan kategori sebagai tag
+                        'Berita',
                     style: TextStyle(
                       color: Colors.blue.shade700,
                       fontSize: 12,

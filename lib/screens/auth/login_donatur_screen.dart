@@ -27,7 +27,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validasi kosong
+    // Validasi kosong.
     if (email.isEmpty || password.isEmpty) {
       setState(() {
         _errorMessage = 'Email dan password tidak boleh kosong!';
@@ -36,7 +36,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
       return;
     }
 
-    // Panggil loginRole untuk mendapatkan peran
+    // Panggil loginRole untuk mendapatkan peran.
     final String? userRole = await SupabaseAuthService.loginRole(email, password);
 
     setState(() {
@@ -49,7 +49,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
       if (userRole == 'donatur') {
         context.go('/dashboard-donatur');
       } else {
-        // Logout jika role tidak sesuai
+        // Logout jika role tidak sesuai.
         await SupabaseAuthService.logout();
         
         setState(() {
@@ -111,13 +111,13 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Tombol Kembali & Logo
+                        // Tombol Kembali & Logo.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // 👇 PERBAIKAN: Membungkus tombol dengan Transform
-                            // agar posisi tombol bergeser sedikit ke kiri,
-                            // namun efek bulatannya (hover) tetap presisi mengikuti panah.
+                            // Membungkus tombol dengan Transform.
+                            // Agar posisi tombol bergeser sedikit ke kiri.
+                            // Namun efek bulatannya (hover) tetap presisi mengikuti panah.
                             Transform.translate(
                               offset: const Offset(-12, 0),
                               child: IconButton(
@@ -172,7 +172,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                             ),
                           ),
 
-                        // Form Email
+                        // Form Email.
                         const Text(
                           'Email',
                           style: TextStyle(
@@ -218,7 +218,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Form Password
+                        // Form Password.
                         const Text(
                           'Password',
                           style: TextStyle(
@@ -276,7 +276,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         ),
                         const SizedBox(height: 10),
 
-                        // Lupa Password
+                        // Lupa Password.
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -292,7 +292,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Tombol Masuk
+                        // Tombol Masuk.
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -327,7 +327,7 @@ class _LoginDonaturScreenState extends State<LoginDonaturScreen> {
                         ),
                         const SizedBox(height: 25),
 
-                        // Navigasi ke Daftar Akun Donatur
+                        // Navigasi ke Daftar Akun Donatur.
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [

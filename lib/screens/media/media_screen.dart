@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/app_colors.dart';
 import '../shared/custom_navbar.dart';
@@ -18,7 +18,6 @@ class _MediaScreenState extends State<MediaScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // 👇 Ubah jadi dynamic untuk menerima data dari Supabase
   List<Map<String, dynamic>> _artikelList = [];
   List<Map<String, dynamic>> _galeriList = [];
   bool _isLoading = true;
@@ -29,14 +28,14 @@ class _MediaScreenState extends State<MediaScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _fetchMediaFromSupabase(); // 👇 Panggil fungsi fetch
+    _fetchMediaFromSupabase();
 
     _tabController.addListener(() {
       setState(() {});
     });
   }
 
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  // Fungsi menarik data dari Supabase.
   Future<void> _fetchMediaFromSupabase() async {
     setState(() => _isLoading = true);
     try {
@@ -217,7 +216,7 @@ class _MediaScreenState extends State<MediaScreen>
                       color: Colors.grey.shade200,
                       child: _buildImageDisplay(
                         artikel['image_url'] ?? '',
-                      ), // 👇 Sesuaikan nama kolom DB
+                      ),
                     ),
                   ),
                   Expanded(
@@ -243,7 +242,7 @@ class _MediaScreenState extends State<MediaScreen>
                                 ),
                                 child: Text(
                                   artikel['category'] ??
-                                      'Berita', // 👇 Sesuaikan nama kolom DB
+                                      'Berita',
                                   style: const TextStyle(
                                     color: AppColors.primary,
                                     fontSize: 11,
@@ -275,7 +274,7 @@ class _MediaScreenState extends State<MediaScreen>
                           Expanded(
                             child: Text(
                               artikel['description'] ??
-                                  '', // 👇 Sesuaikan nama kolom DB
+                                  '',
                               style: TextStyle(
                                 color: Colors.grey.shade600,
                                 fontSize: 13,
@@ -341,7 +340,7 @@ class _MediaScreenState extends State<MediaScreen>
           final g = _galeriList[index];
           final judulFoto = g['title'] ?? '';
           final imageSource =
-              g['image_url'] ?? ''; // 👇 Sesuaikan nama kolom DB
+              g['image_url'] ?? '';
 
           return Card(
             elevation: 2,

@@ -2,7 +2,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -25,7 +25,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     _loadData();
   }
 
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  // Fungsi menarik data dari Supabase.
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -46,7 +46,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     }
   }
 
-  // 👇 FUNGSI MENGHAPUS DATA DARI SUPABASE
+  // Fungsi menghapus data dari Supabase.
   void _confirmDeletePartner(dynamic id) {
     showDialog(
       context: context,
@@ -95,7 +95,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     );
   }
 
-  // FUNGSI MENAMPILKAN GAMBAR (MENDUKUNG BYTES LOKAL & URL SUPABASE)
+  // Fungsi menampilkan gambar (mendukung bytes lokal & URL Supabase).
   Widget _buildImageDisplay({String url = '', Uint8List? bytes}) {
     if (bytes != null) {
       return Image.memory(bytes, fit: BoxFit.contain);
@@ -112,7 +112,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     return const Center(child: Icon(Icons.image, color: Colors.grey, size: 40));
   }
 
-  // 👇 FUNGSI UPLOAD GAMBAR UNTUK SUPABASE STORAGE
+  // Fungsi upload gambar untuk Supabase storage.
   Future<void> _pickImage(
     Function(Uint8List bytes, String ext) onImagePicked,
   ) async {
@@ -129,14 +129,14 @@ class _PartnersAdminState extends State<PartnersAdmin> {
     }
   }
 
-  // FORM DIALOG TAMBAH / EDIT
+  // Form dialog tambah / edit.
   void _showFormDialog({Map<String, dynamic>? partner}) {
     final isEdit = partner != null;
     final nameController = TextEditingController(
       text: isEdit ? partner['name'] : '',
     );
 
-    // Sesuaikan dengan nama kolom di database 'image_url'
+    // Sesuaikan dengan nama kolom di database 'image_url'.
     String currentImageUrl = isEdit ? (partner['image_url'] ?? '') : '';
     Uint8List? newImageBytes;
     String? newImageExt;
@@ -192,14 +192,14 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                   ),
                   const SizedBox(height: 10),
 
-                  // KOTAK UPLOAD GAMBAR
+                  // Kotak upload gambar.
                   InkWell(
                     onTap: () {
                       _pickImage((bytes, ext) {
                         setModalState(() {
                           newImageBytes = bytes;
                           newImageExt = ext;
-                          currentImageUrl = ''; // Hapus preview lama
+                          currentImageUrl = '';
                         });
                       });
                     },
@@ -296,7 +296,7 @@ class _PartnersAdminState extends State<PartnersAdmin> {
                         try {
                           String finalImageUrl = currentImageUrl;
 
-                          // Upload ke Supabase Storage jika ada gambar baru
+                          // Upload ke Supabase Storage jika ada gambar baru.
                           if (newImageBytes != null) {
                             final fileName =
                                 'partner_${DateTime.now().millisecondsSinceEpoch}.$newImageExt';

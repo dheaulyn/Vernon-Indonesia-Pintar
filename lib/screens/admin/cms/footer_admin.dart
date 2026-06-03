@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // 👇 Import Supabase
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -13,7 +13,6 @@ class FooterAdmin extends StatefulWidget {
 }
 
 class _FooterAdminState extends State<FooterAdmin> {
-  // 👇 Data dari Supabase
   Map<String, dynamic> _footerData = {};
   bool _isLoading = true;
   final _supabase = Supabase.instance.client;
@@ -24,7 +23,7 @@ class _FooterAdminState extends State<FooterAdmin> {
     _loadData();
   }
 
-  // 👇 FUNGSI MENARIK DATA DARI SUPABASE
+  // Fungsi menarik data dari Supabase.
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -87,7 +86,7 @@ class _FooterAdminState extends State<FooterAdmin> {
   }
 
   void _showEditForm() {
-    // 👇 Ambil dari state _footerData dan sesuaikan nama kolom DB
+    // Ambil dari state _footerData dan sesuaikan nama kolom DB.
     TextEditingController descCtrl = TextEditingController(
       text: _footerData['deskripsi_yayasan'] ?? '',
     );
@@ -212,7 +211,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                         setModalState(() => isSaving = true);
 
                         final footerId =
-                            _footerData['id'] ?? 1; // Default ke 1 jika null
+                            _footerData['id'] ?? 1;
 
                         final updateData = {
                           'deskripsi_yayasan': descCtrl.text.trim(),
@@ -221,7 +220,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                           'instagram': igCtrl.text.trim(),
                           'email': emailCtrl.text.trim(),
                           'updated_at': DateTime.now()
-                              .toIso8601String(), // Update waktu
+                              .toIso8601String(),
                         };
 
                         try {
@@ -230,7 +229,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                               .update(updateData)
                               .eq('id', footerId);
 
-                          _loadData(); // Refresh layar admin
+                          _loadData();
                           if (mounted) Navigator.pop(context);
                           if (mounted) {
                             showSuccessSnackBar(

@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseCmsService {
   static final _supabase = Supabase.instance.client;
 
-  // 👇 Tabungan data dinamis yang bisa didengarkan oleh halaman depan (Real-time)
+  // Tabungan data dinamis yang bisa didengarkan oleh halaman depan (Real-time).
   static final ValueNotifier<Map<String, dynamic>> heroBanner = ValueNotifier(
     {},
   );
@@ -14,12 +14,12 @@ class SupabaseCmsService {
 
   static bool _isInitialized = false;
 
-  /// Fungsi untuk menyalukan "radar" realtime ke Supabase CMS
+  /// Fungsi untuk menyalukan "radar" realtime ke Supabase CMS.
   static void initialize() {
     if (_isInitialized) return;
     _isInitialized = true;
 
-    // 1. Dengarkan perubahan tabel Hero Banner secara live
+    // 1. Dengarkan perubahan tabel Hero Banner secara live.
     _supabase.from('cms_hero_banners').stream(primaryKey: ['id']).listen((
       data,
     ) {
@@ -28,14 +28,14 @@ class SupabaseCmsService {
       }
     });
 
-    // 2. Dengarkan perubahan tabel Tentang Kami secara live
+    // 2. Dengarkan perubahan tabel Tentang Kami secara live.
     _supabase.from('cms_about_us').stream(primaryKey: ['id']).listen((data) {
       if (data.isNotEmpty) {
         aboutUs.value = data.first;
       }
     });
 
-    // 3. Dengarkan perubahan tabel Profil Yayasan (Visi Misi) secara live
+    // 3. Dengarkan perubahan tabel Profil Yayasan (Visi Misi) secara live.
     _supabase.from('cms_foundation_profiles').stream(primaryKey: ['id']).listen(
       (data) {
         if (data.isNotEmpty) {

@@ -29,7 +29,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
   String _currentPassword = '';
   String _currentConfirmPassword = '';
 
-  // Cek persyaratan password
+  // Cek persyaratan password.
   bool get _hasMinLength => _currentPassword.length >= 6;
   bool get _hasUppercase => _currentPassword.contains(RegExp(r'[A-Z]'));
   bool get _hasDigit => _currentPassword.contains(RegExp(r'[0-9]'));
@@ -37,7 +37,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _currentConfirmPassword.isNotEmpty &&
       _currentPassword == _currentConfirmPassword;
 
-  // 👇 FUNGSI YANG SUDAH DIPERBAIKI
+  // Fungsi registrasi donatur.
   Future<void> _handleRegister() async {
     setState(() {
       _errorMessage = '';
@@ -53,7 +53,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       return;
     }
 
-    // Validasi persyaratan password sebelum kirim ke server
+    // Validasi persyaratan password sebelum kirim ke server.
     if (!_hasMinLength || !_hasUppercase || !_hasDigit) {
       setState(() {
         _errorMessage = 'Password belum memenuhi semua persyaratan.';
@@ -65,7 +65,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
       _isLoading = true;
     });
 
-    // Panggil register dan set role-nya sebagai 'donatur'
+    // Panggil register dan set role-nya sebagai 'donatur'.
     String? error = await SupabaseAuthService.register(
       _nameController.text,
       _emailController.text,
@@ -81,7 +81,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
     });
 
     if (error == null) {
-      // null = berhasil
+      // Null = berhasil.
       showSuccessSnackBar(context, 'Registrasi berhasil! Silakan masuk dengan akun Anda.');
       context.go('/login-donatur');
     } else {
@@ -138,11 +138,11 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Header: Tombol Kembali & Logo
+                          // Header: Tombol Kembali & Logo.
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // 👇 PERBAIKAN: Posisi tombol arrow_back
+                              // Posisi tombol arrow_back.
                               Transform.translate(
                                 offset: const Offset(-12, 0),
                                 child: IconButton(
@@ -200,7 +200,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                               ),
                             ),
 
-                          // Form Nama Lengkap
+                          // Form Nama Lengkap.
                           _buildLabel('Nama Lengkap'),
                           _buildTextField(
                             controller: _nameController,
@@ -219,7 +219,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Form Email & No HP
+                          // Form Email & No HP.
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -271,7 +271,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Form Password
+                          // Form Password.
                           _buildLabel('Password'),
                           _buildPasswordField(
                             controller: _passwordController,
@@ -288,11 +288,11 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                               return null;
                             },
                           ),
-                          // ✅ Indikator persyaratan password
+                          // Indikator persyaratan password.
                           if (_currentPassword.isNotEmpty) ..._buildPasswordChecklist(),
                           const SizedBox(height: 20),
 
-                          // Form Konfirmasi Password
+                          // Form Konfirmasi Password.
                           _buildLabel('Konfirmasi Password'),
                           TextFormField(
                             controller: _confirmPasswordController,
@@ -369,7 +369,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Checkbox Syarat & Ketentuan
+                          // Checkbox Syarat & Ketentuan.
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -417,7 +417,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 35),
 
-                          // Tombol Daftar
+                          // Tombol Daftar.
                           SizedBox(
                             width: double.infinity,
                             height: 55,
@@ -452,7 +452,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           ),
                           const SizedBox(height: 25),
 
-                          // Navigasi ke Login
+                          // Navigasi ke Login.
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -478,7 +478,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
                           const Divider(color: Colors.black12),
                           const SizedBox(height: 15),
 
-                          // Pintu Khusus Siswa
+                          // Pintu Khusus Siswa.
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
@@ -538,7 +538,7 @@ class _RegisterDonaturScreenState extends State<RegisterDonaturScreen> {
     );
   }
 
-  // WIDGET BANTUAN UNTUK FORM
+  // Widget bantuan untuk form.
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

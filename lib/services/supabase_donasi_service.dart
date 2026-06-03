@@ -6,7 +6,7 @@ import 'supabase_notification_service.dart';
 class SupabaseDonationService {
   static final SupabaseClient _client = Supabase.instance.client;
 
-  // State local pengganti ValueNotifier kemarin agar UI tetap reaktif secara Real-time
+  // State lokal agar UI tetap reaktif secara real-time.
   static final ValueNotifier<List<Map<String, dynamic>>> riwayatDonasi =
       ValueNotifier([]);
   static final ValueNotifier<List<Map<String, dynamic>>> riwayatPenyaluran =
@@ -14,13 +14,13 @@ class SupabaseDonationService {
   static final ValueNotifier<int> totalDonasiTerkumpul = ValueNotifier(0);
   static final ValueNotifier<int> danaTersalurkan = ValueNotifier(0);
 
-  // ==========================================
-  // FITUR ALIRAN DANA & REAL-TIME STREAM (TUGAS DHEA)
-  // ==========================================
+  // =========================================================================
+  // FITUR ALIRAN DANA & REAL-TIME STREAM
+  // =========================================================================
 
-  // Fungsi dipanggil pertama kali saat aplikasi dibuka untuk mendengarkan perubahan database
+  // Fungsi dipanggil pertama kali saat aplikasi dibuka untuk mendengarkan perubahan database.
   static void listenToFinancialRealtime() {
-    // A. Dengarkan tabel donasi masuk
+    // A. Dengarkan tabel donasi masuk.
     _client.from('donations').stream(primaryKey: ['id']).listen((
       List<Map<String, dynamic>> data,
     ) {
@@ -34,7 +34,7 @@ class SupabaseDonationService {
       totalDonasiTerkumpul.value = total;
     });
 
-    // B. Dengarkan tabel penyaluran dana keluar
+    // B. Dengarkan tabel penyaluran dana keluar.
     _client.from('disbursements').stream(primaryKey: ['id']).listen((
       List<Map<String, dynamic>> data,
     ) {
@@ -49,13 +49,13 @@ class SupabaseDonationService {
     });
   }
 
-  // Fungsi saat Donatur mengirim uang dari halaman Formulir Donasi
+  // Fungsi saat Donatur mengirim uang dari halaman Formulir Donasi.
   static Future<void> kirimDonasiKeCloud(
     String nama,
     String program,
     int nominal,
   ) async {
-    // 👇 2. KUNCI KOLABORASI: Ambil email user yang sedang login dari file Nabila
+    // Ambil email user yang sedang login.
     final user = SupabaseAuthService.currentUserData;
     final emailDonatur = user?['email'];
     final uid = Supabase.instance.client.auth.currentUser?.id;
@@ -67,15 +67,15 @@ class SupabaseDonationService {
       'amount': nominal,
     });
 
-    // 🔔 Buat notifikasi untuk ADMIN
+    // Buat notifikasi untuk ADMIN.
     await SupabaseNotificationService.createNotification(
-      userId: null, // Global untuk admin
+      userId: null,
       title: 'Donasi Masuk',
       message: 'Donasi sebesar Rp $nominal berhasil diterima dari ${nama.isEmpty ? 'Hamba Allah' : nama} untuk program $program.',
       type: 'donasi_masuk',
     );
 
-    // 🔔 Buat notifikasi untuk DONATUR (jika login)
+    // Buat notifikasi untuk DONATUR (jika login).
     if (uid != null) {
       await SupabaseNotificationService.createNotification(
         userId: uid,
@@ -86,7 +86,7 @@ class SupabaseDonationService {
     }
   }
 
-  // Fungsi saat Admin mencatatkan pengeluaran
+  // Fungsi saat Admin mencatatkan pengeluaran.
   static Future<void> catatPengeluaranKeCloud(
     int nominal,
     String kategori,
@@ -101,7 +101,7 @@ class SupabaseDonationService {
       'nominal': nominal,
     });
 
-    // Buat notifikasi ke admin (global)
+    // Buat notifikasi ke admin (global).
     await SupabaseNotificationService.createNotification(
       userId: null,
       title: 'Penyaluran Dana',

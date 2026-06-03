@@ -4,7 +4,6 @@ import '../../shared/custom_navbar.dart';
 import '../../shared/custom_footer.dart';
 import '/core/app_colors.dart';
 
-// 👇 1. IMPORT SERVICE CMS SUPABASE
 import '../../../services/supabase_cms_service.dart';
 
 class ProfilYayasanScreen extends StatelessWidget {
@@ -60,11 +59,10 @@ class ProfilYayasanScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
-      // 👇 2. BUNGKUS DENGAN VALUELISTENABLEBUILDER
       body: ValueListenableBuilder<Map<String, dynamic>>(
         valueListenable: SupabaseCmsService.foundationProfile,
         builder: (context, dataProfil, _) {
-          // Siapkan data dengan fallback jika belum ter-load dari internet
+          // Siapkan data dengan fallback jika belum ter-load dari internet.
           final String title =
               dataProfil['title'] ??
               "Apa itu YAYASAN VERNON INDONESIA PINTAR (VIP)?";
@@ -73,7 +71,7 @@ class ProfilYayasanScreen extends StatelessWidget {
           final String vision = dataProfil['vision'] ?? "Teks Visi...";
           final String imageUrl = dataProfil['image_url'] ?? '';
 
-          // Ambil array JSON missions, jika kosong berikan list kosong
+          // Ambil array JSON missions, jika kosong berikan list kosong.
           final List<dynamic> missions = dataProfil['missions'] ?? [];
 
           return SingleChildScrollView(
@@ -88,9 +86,9 @@ class ProfilYayasanScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      // ==========================================
-                      // SECTION 1: TENTANG KAMI & GAMBAR
-                      // ==========================================
+                      // =========================================================================
+                      // TENTANG KAMI & GAMBAR
+                      // =========================================================================
                       isMobile
                           ? Column(
                               children: [
@@ -120,9 +118,9 @@ class ProfilYayasanScreen extends StatelessWidget {
 
                       const SizedBox(height: 80),
 
-                      // ==========================================
-                      // SECTION 2: VISION & MISSION
-                      // ==========================================
+                      // =========================================================================
+                      // VISION & MISSION
+                      // =========================================================================
                       isMobile
                           ? Column(
                               children: [
@@ -190,7 +188,7 @@ class ProfilYayasanScreen extends StatelessWidget {
     );
   }
 
-  // 👇 Data Teks Dinamis via Parameter
+  // Data Teks Dinamis via Parameter.
   Widget _buildAboutText(String title, String description, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +210,7 @@ class ProfilYayasanScreen extends StatelessWidget {
     );
   }
 
-  // 👇 Data Gambar Dinamis via Parameter
+  // Data Gambar Dinamis via Parameter.
   Widget _buildImageSection(String imageUrl, bool isMobile) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -220,7 +218,7 @@ class ProfilYayasanScreen extends StatelessWidget {
     );
   }
 
-  // 👇 Data Visi Dinamis via Parameter
+  // Data Visi Dinamis via Parameter.
   Widget _buildVisionCard(String vision) {
     return Container(
       padding: const EdgeInsets.all(30),
@@ -269,7 +267,7 @@ class ProfilYayasanScreen extends StatelessWidget {
     );
   }
 
-  // 👇 Data Misi Dinamis dari Array via Parameter
+  // Data Misi Dinamis dari Array via Parameter.
   Widget _buildMissionCard(List<dynamic> missions) {
     return Container(
       padding: const EdgeInsets.all(30),
@@ -307,7 +305,7 @@ class ProfilYayasanScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Loop data poin misi dari database
+          // Loop data poin misi dari database.
           if (missions.isEmpty)
             const Text(
               "Belum ada poin misi",

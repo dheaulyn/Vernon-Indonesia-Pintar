@@ -407,7 +407,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
-                        // ✅ Indikator persyaratan password
+                        // Indikator persyaratan password
                         if (_currentPassword.isNotEmpty) ..._buildPasswordChecklist(),
                         const SizedBox(height: 20),
 

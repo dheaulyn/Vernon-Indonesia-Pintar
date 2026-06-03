@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// 👇 1. IMPORT KEDUA SERVICE (Auth & Donasi)
 import '../../../../services/supabase_auth_service.dart';
 import '../../../../services/supabase_donasi_service.dart';
 
@@ -18,17 +17,17 @@ class RiwayatDonasiView extends StatelessWidget {
       decimalDigits: 0,
     );
 
-    // Format tanggal untuk Supabase (ISO8601 ke text biasa)
+    // Format tanggal untuk Supabase (ISO8601 ke text biasa).
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm', 'id_ID');
 
-    // 👇 2. AMBIL EMAIL USER YANG LOGIN DARI SERVICE NABILA
+    // Ambil email user yang login.
     final String? currentUserEmail =
         SupabaseAuthService.currentUserData?['email'];
 
     return ValueListenableBuilder(
       valueListenable: SupabaseDonationService.riwayatDonasi,
       builder: (context, List<Map<String, dynamic>> riwayatGlobal, _) {
-        // 👇 3. FILTER PINTAR: Cocokkan berdasarkan Email, bukan Nama.
+        // Filter berdasarkan email, bukan nama.
         final riwayatPribadi = riwayatGlobal
             .where((donasi) => donasi['donatur_email'] == currentUserEmail)
             .toList();
@@ -51,7 +50,7 @@ class RiwayatDonasiView extends StatelessWidget {
               )
             else
               ...riwayatPribadi.map((history) {
-                // Konversi tanggal dari database
+
                 String formattedDate = '-';
                 if (history['created_at'] != null) {
                   try {
@@ -80,7 +79,7 @@ class RiwayatDonasiView extends StatelessWidget {
                           children: [
                             Text(
                               history['program_name'] ??
-                                  "Program VIP", // Sesuai kolom database
+                                  "Program VIP",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
@@ -104,7 +103,7 @@ class RiwayatDonasiView extends StatelessWidget {
                           Text(
                             currencyFormatter.format(
                               history['amount'] ?? 0,
-                            ), // Sesuai kolom database
+                            ),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,

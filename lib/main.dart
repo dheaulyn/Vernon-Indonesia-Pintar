@@ -5,7 +5,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
-// --- IMPORT PUBLIK ---
 import 'screens/home/home_screen.dart';
 import 'screens/home/widgets/faq_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -24,7 +23,6 @@ import 'screens/auth/forgot_password_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/media/artikel/artikel_detail_screen.dart';
 
-// --- IMPORT ADMIN ---
 import 'screens/admin/auth/login_admin_screen.dart';
 import 'screens/admin/layout_dashboard.dart';
 import 'screens/admin/home_dashboard.dart';
@@ -40,7 +38,6 @@ import 'screens/admin/cms/testimoni_admin.dart';
 import 'screens/admin/cms/faq_admin.dart';
 import 'screens/admin/cms/footer_admin.dart';
 import 'screens/admin/cms/partners_admin.dart';
-// 👇 IMPORT SUPABASE BARU
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/supabase_auth_service.dart';
 import 'services/supabase_donasi_service.dart';
@@ -55,7 +52,7 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmdWZscGVmdGR5c29vd3JyaWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNzMyODEsImV4cCI6MjA5NDY0OTI4MX0.-ejrTKRPSONwmoe4fkdE4Ck5DWmXLa3Tp6sZ5MHEa7Y',
   );
 
-  // Pulihkan sesi jika user sudah login sebelumnya (penting untuk page refresh)
+  // Pulihkan sesi jika user sudah login sebelumnya (penting untuk page refresh).
   await SupabaseAuthService.restoreSession();
 
   SupabaseDonationService.listenToFinancialRealtime();
@@ -65,15 +62,15 @@ void main() async {
   runApp(const YayasanApp());
 }
 
-// ======================================================
+// =========================================================================
 // ROUTER CONFIGURATION
-// ======================================================
+// =========================================================================
 final GoRouter _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // --------------------------------------------------
+    // =========================================================================
     // 1. RUTE PUBLIK (USER/GUEST)
-    // --------------------------------------------------
+    // =========================================================================
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
     GoRoute(
       path: '/pusat-bantuan',
@@ -193,9 +190,9 @@ final GoRouter _router = GoRouter(
       },
     ),
 
-    // --------------------------------------------------
+    // =========================================================================
     // 2. RUTE ADMIN (MENGGUNAKAN SHELL ROUTE)
-    // --------------------------------------------------
+    // =========================================================================
     ShellRoute(
       redirect: (context, state) async {
         if (!SupabaseAuthService.isLoggedIn) return '/login-admin';
@@ -266,9 +263,9 @@ final GoRouter _router = GoRouter(
       ],
     ),
 
-    // --------------------------------------------------
+    // =========================================================================
     // RUTE DINAMIS (SCROLL KE SECTION)
-    // --------------------------------------------------
+    // =========================================================================
     GoRoute(
       path: '/:section',
       builder: (context, state) {
@@ -279,9 +276,9 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-// ======================================================
+// =========================================================================
 // MAIN APP CLASS
-// ======================================================
+// =========================================================================
 class YayasanApp extends StatelessWidget {
   const YayasanApp({super.key});
 
@@ -291,7 +288,7 @@ class YayasanApp extends StatelessWidget {
       title: 'Vernon Indonesia Pintar',
       debugShowCheckedModeBanner: false,
 
-      // Konfigurasi Localization untuk Quill & Flutter
+      // Konfigurasi Localization untuk Quill & Flutter.
       localizationsDelegates: const [
         FlutterQuillLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
