@@ -28,6 +28,8 @@ import 'screens/admin/layout_dashboard.dart';
 import 'screens/admin/home_dashboard.dart';
 import 'screens/admin/manajemen_pendaftar_admin.dart';
 import 'screens/admin/manajemen_donasi.dart';
+import 'screens/admin/manajemen_admin_screen.dart';
+import 'screens/admin/admin_profil_screen.dart';
 
 import 'screens/admin/cms/hero_banner_admin.dart';
 import 'screens/admin/cms/about_section_admin.dart';
@@ -197,7 +199,7 @@ final GoRouter _router = GoRouter(
       redirect: (context, state) async {
         if (!SupabaseAuthService.isLoggedIn) return '/login-admin';
         final role = SupabaseAuthService.currentUserData?['role'];
-        if (role != 'admin') return '/login-admin';
+        if (role != 'admin' && role != 'super_admin') return '/login-admin';
         return null;
       },
       builder: (context, state, child) {
@@ -223,6 +225,14 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/admin-donasi-salurkan',
           builder: (context, state) => const PenyaluranDanaView(),
+        ),
+        GoRoute(
+          path: '/admin-manajemen-admin',
+          builder: (context, state) => const ManajemenAdminScreen(),
+        ),
+        GoRoute(
+          path: '/admin-profil',
+          builder: (context, state) => const AdminProfilScreen(),
         ),
         GoRoute(
           path: '/cms-hero-banner',

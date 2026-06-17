@@ -191,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _emailController,
+                          textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
                             hintText: 'Masukkan email terdaftar',
                             hintStyle: TextStyle(
@@ -240,6 +241,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _handleLogin(),
                           decoration: InputDecoration(
                             hintText: 'Masukkan password Anda',
                             hintStyle: TextStyle(

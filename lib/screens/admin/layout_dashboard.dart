@@ -5,6 +5,8 @@ import '../shared/shared_dashboard_layout.dart';
 // Catatan: Anda TIDAK perlu lagi mengimpor halaman-halaman (HomeDashboard, dll) di file ini,
 // karena halaman-halaman tersebut akan dipanggil di file konfigurasi router Anda.
 
+import '../../services/supabase_auth_service.dart';
+
 class LayoutDashboard extends StatelessWidget {
   final Widget child;
 
@@ -13,41 +15,55 @@ class LayoutDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentRoute = GoRouterState.of(context).uri.toString();
+    final role = SupabaseAuthService.currentUserData?['role'];
+    final isSuperAdmin = role == 'super_admin';
 
-    final menuItems = [
-      MenuModel(title: "MENU ADMIN", isHeader: true),
-      MenuModel(
-        icon: Icons.grid_view_rounded,
-        title: "Home Dashboard",
-        routePath: "/admin-dashboard",
-      ),
-      MenuModel(
-        icon: Icons.people_alt_rounded,
-        title: "Data Pendaftar",
-        routePath: "/admin-pendaftar",
-      ),
-      MenuModel(
-        icon: Icons.volunteer_activism_rounded,
-        title: "Manajemen Donasi",
-        subMenus: [
-          MenuModel(
-            icon: Icons.chevron_right,
-            title: "Riwayat Dana Masuk",
-            routePath: "/admin-donasi-masuk",
-          ),
-          MenuModel(
-            icon: Icons.chevron_right,
-            title: "Riwayat Dana Keluar",
-            routePath: "/admin-donasi-keluar",
-          ),
-          MenuModel(
-            icon: Icons.chevron_right,
-            title: "Penyaluran Dana",
-            routePath: "/admin-donasi-salurkan",
-          ),
-        ],
-      ),
-      MenuModel(isDivider: true),
+    final menuItems = <MenuModel>[];
+
+    if (isSuperAdmin) {
+      menuItems.addAll([
+        MenuModel(title: "MENU ADMIN", isHeader: true),
+        MenuModel(
+          icon: Icons.grid_view_rounded,
+          title: "Home Dashboard",
+          routePath: "/admin-dashboard",
+        ),
+        MenuModel(
+          icon: Icons.admin_panel_settings_rounded,
+          title: "Manajemen Admin",
+          routePath: "/admin-manajemen-admin",
+        ),
+        MenuModel(
+          icon: Icons.people_alt_rounded,
+          title: "Data Pendaftar",
+          routePath: "/admin-pendaftar",
+        ),
+        MenuModel(
+          icon: Icons.volunteer_activism_rounded,
+          title: "Manajemen Donasi",
+          subMenus: [
+            MenuModel(
+              icon: Icons.chevron_right,
+              title: "Riwayat Dana Masuk",
+              routePath: "/admin-donasi-masuk",
+            ),
+            MenuModel(
+              icon: Icons.chevron_right,
+              title: "Riwayat Dana Keluar",
+              routePath: "/admin-donasi-keluar",
+            ),
+            MenuModel(
+              icon: Icons.chevron_right,
+              title: "Penyaluran Dana",
+              routePath: "/admin-donasi-salurkan",
+            ),
+          ],
+        ),
+        MenuModel(isDivider: true),
+      ]);
+    }
+
+    menuItems.addAll([
       MenuModel(title: "KONTEN WEBSITE (CMS)", isHeader: true),
       MenuModel(
         icon: Icons.image_rounded,
@@ -94,9 +110,14 @@ class LayoutDashboard extends StatelessWidget {
         title: "Kelola Footer",
         routePath: "/cms-footer",
       ),
-    ];
+    ]);
 
     final bottomMenuItems = [
+      MenuModel(
+        icon: Icons.person,
+        title: "Profil Saya",
+        routePath: "/admin-profil",
+      ),
       MenuModel(
         icon: Icons.public,
         title: "Lihat Web Publik",
@@ -113,7 +134,7 @@ class LayoutDashboard extends StatelessWidget {
 
     return SharedDashboardLayout(
       title: 'ADMINISTRATOR VIP',
-      roleText: 'ADMIN VIP',
+      roleText: isSuperAdmin ? 'SUPER ADMIN VIP' : 'ADMIN KONTEN VIP',
       menuItems: menuItems,
       bottomMenuItems: bottomMenuItems,
       activeRoute: currentRoute,
