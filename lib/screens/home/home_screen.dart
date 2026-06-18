@@ -30,11 +30,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _supabase = Supabase.instance.client;
   bool _faqLoaded = false;
+  final ScrollController _testimonialScrollController = ScrollController();
+  final ValueNotifier<bool> _leftArrowNotifier = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _rightArrowNotifier = ValueNotifier<bool>(true);
+
+  @override
+  void dispose() {
+    _leftArrowNotifier.dispose();
+    _rightArrowNotifier.dispose();
+    _testimonialScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     SupabaseCmsService.initialize();
+
+    _testimonialScrollController.addListener(() {
+      if (_testimonialScrollController.hasClients) {
+        final position = _testimonialScrollController.position;
+        _leftArrowNotifier.value = position.pixels > 0;
+        _rightArrowNotifier.value = position.pixels < position.maxScrollExtent;
+      }
+    });
 
     if (widget.targetSection != null) {
       Future.delayed(const Duration(milliseconds: 300), () {
@@ -776,10 +795,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTestimonialSection(bool isMobile) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 24 : 80,
-        vertical: 80,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 80),
       color: const Color(0xFF1A1A1A),
       child: Column(
         children: [
@@ -800,6 +816,71 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.white,
             ),
           ),
+          const SizedBox(height: 16),
+          ValueListenableBuilder<bool>(
+            valueListenable: _leftArrowNotifier,
+            builder: (context, showLeft, _) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: _rightArrowNotifier,
+                builder: (context, showRight, _) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 48,
+                        child: showLeft
+                            ? IconButton(
+                                onPressed: () {
+                                  if (_testimonialScrollController.hasClients) {
+                                    final target = (_testimonialScrollController.offset - 400).clamp(
+                                      0.0,
+                                      _testimonialScrollController.position.maxScrollExtent,
+                                    );
+                                    _testimonialScrollController.animateTo(
+                                      target,
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              )
+                            : null,
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "Geser untuk melihat",
+                          style: TextStyle(color: Colors.white54, fontSize: 14),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 48,
+                        child: showRight
+                            ? IconButton(
+                                onPressed: () {
+                                  if (_testimonialScrollController.hasClients) {
+                                    final target = (_testimonialScrollController.offset + 400).clamp(
+                                      0.0,
+                                      _testimonialScrollController.position.maxScrollExtent,
+                                    );
+                                    _testimonialScrollController.animateTo(
+                                      target,
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                              )
+                            : null,
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
           const SizedBox(height: 40),
           StreamBuilder<List<Map<String, dynamic>>>(
             stream: _supabase
@@ -818,8 +899,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
+              // Update arrows post layout to ensure correctness without setState loop
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_testimonialScrollController.hasClients) {
+                  final pos = _testimonialScrollController.position;
+                  _leftArrowNotifier.value = pos.pixels > 0;
+                  _rightArrowNotifier.value = pos.pixels < pos.maxScrollExtent;
+                }
+              });
+
               return SingleChildScrollView(
+                controller: _testimonialScrollController,
                 scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 80),
                 child: Row(
                   children: testimonials.map((testimoni) {
                     return TestimonialCard(
