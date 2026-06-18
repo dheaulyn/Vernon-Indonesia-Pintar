@@ -82,8 +82,6 @@ class CustomFooter extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 15,
-                  decoration: TextDecoration.underline,
-                  decorationColor: Colors.white38,
                 ),
               ),
             ),

@@ -41,10 +41,14 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
       _isLoading = false;
     });
 
-    // Validasi ekstra ketat: HANYA BOLEH ADMIN
-    if (userRole == 'admin') {
+    // Validasi ekstra ketat: HANYA BOLEH ADMIN ATAU SUPER ADMIN
+    if (userRole == 'admin' || userRole == 'super_admin') {
       if (!mounted) return;
-      context.go('/admin-dashboard'); // Masuk ke dashboard Admin
+      if (userRole == 'super_admin') {
+        context.go('/admin-dashboard'); // Masuk ke dashboard Admin
+      } else {
+        context.go('/cms-hero-banner'); // Admin biasa ke CMS
+      }
     } else if (userRole != null) {
       // Jika siswa/donatur nyasar ke sini, tendang keluar
       await SupabaseAuthService.logout();
@@ -158,6 +162,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                             const SizedBox(height: 8),
                             TextFormField(
                               controller: _emailController,
+                              textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
@@ -199,6 +204,8 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                             TextFormField(
                               controller: _passwordController,
                               obscureText: !_isPasswordVisible,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _handleAdminLogin(),
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: Colors.grey.shade50,

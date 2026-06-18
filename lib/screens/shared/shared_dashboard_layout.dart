@@ -539,6 +539,23 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
                     ],
                   ),
                 ),
+              if (SupabaseAuthService.currentUserData?['role'] == 'super_admin' || SupabaseAuthService.currentUserData?['role'] == 'admin')
+                const PopupMenuItem<String>(
+                  value: 'profil_saya',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: Colors.blueGrey, size: 20),
+                      SizedBox(width: 10),
+                      Text(
+                        'Profil Saya',
+                        style: TextStyle(
+                          color: Colors.blueGrey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const PopupMenuItem<String>(
                 value: 'logout',
                 child: Row(
@@ -559,6 +576,8 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
             onSelected: (value) {
               if (value == 'pengaturan_akun') {
                 context.go('/pengaturan-akun');
+              } else if (value == 'profil_saya') {
+                context.go('/admin-profil');
               } else if (value == 'logout') {
                 SupabaseAuthService.logout();
                 context.go('/login');
