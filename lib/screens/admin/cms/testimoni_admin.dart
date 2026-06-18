@@ -106,18 +106,28 @@ class _TestimoniAdminState extends State<TestimoniAdmin> {
                           : null,
                     ),
                     const SizedBox(height: 15),
+
+                    // 👇 BAGIAN YANG DIUBAH (BATASAN KARAKTER) 👇
                     TextFormField(
                       controller: quoteController,
                       maxLines: 4,
+                      maxLength: 200, // Batasan input di layar Admin
                       decoration: const InputDecoration(
                         labelText: 'Kutipan Testimoni',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Kutipan testimoni tidak boleh kosong'
-                          : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Kutipan testimoni tidak boleh kosong';
+                        }
+                        if (value.length > 200) {
+                          return 'Maksimal 200 karakter!';
+                        }
+                        return null;
+                      },
                     ),
+
+                    // 👆 SAMPAI SINI 👆
                   ],
                 ),
               ),

@@ -6,7 +6,10 @@ import 'shared/custom_footer.dart';
 import '../../core/app_colors.dart';
 
 class ProgramDetailScreen extends StatefulWidget {
-  const ProgramDetailScreen({super.key});
+  // 👇 Menerima ID program secara dinamis dari halaman katalog/beranda
+  final dynamic programId;
+
+  const ProgramDetailScreen({super.key, required this.programId});
 
   @override
   State<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
@@ -36,10 +39,20 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: _supabase.from('programs').stream(primaryKey: ['id']).eq('id', 1),
+        // 👇 Menggunakan widget.programId untuk menyaring data yang sesuai di database
+        stream: _supabase
+            .from('programs')
+            .stream(primaryKey: ['id'])
+            .eq('id', widget.programId),
         builder: (context, snapshot) {
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text("Detail program tidak ditemukan atau telah dihapus."),
+            );
           }
 
           final programData = snapshot.data!.first;
@@ -71,8 +84,11 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     bool isMobile,
     Map<String, dynamic> programData,
   ) {
-    final String title = programData['nama_program'] ?? 'Kurikulum VIP (10 Bulan)';
-    final String description = programData['deskripsi'] ?? 'Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.';
+    final String title =
+        programData['nama_program'] ?? 'Kurikulum VIP (10 Bulan)';
+    final String description =
+        programData['deskripsi'] ??
+        'Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.';
     final phaseData = (programData['fase_program'] as List?) ?? [];
     final fasilitasData = (programData['fasilitas'] as List?) ?? [];
 
@@ -195,7 +211,9 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
                       runSpacing: 15,
                       alignment: WrapAlignment.center,
                       children: fasilitasData
-                          .map<Widget>((fas) => FasilitasPill(text: fas.toString()))
+                          .map<Widget>(
+                            (fas) => FasilitasPill(text: fas.toString()),
+                          )
                           .toList(),
                     ),
                   ],
@@ -451,9 +469,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     return Container(
       width: double.infinity,
       color: Colors.white,
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 80,
-      ),
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 60 : 80),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -471,10 +487,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
             onPressed: () => context.go('/login'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 20,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -601,18 +614,18 @@ class _PhaseCardState extends State<PhaseCard> {
             ),
             const SizedBox(height: 25),
             ...widget.items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
                   ),
                 ),
+              ),
+            ),
           ],
         ),
       ),

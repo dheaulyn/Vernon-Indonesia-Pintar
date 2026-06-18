@@ -1,4 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/app_colors.dart';
@@ -30,7 +32,9 @@ class PhaseController {
 }
 
 class ProgramDetailAdmin extends StatefulWidget {
-  const ProgramDetailAdmin({super.key});
+  final dynamic programId;
+
+  const ProgramDetailAdmin({super.key, this.programId});
 
   @override
   State<ProgramDetailAdmin> createState() => _ProgramDetailAdminState();
@@ -49,29 +53,35 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
 
   bool _isLoading = true;
   bool _isSaving = false;
-  final int _programId = 1;
 
   final _supabase = Supabase.instance.client;
 
   @override
   void initState() {
     super.initState();
-    // Sekarang ada 5 Tab.
     _tabController = TabController(length: 5, vsync: this);
     _loadDataFromSupabase();
   }
 
   Future<void> _loadDataFromSupabase() async {
+    if (widget.programId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final response = await _supabase
           .from('programs')
           .select()
-          .eq('id', _programId)
+          .eq('id', widget.programId)
           .maybeSingle();
 
       if (response != null) {
-        _namaProgramCtrl.text = response['nama_program']?.toString() ?? '';
+        _namaProgramCtrl.text =
+            response['name']?.toString() ??
+            response['nama_program']?.toString() ??
+            '';
         _deskripsiCtrl.text = response['deskripsi']?.toString() ?? '';
 
         // 1. Load Fasilitas.
@@ -186,16 +196,19 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   }
 
   Future<void> _saveData() async {
+    if (_namaProgramCtrl.text.trim().isEmpty) {
+      showErrorSnackBar(context, 'Judul program wajib diisi!');
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
-      // Data Fasilitas.
       List<String> updatedFasilitas = _fasilitasControllers
           .map((ctrl) => ctrl.text.trim())
           .where((text) => text.isNotEmpty)
           .toList();
 
-      // Data Fase.
       List<Map<String, dynamic>> updatedPhases = _phaseControllers
           .map((phase) {
             return {
@@ -211,7 +224,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           .where((p) => p['title'].toString().isNotEmpty)
           .toList();
 
-      // Data Syarat.
       List<Map<String, dynamic>> updatedReqs = _reqControllers
           .map((reqCtrl) {
             return {
@@ -229,7 +241,6 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // Data Alur.
       List<Map<String, String>> updatedTimeline = _timelineControllers
           .map((timeCtrl) {
             return {
@@ -243,21 +254,30 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
-      // Update ke Supabase.
-      await _supabase
-          .from('programs')
-          .update({
-            'nama_program': _namaProgramCtrl.text.trim(),
-            'deskripsi': _deskripsiCtrl.text.trim(),
-            'fasilitas': updatedFasilitas,
-            'fase_program': updatedPhases,
-            'syarat_ketentuan': updatedReqs,
-            'alur_pendaftaran': updatedTimeline,
-          })
-          .eq('id', _programId);
+      final payloadData = {
+        'nama_program': _namaProgramCtrl.text.trim(),
+        'deskripsi': _deskripsiCtrl.text.trim(),
+        'fasilitas': updatedFasilitas,
+        'fase_program': updatedPhases,
+        'syarat_ketentuan': updatedReqs,
+        'alur_pendaftaran': updatedTimeline,
+      };
+
+      if (widget.programId == null) {
+        final countRes = await _supabase.from('programs').select('id');
+        payloadData['sort_order'] = countRes.length;
+        await _supabase.from('programs').insert(payloadData);
+      } else {
+        await _supabase
+            .from('programs')
+            .update(payloadData)
+            .eq('id', widget.programId);
+      }
 
       if (mounted) {
-        showSuccessSnackBar(context, 'Data Program VIP berhasil diperbarui!');
+        showSuccessSnackBar(context, 'Data Program VIP berhasil disimpan!');
+        // 👇 PERBAIKAN: Gunakan context.go untuk menghindari layar putih/error GoRouter 👇
+        context.go('/cms-program');
       }
     } catch (e) {
       if (mounted) showErrorSnackBar(context, 'Gagal menyimpan: $e');
@@ -270,92 +290,123 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    return Padding(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Kelola Konten Program',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        // 👇 PERBAIKAN: Gunakan context.go untuk menghindari layar putih/error GoRouter 👇
+                        onPressed: () => context.go('/cms-program'),
+                        tooltip: 'Kembali',
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.programId == null
+                              ? 'Tambah Program Baru'
+                              : 'Edit Konten Program',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          widget.programId == null
+                              ? 'Lengkapi detail program di bawah ini'
+                              : _namaProgramCtrl.text,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _saveData,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.save, color: Colors.white),
+                  label: Text(
+                    _isSaving ? "MENYIMPAN..." : "SIMPAN PERUBAHAN",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Program Karir VIP (10 Bulan)',
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 15,
+                    ),
+                    shape: const StadiumBorder(),
                   ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            Container(
+              color: Colors.white,
+              child: TabBar(
+                controller: _tabController,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: AppColors.primary,
+                isScrollable: true,
+                tabs: const [
+                  Tab(text: 'Umum'),
+                  Tab(text: 'Fasilitas'),
+                  Tab(text: 'Fase Program'),
+                  Tab(text: 'Syarat & Ketentuan'),
+                  Tab(text: 'Alur Pendaftaran'),
                 ],
               ),
-              ElevatedButton.icon(
-                onPressed: _isSaving ? null : _saveData,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.save, color: Colors.white),
-                label: Text(
-                  _isSaving ? "MENYIMPAN..." : "SIMPAN PERUBAHAN",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 15,
-                  ),
-                  shape: const StadiumBorder(),
-                ),
+            ),
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildUmumTab(),
+                  _buildFasilitasTab(),
+                  _buildFaseTab(),
+                  _buildRequirementsTab(),
+                  _buildTimelineTab(),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 30),
-
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppColors.primary,
-              isScrollable: true,
-              tabs: const [
-                Tab(text: 'Umum'),
-                Tab(text: 'Fasilitas'),
-                Tab(text: 'Fase Program'),
-                Tab(text: 'Syarat & Ketentuan'),
-                Tab(text: 'Alur Pendaftaran'),
-              ],
             ),
-          ),
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildUmumTab(),
-                _buildFasilitasTab(),
-                _buildFaseTab(),
-                _buildRequirementsTab(),
-                _buildTimelineTab(),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -23,6 +23,9 @@ import 'screens/auth/forgot_password_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/media/artikel/artikel_detail_screen.dart';
 
+// 👇 TAMBAHAN BARU: Import file Katalog Program Publik 👇
+import 'screens/home/program_catalog_screen.dart';
+
 import 'screens/admin/auth/login_admin_screen.dart';
 import 'screens/admin/layout_dashboard.dart';
 import 'screens/admin/home_dashboard.dart';
@@ -33,11 +36,13 @@ import 'screens/admin/cms/hero_banner_admin.dart';
 import 'screens/admin/cms/about_section_admin.dart';
 import 'screens/admin/cms/profil_yayasan_admin.dart';
 import 'screens/admin/cms/program_detail_admin.dart';
+import 'screens/admin/cms/program_list_admin.dart';
 import 'screens/admin/cms/media_admin.dart';
 import 'screens/admin/cms/testimoni_admin.dart';
 import 'screens/admin/cms/faq_admin.dart';
 import 'screens/admin/cms/footer_admin.dart';
 import 'screens/admin/cms/partners_admin.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/supabase_auth_service.dart';
 import 'services/supabase_donasi_service.dart';
@@ -157,10 +162,23 @@ final GoRouter _router = GoRouter(
       path: '/donasi',
       builder: (context, state) => const DonaturDashboardScreen(),
     ),
+
+    // Rute untuk Halaman Katalog Program Publik 
     GoRoute(
       path: '/program',
-      builder: (context, state) => const ProgramDetailScreen(),
+      builder: (context, state) => const ProgramCatalogScreen(),
     ),
+
+    // Rute Detail Program (Web Publik)
+    GoRoute(
+      path: '/program-detail/:id',
+      builder: (context, state) {
+        final idParam = state.pathParameters['id'];
+        final id = int.tryParse(idParam ?? '0');
+        return ProgramDetailScreen(programId: id);
+      },
+    ),
+
     GoRoute(
       path: '/media',
       name: 'media',
@@ -184,7 +202,8 @@ final GoRouter _router = GoRouter(
             context.go('/login');
           });
           return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         return const PengaturanAkunScreen();
       },
@@ -236,10 +255,25 @@ final GoRouter _router = GoRouter(
           path: '/cms-profil',
           builder: (context, state) => const ProfilYayasanAdmin(),
         ),
+
+        // Rute CMS Program (Dipisah antara List dan Form)
         GoRoute(
           path: '/cms-program',
-          builder: (context, state) => const ProgramDetailAdmin(),
+          builder: (context, state) => const ProgramListAdmin(),
         ),
+        GoRoute(
+          path: '/cms-program/add',
+          builder: (context, state) =>
+              const ProgramDetailAdmin(programId: null),
+        ),
+        GoRoute(
+          path: '/cms-program/edit/:id',
+          builder: (context, state) {
+            final id = int.tryParse(state.pathParameters['id'] ?? '0');
+            return ProgramDetailAdmin(programId: id);
+          },
+        ),
+
         GoRoute(
           path: '/cms-media',
           builder: (context, state) => const KelolaMediaAdmin(),
@@ -264,7 +298,7 @@ final GoRouter _router = GoRouter(
     ),
 
     // =========================================================================
-    // RUTE DINAMIS (SCROLL KE SECTION)
+    // RUTE DINAMIS (SCROLL KE SECTION LANDING PAGE)
     // =========================================================================
     GoRoute(
       path: '/:section',

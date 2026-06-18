@@ -243,7 +243,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () => context.go('/program'),
+                      onPressed: () {
+                        // Diarahkan auto scroll ke bagian Program
+                        Scrollable.ensureVisible(
+                          programKey.currentContext!,
+                          duration: const Duration(milliseconds: 800),
+                          curve: Curves.easeInOut,
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(
@@ -419,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ==========================================
-  // PROGRAM UNGGULAN (Single Card Preview untuk Beranda)
+  // PROGRAM UNGGULAN (Dinamis: 1 Program vs Banyak Program)
   // ==========================================
   Widget _buildProgramUnggulan(BuildContext context, {required bool isMobile}) {
     return Container(
@@ -431,49 +438,149 @@ class _HomeScreenState extends State<HomeScreen> {
         vertical: 80,
       ),
       child: Center(
-        child: SizedBox(
-          width: isMobile ? double.infinity : 1100,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: isMobile
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        height: 250,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(
-                              'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
-                            ),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _supabase
+              .from('programs')
+              .stream(primaryKey: ['id'])
+              .order('sort_order', ascending: true),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 400,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final programs = snapshot.data ?? [];
+
+            if (programs.isEmpty) {
+              return const SizedBox(
+                height: 400,
+                child: Center(child: Text("Belum ada program.")),
+              );
+            }
+
+            // ========================================================
+            // KONDISI 1: JIKA HANYA ADA 1 PROGRAM (KOTAK BESAR VERCEL)
+            // ========================================================
+            if (programs.length == 1) {
+              final prog = programs[0];
+              return SizedBox(
+                width: isMobile ? double.infinity : 1100,
+                height: isMobile ? 650 : 450,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
-                      _buildProgramCardContent(context, isMobile: true),
                     ],
-                  )
-                : IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: isMobile
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              height: 200,
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
+                                  image: NetworkImage(
+                                    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                  ),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: _buildProgramCardContent(
+                                context,
+                                isMobile: true,
+                                prog: prog,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: NetworkImage(
+                                      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 7,
+                              child: _buildProgramCardContent(
+                                context,
+                                isMobile: false,
+                                prog: prog,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              );
+            }
+
+            // ========================================================
+            // KONDISI 2: JIKA > 1 PROGRAM (GRID KOTAK RATA TENGAH)
+            // ========================================================
+            final double screenWidth = MediaQuery.of(context).size.width;
+            double cardWidth;
+            if (screenWidth < 600) {
+              cardWidth = double.infinity;
+            } else if (screenWidth < 900) {
+              cardWidth = (screenWidth - 48 - 30) / 2;
+            } else {
+              cardWidth = 360;
+            }
+
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Wrap(
+                alignment: WrapAlignment.center, // BIKIN RATA TENGAH
+                spacing: 30,
+                runSpacing: 30,
+                children: programs.map((prog) {
+                  return SizedBox(
+                    width: cardWidth,
+                    height: 480,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 180,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              image: const DecorationImage(
                                 image: NetworkImage(
                                   'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
                                 ),
@@ -481,29 +588,120 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 7,
-                          child: _buildProgramCardContent(
-                            context,
-                            isMobile: false,
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      prog['kategori']?.toString() ??
+                                          'Pendidikan',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Text(
+                                    prog['nama_program']?.toString() ??
+                                        'Tanpa Nama',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Expanded(
+                                    child: Text(
+                                      prog['deskripsi']?.toString() ??
+                                          'Deskripsi belum tersedia.',
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 13,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        context.go(
+                                          '/program-detail/${prog['id']}',
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF1A1A1A,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 18,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        "LIHAT DETAIL",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-          ),
+                  );
+                }).toList(),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
+  // ==========================================
+  // WIDGET KONTEN CARD PROGRAM (PENTING! JANGAN DIHAPUS)
+  // ==========================================
   Widget _buildProgramCardContent(
     BuildContext context, {
     required bool isMobile,
+    required Map<String, dynamic> prog,
   }) {
+    final kategori = prog['kategori']?.toString() ?? 'Pendidikan & Karir';
+    final namaProgram =
+        prog['nama_program']?.toString() ?? 'Program Tanpa Nama';
+    final deskripsi =
+        prog['deskripsi']?.toString() ?? 'Deskripsi belum tersedia.';
+
     return Padding(
-      padding: EdgeInsets.all(isMobile ? 30 : 50),
+      padding: EdgeInsets.all(isMobile ? 25 : 50),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -514,91 +712,46 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.red.shade600,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              "Pendidikan & Karir",
-              style: TextStyle(
+            child: Text(
+              kategori,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 15),
           Text(
-            "Program Karir Kurikulum 10 Bulan VIP",
+            namaProgram,
             style: TextStyle(
-              fontSize: isMobile ? 24 : 32,
+              fontSize: isMobile ? 22 : 32,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
               height: 1.2,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 15),
           Text(
-            "Pelatihan intensif terpadu untuk membekali generasi muda kurang mampu dengan keterampilan praktis dan karakter profesional agar siap bersaing di dunia kerja.",
+            deskripsi,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: isMobile ? 14 : 15,
               color: Colors.grey.shade600,
               height: 1.6,
             ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 40),
-          ValueListenableBuilder<int>(
-            valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
-            builder: (context, int total, _) {
-              final formatRp = NumberFormat.currency(
-                locale: 'id_ID',
-                symbol: 'Rp ',
-                decimalDigits: 0,
-              );
-              String displayTotal = formatRp.format(total);
-              return Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: (total / 500000000).clamp(0.0, 1.0),
-                      minHeight: 8,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.red,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                        children: [
-                          const TextSpan(text: "Terkumpul: "),
-                          TextSpan(
-                            text: displayTotal,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 40),
+          const Spacer(), // Mendorong tombol agar selalu menempel di bawah
           SizedBox(
             width: double.infinity,
             height: 55,
             child: ElevatedButton(
               onPressed: () {
-                context.go('/login-donatur');
+                final id = prog['id'].toString();
+                context.go('/program-detail/$id');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A1A1A),
@@ -607,7 +760,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 elevation: 0,
               ),
               child: const Text(
-                "IKUT BERDONASI",
+                "LIHAT DETAIL PROGRAM",
                 style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
               ),
             ),
@@ -667,7 +820,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
                 child: Row(
                   children: testimonials.map((testimoni) {
                     return TestimonialCard(
@@ -726,7 +878,7 @@ class _HomeScreenState extends State<HomeScreen> {
             stream: _supabase
                 .from('partners')
                 .stream(primaryKey: ['id'])
-                .order('sort_order', ascending: true), // Update otomatis
+                .order('sort_order', ascending: true),
             builder: (context, snapshot) {
               final partners = snapshot.data ?? [];
 
@@ -769,7 +921,8 @@ class _HomeScreenState extends State<HomeScreen> {
           .stream(primaryKey: ['id'])
           .order('created_at', ascending: false),
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.waiting && !_faqLoaded) {
+        if (snapshot.connectionState != ConnectionState.waiting &&
+            !_faqLoaded) {
           _faqLoaded = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (widget.targetSection == 'faq' && mounted) {
@@ -1024,10 +1177,10 @@ class _TestimonialCardState extends State<TestimonialCard> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         width: widget.isMobile ? 300 : 400,
+        height: 280,
         margin: const EdgeInsets.only(right: 24, bottom: 20, top: 10),
         padding: const EdgeInsets.all(30),
         transform: Matrix4.identity()..scale(_isHovered ? 1.03 : 1.0),
-        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFF2B2B2B),
           borderRadius: BorderRadius.circular(20),
@@ -1049,20 +1202,23 @@ class _TestimonialCardState extends State<TestimonialCard> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.format_quote_rounded, color: Colors.red, size: 40),
             const SizedBox(height: 16),
-            Text(
-              '"${widget.quote}"',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 15,
-                height: 1.6,
-                fontStyle: FontStyle.italic,
+            Expanded(
+              child: Text(
+                '"${widget.quote}"',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                  height: 1.6,
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 16),
             Row(
               children: [
                 CircleAvatar(
@@ -1207,11 +1363,7 @@ class _PartnerCardState extends State<PartnerCard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: Center(
-                child: imageWidget,
-              ),
-            ),
+            Expanded(child: Center(child: imageWidget)),
             const SizedBox(height: 8),
             Text(
               widget.name,
@@ -1230,4 +1382,3 @@ class _PartnerCardState extends State<PartnerCard> {
     );
   }
 }
-

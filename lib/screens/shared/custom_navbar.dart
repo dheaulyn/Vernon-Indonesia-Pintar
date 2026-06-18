@@ -16,13 +16,15 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
       icon: const Icon(Icons.menu, color: Colors.black87, size: 30),
       offset: const Offset(0, 45),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      onSelected: (value) {
-        context.go(value);
-      },
+      onSelected: (value) => context.go(value),
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
         _mobileMenuItem('Beranda', '/', currentPath),
         _mobileMenuItem('Tentang', '/tentang', currentPath),
-        _mobileMenuItem('Program', '/program', currentPath),
+        _mobileMenuItem(
+          'Program',
+          '/program',
+          currentPath,
+        ), // Normal ke /program
         _mobileMenuItem('Media', '/media', currentPath),
         _mobileMenuItem('Fund Pool', '/fund-pool', currentPath),
         _mobileMenuItem('FAQ', '/faq', currentPath),
@@ -57,7 +59,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     String path,
     String currentPath,
   ) {
-    final bool isActive = currentPath == path;
+    final bool isActive = title == 'Program'
+        ? currentPath.startsWith('/program')
+        : currentPath == path;
     return PopupMenuItem<String>(
       value: path,
       child: Text(
@@ -83,7 +87,12 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 30),
         _navbarItem(context, "Tentang", '/tentang', currentPath),
         const SizedBox(width: 30),
-        _navbarItem(context, "Program", '/program', currentPath),
+        _navbarItem(
+          context,
+          "Program",
+          '/program',
+          currentPath,
+        ), // Normal ke /program
         const SizedBox(width: 30),
         _navbarItem(context, "Media", '/media', currentPath),
         const SizedBox(width: 30),
@@ -94,9 +103,6 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
         _navbarItem(context, "Kontak", '/kontak', currentPath),
         const SizedBox(width: 40),
 
-        // =========================================================================
-        // TOMBOL DONASI (OUTLINE MERAH SOLID)
-        // =========================================================================
         OutlinedButton(
           onPressed: () => context.go('/login-donatur'),
           style: OutlinedButton.styleFrom(
@@ -120,10 +126,7 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-
         const SizedBox(width: 15),
-
-        // Tombol login (filled).
         ElevatedButton(
           onPressed: () => context.go('/login'),
           style: ElevatedButton.styleFrom(
@@ -148,7 +151,9 @@ class CustomNavbar extends StatelessWidget implements PreferredSizeWidget {
     String path,
     String currentPath,
   ) {
-    final bool isActive = currentPath == path;
+    final bool isActive = title == 'Program'
+        ? currentPath.startsWith('/program')
+        : currentPath == path;
 
     return InkWell(
       onTap: () => context.go(path),
