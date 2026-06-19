@@ -192,6 +192,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           textInputAction: TextInputAction.next,
+                          onFieldSubmitted: (_) {
+                            if (_passwordController.text.isNotEmpty) {
+                              _handleLogin();
+                            } else {
+                              FocusScope.of(context).nextFocus();
+                            }
+                          },
                           decoration: InputDecoration(
                             hintText: 'Masukkan email terdaftar',
                             hintStyle: TextStyle(

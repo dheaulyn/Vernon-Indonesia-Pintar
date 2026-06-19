@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'supabase_auth_service.dart';
+import 'supabase_notification_service.dart';
 
 /// Service untuk mengelola data pendaftaran siswa ke Supabase.
 /// Menangani:
@@ -16,6 +17,9 @@ class SupabasePendaftaranService {
   /// ValueNotifier untuk data pendaftar real-time (admin dashboard)
   static final ValueNotifier<List<Map<String, dynamic>>> listPendaftar =
       ValueNotifier([]);
+
+  /// ValueNotifier untuk jumlah penerima beasiswa (status Diterima/Pelatihan/Lulus)
+  static final ValueNotifier<int> totalPenerimaBeasiswa = ValueNotifier(0);
 
   // ==========================================
   // HELPER: UPLOAD FILE KE STORAGE
@@ -97,6 +101,14 @@ class SupabasePendaftaranService {
         'catatan_revisi': '',
         'admin_status': 'Menunggu Review',
       }).eq('id', user.id);
+
+      // Buat notifikasi ke admin (global)
+      await SupabaseNotificationService.createNotification(
+        userId: null,
+        title: 'Pendaftaran Baru Masuk',
+        message: 'Siswa ${nama.toUpperCase()} telah mengajukan berkas pendaftaran.',
+        type: 'pendaftaran_baru',
+      );
 
       // Sinkronkan data lokal agar UI langsung update
       await _refreshCurrentUserData();
@@ -309,6 +321,50 @@ class SupabasePendaftaranService {
           });
 
           listPendaftar.value = registered;
+
+          // Hitung jumlah penerima beasiswa (status Diterima, Pelatihan, atau Lulus)
+          final statusDiterima = {'Diterima', 'Pelatihan', 'Lulus'};
+          final count = registered.where((d) =>
+            statusDiterima.contains(d['admin_status']?.toString())
+          ).length;
+          totalPenerimaBeasiswa.value = count;
+        });
+  }
+
+  /// Listener ringan khusus untuk halaman beranda (homepage).
+  /// Hanya menghitung jumlah penerima beasiswa tanpa memuat semua data.
+  static bool _homepageListenerActive = false;
+  static void listenPenerimaBeasiswaCount() {
+    if (_homepageListenerActive) return;
+    _homepageListenerActive = true;
+
+    // Fetch initial count as robust fallback
+    _client
+        .from('profiles')
+        .select('admin_status, is_registered')
+        .eq('role', 'siswa')
+        .then((data) {
+          final statusDiterima = {'Diterima', 'Pelatihan', 'Lulus'};
+          final count = data.where((d) =>
+            d['is_registered'] == true &&
+            statusDiterima.contains(d['admin_status']?.toString())
+          ).length;
+          totalPenerimaBeasiswa.value = count;
+        }).catchError((e) {
+          debugPrint('Error fetching initial count: $e');
+        });
+
+    _client
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('role', 'siswa')
+        .listen((List<Map<String, dynamic>> data) {
+          final statusDiterima = {'Diterima', 'Pelatihan', 'Lulus'};
+          final count = data.where((d) =>
+            d['is_registered'] == true &&
+            statusDiterima.contains(d['admin_status']?.toString())
+          ).length;
+          totalPenerimaBeasiswa.value = count;
         });
   }
 
@@ -341,5 +397,45 @@ class SupabasePendaftaranService {
   /// Bisa dipanggil dari screen manapun setelah operasi penting.
   static Future<void> refreshCurrentUser() async {
     await _refreshCurrentUserData();
+  }
+
+  // ==========================================
+  // FUNGSI ADMIN: AMBIL AKUN BELUM LENGKAP
+  // ==========================================
+
+  /// Mengambil semua akun siswa yang sudah registrasi
+  /// tetapi belum pernah mengisi formulir pendaftaran (is_registered = false).
+  static Future<List<Map<String, dynamic>>> getAllAkunBelumLengkap() async {
+    try {
+      final data = await _client
+          .from('profiles')
+          .select()
+          .eq('role', 'siswa')
+          .eq('is_registered', false)
+          .order('created_at', ascending: false);
+
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('getAllAkunBelumLengkap Error: $e');
+      return [];
+    }
+  }
+
+  // ==========================================
+  // FUNGSI ADMIN: HAPUS AKUN SISWA
+  // ==========================================
+
+  /// Menghapus akun siswa dari auth.users (dan profiles melalui cascade/trigger).
+  /// Memerlukan RPC function `delete_user_by_id` di Supabase.
+  static Future<String?> deleteAkunSiswa(String userId) async {
+    try {
+      await _client.rpc('delete_user_by_id', params: {
+        'p_user_id': userId,
+      });
+      return null; // null = sukses
+    } catch (e) {
+      debugPrint('deleteAkunSiswa Error: $e');
+      return 'Gagal menghapus akun: $e';
+    }
   }
 }

@@ -173,11 +173,10 @@ final GoRouter _router = GoRouter(
 
     // Rute Detail Program (Web Publik)
     GoRoute(
-      path: '/program-detail/:id',
+      path: '/program-detail/:slug',
       builder: (context, state) {
-        final idParam = state.pathParameters['id'];
-        final id = int.tryParse(idParam ?? '0');
-        return ProgramDetailScreen(programId: id);
+        final slug = state.pathParameters['slug'] ?? '';
+        return ProgramDetailScreen(programSlug: slug);
       },
     ),
 
@@ -274,13 +273,13 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/cms-program/add',
           builder: (context, state) =>
-              const ProgramDetailAdmin(programId: null),
+              const ProgramDetailAdmin(programSlug: null),
         ),
         GoRoute(
-          path: '/cms-program/edit/:id',
+          path: '/cms-program/edit/:slug',
           builder: (context, state) {
-            final id = int.tryParse(state.pathParameters['id'] ?? '0');
-            return ProgramDetailAdmin(programId: id);
+            final slug = state.pathParameters['slug'] ?? '';
+            return ProgramDetailAdmin(programSlug: slug);
           },
         ),
 

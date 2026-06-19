@@ -32,14 +32,26 @@ class ManajemenPendaftarAdmin extends StatefulWidget {
       _ManajemenPendaftarAdminState();
 }
 
-class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
+class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin>
+    with SingleTickerProviderStateMixin {
   List<PendaftarModel> listPendaftar = [];
+  List<Map<String, dynamic>> listAkunBelumLengkap = [];
   bool _isLoadingData = true;
+  bool _isLoadingBelumLengkap = true;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadData();
+    _loadAkunBelumLengkap();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -59,6 +71,138 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
       }).toList();
       _isLoadingData = false;
     });
+  }
+
+  Future<void> _loadAkunBelumLengkap() async {
+    setState(() => _isLoadingBelumLengkap = true);
+    final data = await SupabasePendaftaranService.getAllAkunBelumLengkap();
+    setState(() {
+      listAkunBelumLengkap = data;
+      _isLoadingBelumLengkap = false;
+    });
+  }
+
+  void _showDeleteDialog(Map<String, dynamic> akun) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isDeleting = false;
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red),
+                  SizedBox(width: 10),
+                  Text("Hapus Akun Siswa"),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Apakah Anda yakin ingin menghapus akun siswa ini?",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text("Nama: ${akun['name'] ?? '-'}"),
+                  Text("Email: ${akun['email'] ?? '-'}"),
+                  const SizedBox(height: 15),
+                  const Text(
+                    "Tindakan ini tidak dapat dibatalkan. Seluruh data akun dan akses login akan dihapus secara permanen dari sistem.",
+                    style: TextStyle(color: Colors.red, fontSize: 13),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isDeleting ? null : () => Navigator.pop(context),
+                  child: const Text("Batal"),
+                ),
+                ElevatedButton(
+                  onPressed: isDeleting
+                      ? null
+                      : () async {
+                          setStateDialog(() => isDeleting = true);
+                          final error = await SupabasePendaftaranService.deleteAkunSiswa(akun['id']);
+                          if (mounted) {
+                            setStateDialog(() => isDeleting = false);
+                            if (error != null) {
+                              showErrorSnackBar(context, error);
+                            } else {
+                              showSuccessSnackBar(context, "Akun berhasil dihapus.");
+                              Navigator.pop(context);
+                              _loadAkunBelumLengkap();
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isDeleting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text("Hapus"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRegistrationAgeBadge(String? createdAtStr) {
+    if (createdAtStr == null) return const SizedBox.shrink();
+    try {
+      final createdAt = DateTime.parse(createdAtStr).toLocal();
+      final difference = DateTime.now().difference(createdAt).inDays;
+
+      Color bgColor;
+      Color textColor;
+      String text;
+
+      if (difference < 7) {
+        bgColor = Colors.green.shade100;
+        textColor = Colors.green.shade800;
+        text = "$difference Hari (Baru)";
+      } else if (difference <= 30) {
+        bgColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade800;
+        text = "$difference Hari";
+      } else {
+        bgColor = Colors.red.shade100;
+        textColor = Colors.red.shade800;
+        text = "$difference Hari (Tidak Aktif)";
+      }
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+      );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
   }
 
   String _formatDate(String? dateString) {
@@ -1034,7 +1178,10 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () => _loadData(),
+                  onPressed: () {
+                    _loadData();
+                    _loadAkunBelumLengkap();
+                  },
                   icon: const Icon(Icons.refresh, color: Colors.black87),
                   label: const Text(
                     "Muat Ulang Data",
@@ -1057,25 +1204,81 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
             ),
           ),
           const SizedBox(height: 20),
-          Expanded(
-            child: Card(
-              color: Colors.white,
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          TabBar(
+            controller: _tabController,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.primary,
+            indicatorSize: TabBarIndicatorSize.tab,
+            tabs: const [
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.assignment_turned_in_rounded),
+                    SizedBox(width: 8),
+                    Text("Sudah Melengkapi Berkas"),
+                  ],
+                ),
               ),
-              child: _isLoadingData
-                  ? const Center(child: CircularProgressIndicator())
-                  : listPendaftar.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "Belum ada pendaftar yang men-submit formulir.",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : isMobile
-                  ? _buildMobileView()
-                  : _buildDesktopView(),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.assignment_late_rounded),
+                    SizedBox(width: 8),
+                    Text("Belum Melengkapi Berkas"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // Tab 1: Sudah Melengkapi Berkas
+                Card(
+                  color: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isLoadingData
+                      ? const Center(child: CircularProgressIndicator())
+                      : listPendaftar.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "Belum ada pendaftar yang men-submit formulir.",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : isMobile
+                      ? _buildMobileView()
+                      : _buildDesktopView(),
+                ),
+                // Tab 2: Belum Melengkapi Berkas
+                Card(
+                  color: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: _isLoadingBelumLengkap
+                      ? const Center(child: CircularProgressIndicator())
+                      : listAkunBelumLengkap.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "Tidak ada akun siswa yang belum melengkapi berkas.",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : isMobile
+                      ? _buildMobileBelumLengkapView()
+                      : _buildDesktopBelumLengkapView(),
+                ),
+              ],
             ),
           ),
         ],
@@ -1208,6 +1411,142 @@ class _ManajemenPendaftarAdminState extends State<ManajemenPendaftarAdmin> {
               size: 20,
             ),
             onPressed: () => _showReviewDialog(p, index),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopBelumLengkapView() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(15),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(Colors.grey[50]),
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    "Waktu Registrasi",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    "Nama & Email",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    "Durasi Tidak Aktif",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    "Aksi",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+              rows: List.generate(listAkunBelumLengkap.length, (index) {
+                final user = listAkunBelumLengkap[index];
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Text(
+                        _formatDate(user['created_at']),
+                        style: TextStyle(color: Colors.grey.shade700),
+                      ),
+                    ),
+                    DataCell(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            user['name'] ?? '-',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            user['email'] ?? '-',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    DataCell(_buildRegistrationAgeBadge(user['created_at'])),
+                    DataCell(
+                      ElevatedButton.icon(
+                        onPressed: () => _showDeleteDialog(user),
+                        icon: const Icon(
+                          Icons.delete_forever_rounded,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          "Hapus Akun",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileBelumLengkapView() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(15),
+      itemCount: listAkunBelumLengkap.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final user = listAkunBelumLengkap[index];
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            user['name'] ?? '-',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(user['email'] ?? '-'),
+              const SizedBox(height: 4),
+              Text(
+                "Registrasi: ${_formatDate(user['created_at'])}",
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 6),
+              _buildRegistrationAgeBadge(user['created_at']),
+            ],
+          ),
+          trailing: IconButton(
+            icon: Icon(
+              Icons.delete_forever_rounded,
+              color: Colors.red.shade700,
+              size: 24,
+            ),
+            onPressed: () => _showDeleteDialog(user),
           ),
         );
       },

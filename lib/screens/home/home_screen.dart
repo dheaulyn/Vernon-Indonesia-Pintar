@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,7 @@ import '../../core/app_colors.dart';
 
 import '../../services/supabase_donasi_service.dart';
 import '../../services/supabase_cms_service.dart';
+import '../../services/supabase_pendaftaran_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final String? targetSection;
@@ -34,11 +36,19 @@ class _HomeScreenState extends State<HomeScreen> {
   final ValueNotifier<bool> _leftArrowNotifier = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _rightArrowNotifier = ValueNotifier<bool>(true);
 
+  // Controller dan Notifier untuk PageView Program
+  final PageController _programPageController = PageController();
+  final ValueNotifier<int> _currentProgramPage = ValueNotifier<int>(0);
+  int _totalProgramPages = 0;
+
   @override
   void dispose() {
     _leftArrowNotifier.dispose();
     _rightArrowNotifier.dispose();
     _testimonialScrollController.dispose();
+    
+    _programPageController.dispose();
+    _currentProgramPage.dispose();
     super.dispose();
   }
 
@@ -46,12 +56,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     SupabaseCmsService.initialize();
+    SupabasePendaftaranService.listenPenerimaBeasiswaCount();
 
     _testimonialScrollController.addListener(() {
       if (_testimonialScrollController.hasClients) {
         final position = _testimonialScrollController.position;
         _leftArrowNotifier.value = position.pixels > 0;
         _rightArrowNotifier.value = position.pixels < position.maxScrollExtent;
+      }
+    });
+
+    _programPageController.addListener(() {
+      if (_programPageController.hasClients && _programPageController.page != null) {
+        _currentProgramPage.value = _programPageController.page!.round();
       }
     });
 
@@ -360,7 +377,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                _buildStatCard("0", "Penerima Beasiswa"),
+                ValueListenableBuilder<int>(
+                  valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
+                  builder: (context, count, _) {
+                    return _buildStatCard(
+                      count.toString(),
+                      "Penerima Beasiswa",
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
                 _buildStatCard("0", "Batch Aktif"),
                 const SizedBox(height: 20),
@@ -388,7 +413,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 25),
-                Expanded(child: _buildStatCard("0", "Penerima Beasiswa")),
+                Expanded(
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
+                    builder: (context, count, _) {
+                      return _buildStatCard(
+                        count.toString(),
+                        "Penerima Beasiswa",
+                      );
+                    },
+                  ),
+                ),
                 const SizedBox(width: 25),
                 Expanded(child: _buildStatCard("0", "Batch Aktif")),
                 const SizedBox(width: 25),
@@ -452,255 +487,288 @@ class _HomeScreenState extends State<HomeScreen> {
       key: programKey,
       width: double.infinity,
       color: Colors.white,
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 24 : 80,
+      padding: const EdgeInsets.symmetric(
         vertical: 80,
       ),
-      child: Center(
-        child: StreamBuilder<List<Map<String, dynamic>>>(
-          stream: _supabase
-              .from('programs')
-              .stream(primaryKey: ['id'])
-              .order('sort_order', ascending: true),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox(
-                height: 400,
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _supabase
+            .from('programs')
+            .stream(primaryKey: ['id'])
+            .order('sort_order', ascending: true),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SizedBox(
+              height: 400,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
 
-            final programs = snapshot.data ?? [];
+          final programs = snapshot.data ?? [];
 
-            if (programs.isEmpty) {
-              return const SizedBox(
-                height: 400,
-                child: Center(child: Text("Belum ada program.")),
-              );
-            }
+          if (programs.isEmpty) {
+            return const SizedBox(
+              height: 400,
+              child: Center(child: Text("Belum ada program.")),
+            );
+          }
 
-            // ========================================================
-            // KONDISI 1: JIKA HANYA ADA 1 PROGRAM (KOTAK BESAR VERCEL)
-            // ========================================================
-            if (programs.length == 1) {
-              final prog = programs[0];
-              return SizedBox(
-                width: isMobile ? double.infinity : 1100,
-                height: isMobile ? 650 : 450,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: isMobile
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              height: 200,
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: _buildProgramCardContent(
-                                context,
-                                isMobile: true,
-                                prog: prog,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  image: DecorationImage(
-                                    image: NetworkImage(
-                                      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
-                                    ),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 7,
-                              child: _buildProgramCardContent(
-                                context,
-                                isMobile: false,
-                                prog: prog,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              );
-            }
+          _totalProgramPages = programs.length;
 
-            // ========================================================
-            // KONDISI 2: JIKA > 1 PROGRAM (GRID KOTAK RATA TENGAH)
-            // ========================================================
-            final double screenWidth = MediaQuery.of(context).size.width;
-            double cardWidth;
-            if (screenWidth < 600) {
-              cardWidth = double.infinity;
-            } else if (screenWidth < 900) {
-              cardWidth = (screenWidth - 48 - 30) / 2;
-            } else {
-              cardWidth = 360;
-            }
-
-            return ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: Wrap(
-                alignment: WrapAlignment.center, // BIKIN RATA TENGAH
-                spacing: 30,
-                runSpacing: 30,
-                children: programs.map((prog) {
-                  return SizedBox(
-                    width: cardWidth,
-                    height: 480,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 180,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              image: const DecorationImage(
-                                image: NetworkImage(
-                                  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      prog['kategori']?.toString() ??
-                                          'Pendidikan',
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 15),
-                                  Text(
-                                    prog['nama_program']?.toString() ??
-                                        'Tanpa Nama',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.2,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Expanded(
-                                    child: Text(
-                                      prog['deskripsi']?.toString() ??
-                                          'Deskripsi belum tersedia.',
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        context.go(
-                                          '/program-detail/${prog['id']}',
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(
-                                          0xFF1A1A1A,
-                                        ),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 18,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        "LIHAT DETAIL",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // HEADER SECTION
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 80),
+                child: Column(
+                  children: [
+                    const Text(
+                      "PROGRAM UNGGULAN",
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        fontSize: 14,
                       ),
                     ),
-                  );
-                }).toList(),
+                    const SizedBox(height: 15),
+                    Text(
+                      "Program Beasiswa & Pelatihan VIP",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: isMobile ? 28 : 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: 600,
+                      child: Text(
+                        "Akses program bantuan pendidikan kami yang dirancang khusus untuk meningkatkan keterampilan dan menunjang masa depan Anda.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey.shade600,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
-        ),
+              const SizedBox(height: 40),
+
+              // KARTU PROGRAM BESAR (SATU PER HALAMAN, SWIPE/GESER)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 80),
+                child: Center(
+                  child: SizedBox(
+                    width: isMobile ? double.infinity : 1160,
+                    height: isMobile ? 650 : 450,
+                    child: Stack(
+                      children: [
+                        // PageView dengan padding horizontal agar tidak tertutup tombol panah
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 30),
+                          child: ScrollConfiguration(
+                            behavior: AppScrollBehavior(),
+                            child: PageView.builder(
+                              controller: _programPageController,
+                              itemCount: programs.length,
+                              itemBuilder: (context, index) {
+                                final prog = programs[index];
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.grey.shade200),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.05),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: isMobile
+                                      ? Column(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                    (prog['thumbnail_url'] != null &&
+                                                            prog['thumbnail_url']
+                                                                .toString()
+                                                                .isNotEmpty)
+                                                        ? prog['thumbnail_url']
+                                                        : 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: _buildProgramCardContent(
+                                                context,
+                                                isMobile: true,
+                                                prog: prog,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            Expanded(
+                                              flex: 5,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  image: DecorationImage(
+                                                    image: NetworkImage(
+                                                      (prog['thumbnail_url'] != null &&
+                                                              prog['thumbnail_url']
+                                                                  .toString()
+                                                                  .isNotEmpty)
+                                                          ? prog['thumbnail_url']
+                                                          : 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 7,
+                                              child: _buildProgramCardContent(
+                                                context,
+                                                isMobile: false,
+                                                prog: prog,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                        // Tombol panah kiri (desktop)
+                        if (!isMobile)
+                          Positioned(
+                            left: 9,
+                            top: 0,
+                            bottom: 0,
+                            child: ValueListenableBuilder<int>(
+                              valueListenable: _currentProgramPage,
+                              builder: (context, currentPage, _) {
+                                if (currentPage <= 0) return const SizedBox.shrink();
+                                return Center(
+                                  child: Material(
+                                    color: Colors.white,
+                                    elevation: 4,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        _programPageController.previousPage(
+                                          duration: const Duration(milliseconds: 400),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Icon(Icons.arrow_back_ios_new, size: 18, color: Colors.black87),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+
+                        // Tombol panah kanan (desktop)
+                        if (!isMobile)
+                          Positioned(
+                            right: 9,
+                            top: 0,
+                            bottom: 0,
+                            child: ValueListenableBuilder<int>(
+                              valueListenable: _currentProgramPage,
+                              builder: (context, currentPage, _) {
+                                if (currentPage >= programs.length - 1) return const SizedBox.shrink();
+                                return Center(
+                                  child: Material(
+                                    color: Colors.white,
+                                    elevation: 4,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: () {
+                                        _programPageController.nextPage(
+                                          duration: const Duration(milliseconds: 400),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: Icon(Icons.arrow_forward_ios, size: 18, color: Colors.black87),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // DOT INDICATOR & COUNTER
+              if (programs.length > 1) ...[
+                const SizedBox(height: 30),
+                ValueListenableBuilder<int>(
+                  valueListenable: _currentProgramPage,
+                  builder: (context, currentPage, _) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(programs.length, (index) {
+                        final isActive = index == currentPage;
+                        return GestureDetector(
+                          onTap: () {
+                            _programPageController.animateToPage(
+                              index,
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 5),
+                            width: isActive ? 32 : 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: isActive ? Colors.red : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -769,8 +837,8 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 55,
             child: ElevatedButton(
               onPressed: () {
-                final id = prog['id'].toString();
-                context.go('/program-detail/$id');
+                final slug = prog['slug']?.toString() ?? prog['id'].toString();
+                context.go('/program-detail/$slug');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A1A1A),
@@ -1473,4 +1541,16 @@ class _PartnerCardState extends State<PartnerCard> {
       ),
     );
   }
+}
+
+// ==========================================
+// AppScrollBehavior (Mendukung drag menggunakan mouse di Web/Desktop)
+// ==========================================
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+      };
 }

@@ -1,7 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../core/app_colors.dart';
 import '../../../../core/snackbar_helper.dart';
@@ -32,9 +34,9 @@ class PhaseController {
 }
 
 class ProgramDetailAdmin extends StatefulWidget {
-  final dynamic programId;
+  final String? programSlug;
 
-  const ProgramDetailAdmin({super.key, this.programId});
+  const ProgramDetailAdmin({super.key, this.programSlug});
 
   @override
   State<ProgramDetailAdmin> createState() => _ProgramDetailAdminState();
@@ -46,6 +48,8 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
 
   final TextEditingController _namaProgramCtrl = TextEditingController();
   final TextEditingController _deskripsiCtrl = TextEditingController();
+  final TextEditingController _kategoriCtrl = TextEditingController();
+  final FocusNode _kategoriFocusNode = FocusNode();
   final List<TextEditingController> _fasilitasControllers = [];
   final List<PhaseController> _phaseControllers = [];
   final List<ReqController> _reqControllers = [];
@@ -53,6 +57,12 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
 
   bool _isLoading = true;
   bool _isSaving = false;
+  List<String> _existingKategori = [];
+  int? _loadedProgramId;
+
+  String _currentThumbnailUrl = '';
+  Uint8List? _selectedThumbnailBytes;
+  String? _selectedThumbnailExt;
 
   final _supabase = Supabase.instance.client;
 
@@ -60,29 +70,50 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _loadExistingKategori();
     _loadDataFromSupabase();
   }
 
+  Future<void> _loadExistingKategori() async {
+    try {
+      final res = await _supabase.from('programs').select('kategori');
+      final Set<String> kategoriSet = {};
+      for (final row in res) {
+        final kat = (row['kategori'] ?? '').toString().trim();
+        if (kat.isNotEmpty) kategoriSet.add(kat);
+      }
+      if (mounted) {
+        setState(() => _existingKategori = kategoriSet.toList()..sort());
+      }
+    } catch (_) {}
+  }
+
   Future<void> _loadDataFromSupabase() async {
-    if (widget.programId == null) {
+    if (widget.programSlug == null) {
       setState(() => _isLoading = false);
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      final response = await _supabase
-          .from('programs')
-          .select()
-          .eq('id', widget.programId)
-          .maybeSingle();
+      final id = int.tryParse(widget.programSlug!);
+      var query = _supabase.from('programs').select();
+      if (id != null) {
+        query = query.eq('id', id);
+      } else {
+        query = query.eq('slug', widget.programSlug!);
+      }
+      final response = await query.maybeSingle();
 
       if (response != null) {
+        _loadedProgramId = response['id'] as int?;
         _namaProgramCtrl.text =
             response['name']?.toString() ??
             response['nama_program']?.toString() ??
             '';
         _deskripsiCtrl.text = response['deskripsi']?.toString() ?? '';
+        _kategoriCtrl.text = response['kategori']?.toString() ?? '';
+        _currentThumbnailUrl = response['thumbnail_url']?.toString() ?? '';
 
         // 1. Load Fasilitas.
         _fasilitasControllers.clear();
@@ -157,6 +188,29 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
       if (mounted) showErrorSnackBar(context, 'Gagal memuat data: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _generateSlug(String text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'[\s-]+'), '-');
+  }
+
+  Future<void> _pickThumbnail() async {
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+
+    if (result != null && result.files.first.bytes != null) {
+      setState(() {
+        _selectedThumbnailBytes = result.files.first.bytes!;
+        _selectedThumbnailExt = result.files.first.extension ?? 'png';
+        _currentThumbnailUrl = '';
+      });
     }
   }
 
@@ -254,24 +308,45 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
           )
           .toList();
 
+      String finalThumbnailUrl = _currentThumbnailUrl;
+      if (_selectedThumbnailBytes != null) {
+        final fileName =
+            'program_${DateTime.now().millisecondsSinceEpoch}.$_selectedThumbnailExt';
+
+        // Upload ke bucket 'cms_images'.
+        await _supabase.storage
+            .from('cms_images')
+            .uploadBinary(
+              fileName,
+              _selectedThumbnailBytes!,
+              fileOptions: const FileOptions(upsert: true),
+            );
+
+        // Dapatkan URL Publiknya.
+        finalThumbnailUrl = _supabase.storage
+            .from('cms_images')
+            .getPublicUrl(fileName);
+      }
+
       final payloadData = {
         'nama_program': _namaProgramCtrl.text.trim(),
+        'kategori': _kategoriCtrl.text.trim(),
         'deskripsi': _deskripsiCtrl.text.trim(),
+        'slug': _generateSlug(_namaProgramCtrl.text.trim()),
         'fasilitas': updatedFasilitas,
         'fase_program': updatedPhases,
         'syarat_ketentuan': updatedReqs,
         'alur_pendaftaran': updatedTimeline,
+        'thumbnail_url': finalThumbnailUrl.isEmpty ? null : finalThumbnailUrl,
       };
 
-      if (widget.programId == null) {
+      final id = _loadedProgramId;
+      if (id == null) {
         final countRes = await _supabase.from('programs').select('id');
         payloadData['sort_order'] = countRes.length;
         await _supabase.from('programs').insert(payloadData);
       } else {
-        await _supabase
-            .from('programs')
-            .update(payloadData)
-            .eq('id', widget.programId);
+        await _supabase.from('programs').update(payloadData).eq('id', id);
       }
 
       if (mounted) {
@@ -320,7 +395,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.programId == null
+                          widget.programSlug == null
                               ? 'Tambah Program Baru'
                               : 'Edit Konten Program',
                           style: const TextStyle(
@@ -330,7 +405,7 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          widget.programId == null
+                          widget.programSlug == null
                               ? 'Lengkapi detail program di bawah ini'
                               : _namaProgramCtrl.text,
                           style: TextStyle(
@@ -412,6 +487,174 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
   }
 
   // =========================================================================
+  // SELECT2-STYLE KATEGORI PICKER (INLINE DROPDOWN)
+  // =========================================================================
+  Widget _buildKategoriSelect2() {
+    const String createPrefix = '+ Buat: ';
+    return RawAutocomplete<String>(
+      textEditingController: _kategoriCtrl,
+      focusNode: _kategoriFocusNode,
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        final query = textEditingValue.text.toLowerCase().trim();
+        List<String> results = [];
+        if (query.isEmpty) {
+          results = List.from(_existingKategori);
+        } else {
+          results = _existingKategori
+              .where((k) => k.toLowerCase().contains(query))
+              .toList();
+          final exactMatch = _existingKategori.any(
+            (k) => k.toLowerCase() == query,
+          );
+          if (!exactMatch && textEditingValue.text.trim().isNotEmpty) {
+            results.insert(0, '$createPrefix${textEditingValue.text.trim()}');
+          }
+        }
+        return results;
+      },
+      onSelected: (String selection) {
+        if (selection.startsWith(createPrefix)) {
+          final newKat = selection.substring(createPrefix.length).trim();
+          _kategoriCtrl.text = newKat;
+          if (!_existingKategori.contains(newKat)) {
+            _existingKategori.add(newKat);
+            _existingKategori.sort();
+          }
+        } else {
+          _kategoriCtrl.text = selection;
+        }
+        _kategoriCtrl.selection = TextSelection.fromPosition(
+          TextPosition(offset: _kategoriCtrl.text.length),
+        );
+      },
+      fieldViewBuilder:
+          (context, textEditingController, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                labelText: "Kategori Program",
+                hintText: "Ketik untuk cari atau tambah kategori...",
+                border: const OutlineInputBorder(),
+                isDense: true,
+                suffixIcon: textEditingController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          textEditingController.clear();
+                          focusNode.requestFocus();
+                        },
+                      )
+                    : const Icon(Icons.arrow_drop_down),
+              ),
+            );
+          },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(10),
+              shadowColor: Colors.black26,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 250,
+                  maxWidth: 500,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: Colors.grey.shade100),
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      final isCreateNew = option.startsWith(createPrefix);
+                      final isSelected =
+                          !isCreateNew && _kategoriCtrl.text == option;
+                      if (isCreateNew) {
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                          title: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(fontSize: 14),
+                              children: [
+                                const TextSpan(
+                                  text: 'Buat: ',
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                                TextSpan(
+                                  text: option.substring(createPrefix.length),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          hoverColor: Colors.green.withOpacity(0.08),
+                          onTap: () => onSelected(option),
+                        );
+                      }
+                      return ListTile(
+                        dense: true,
+                        leading: Icon(
+                          isSelected ? Icons.check_circle : Icons.label_outline,
+                          color: isSelected ? AppColors.primary : Colors.grey,
+                          size: 20,
+                        ),
+                        title: Text(
+                          option,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? AppColors.primary
+                                : Colors.black87,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedTileColor: AppColors.primary.withOpacity(0.05),
+                        hoverColor: Colors.grey.withOpacity(0.08),
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThumbnailDisplay() {
+    if (_selectedThumbnailBytes != null) {
+      return Image.memory(_selectedThumbnailBytes!, fit: BoxFit.cover);
+    }
+
+    // Gunakan URL kustom yang tersimpan, atau fallback ke gambar Unsplash default.
+    final displayUrl = _currentThumbnailUrl.isNotEmpty
+        ? _currentThumbnailUrl
+        : 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop';
+
+    return Image.network(displayUrl, fit: BoxFit.cover);
+  }
+
+  // =========================================================================
   // UMUM
   // =========================================================================
   Widget _buildUmumTab() {
@@ -419,35 +662,116 @@ class _ProgramDetailAdminState extends State<ProgramDetailAdmin>
       color: Colors.white,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(25),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Informasi Umum Program",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _namaProgramCtrl,
-              decoration: const InputDecoration(
-                labelText: "Judul Program",
-                border: OutlineInputBorder(),
-                isDense: true,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Informasi Umum Program",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _deskripsiCtrl,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: "Deskripsi Program",
-                border: OutlineInputBorder(),
-                isDense: true,
+              const SizedBox(height: 20),
+              const Text(
+                "Gambar Thumbnail Program",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                "Rekomendasi ukuran: 16:9 (Landscape) untuk tampilan optimal di katalog.",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: _pickThumbnail,
+                child: Container(
+                  height: 200,
+                  width: 360,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildThumbnailDisplay(),
+                      if (_currentThumbnailUrl.isEmpty &&
+                          _selectedThumbnailBytes == null)
+                        Positioned(
+                          bottom: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              "Gambar Default",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_currentThumbnailUrl.isNotEmpty ||
+                          _selectedThumbnailBytes != null)
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: CircleAvatar(
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                              ),
+                              onPressed: () => setState(() {
+                                _currentThumbnailUrl = '';
+                                _selectedThumbnailBytes = null;
+                              }),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              TextField(
+                controller: _namaProgramCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Judul Program",
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildKategoriSelect2(),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _deskripsiCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: "Deskripsi Program",
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

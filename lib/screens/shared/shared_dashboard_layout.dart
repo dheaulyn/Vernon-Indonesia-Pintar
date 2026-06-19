@@ -99,7 +99,17 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
     final hasUnreadDbNotifs = SupabaseNotificationService.notifications.value
         .where((n) {
           if (n['is_read'] == true) return false;
-          if (role == 'admin') return n['user_id'] == null;
+          if (role == 'super_admin') {
+            return n['user_id'] == null;
+          }
+          if (role == 'admin') {
+            // Admin biasa tidak melihat notifikasi pendaftaran, registrasi baru, dan donasi
+            return n['user_id'] == null &&
+                n['type'] != 'registrasi_baru' &&
+                n['type'] != 'pendaftaran_baru' &&
+                n['type'] != 'donasi_masuk' &&
+                n['type'] != 'donasi_keluar';
+          }
           return n['user_id'] == userId;
         })
         .isNotEmpty;
@@ -108,13 +118,13 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
 
     if (_isNotifCleared) return false;
 
-    if (role == 'admin') {
+    if (role == 'super_admin') {
       final pendingCount = SupabasePendaftaranService.listPendaftar.value
           .where((p) => p['admin_status'] == 'Menunggu Review')
           .length;
       return pendingCount > 0;
-    } else if (role == 'donatur') {
-      return false; // Donatur relies entirely on DB notifications now
+    } else if (role == 'admin' || role == 'donatur') {
+      return false;
     } else {
       // Siswa
       final isRevisi = user['is_revisi'] == true;
@@ -142,7 +152,16 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
       // 1. TAMBAHKAN NOTIFIKASI DARI DATABASE TERLEBIH DAHULU
       final dbNotifs = SupabaseNotificationService.notifications.value.where((n) {
         if (n['is_read'] == true) return false;
-        if (role == 'admin') return n['user_id'] == null;
+        if (role == 'super_admin') {
+          return n['user_id'] == null;
+        }
+        if (role == 'admin') {
+          return n['user_id'] == null &&
+              n['type'] != 'registrasi_baru' &&
+              n['type'] != 'pendaftaran_baru' &&
+              n['type'] != 'donasi_masuk' &&
+              n['type'] != 'donasi_keluar';
+        }
         return n['user_id'] == user['id'];
       }).toList();
       
@@ -197,7 +216,7 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
 
       // 2. TAMBAHKAN NOTIFIKASI LAMA (HARDCODED) JIKA BELUM DIBERSIHKAN
       if (!_isNotifCleared) {
-        if (role == 'admin') {
+        if (role == 'super_admin') {
           final pendingCount = SupabasePendaftaranService.listPendaftar.value
               .where((p) => p['admin_status'] == 'Menunggu Review')
               .length;
@@ -448,7 +467,8 @@ class _SharedDashboardLayoutState extends State<SharedDashboardLayout> {
             } else if (value == 'clear') {
               final user = SupabaseAuthService.currentUserData ?? {};
               final role = user['role'] ?? 'siswa';
-              final userId = role == 'admin' ? null : user['id'];
+              final bool isAdmin = role == 'admin' || role == 'super_admin';
+              final userId = isAdmin ? null : user['id'];
               await SupabaseNotificationService.markAllAsRead(userId);
             } else if (value == 'go_status') {
               context.go('/status-beasiswa');

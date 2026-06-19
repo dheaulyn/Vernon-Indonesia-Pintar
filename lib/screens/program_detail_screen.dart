@@ -6,10 +6,10 @@ import 'shared/custom_footer.dart';
 import '../../core/app_colors.dart';
 
 class ProgramDetailScreen extends StatefulWidget {
-  // 👇 Menerima ID program secara dinamis dari halaman katalog/beranda
-  final dynamic programId;
+  // 👇 Menerima slug program secara dinamis dari rute URL
+  final String programSlug;
 
-  const ProgramDetailScreen({super.key, required this.programId});
+  const ProgramDetailScreen({super.key, required this.programSlug});
 
   @override
   State<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
@@ -39,11 +39,21 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       backgroundColor: Colors.white,
       appBar: const CustomNavbar(),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        // 👇 Menggunakan widget.programId untuk menyaring data yang sesuai di database
-        stream: _supabase
-            .from('programs')
-            .stream(primaryKey: ['id'])
-            .eq('id', widget.programId),
+        // 👇 Menggunakan widget.programSlug untuk menyaring data (mendukung ID angka atau teks slug)
+        stream: () {
+          final id = int.tryParse(widget.programSlug);
+          if (id != null) {
+            return _supabase
+                .from('programs')
+                .stream(primaryKey: ['id'])
+                .eq('id', id);
+          } else {
+            return _supabase
+                .from('programs')
+                .stream(primaryKey: ['id'])
+                .eq('slug', widget.programSlug);
+          }
+        }(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -60,16 +70,19 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // 1. HEADER TEKS, FASE, FASILITAS
+                // 1. HERO HEADER BANNER (Thumbnail Background)
+                _buildHeaderBanner(context, isMobile, programData),
+
+                // 2. FASE & FASILITAS
                 _buildPhasesSection(context, isMobile, programData),
 
-                // 2. SYARAT, KETENTUAN & ALUR PENDAFTARAN (Real-time dari Supabase)
+                // 3. SYARAT, KETENTUAN & ALUR PENDAFTARAN (Real-time dari Supabase)
                 _buildDynamicRequirements(isMobile, programData),
 
-                // 3. CTA SECTION (Siap Mengubah Nasib?)
+                // 4. CTA SECTION (Siap Mengubah Nasib?)
                 _buildCTASection(context, isMobile),
 
-                // 4. FOOTER
+                // 5. FOOTER
                 const CustomFooter(),
               ],
             ),
@@ -79,7 +92,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     );
   }
 
-  Widget _buildPhasesSection(
+  Widget _buildHeaderBanner(
     BuildContext context,
     bool isMobile,
     Map<String, dynamic> programData,
@@ -89,6 +102,75 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
     final String description =
         programData['deskripsi'] ??
         'Menjembatani kesenjangan antara pendidikan dan dunia kerja nyata.';
+    final String thumbnailUrl = (programData['thumbnail_url'] != null &&
+            programData['thumbnail_url'].toString().isNotEmpty)
+        ? programData['thumbnail_url'].toString()
+        : 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop';
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: NetworkImage(thumbnailUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        width: double.infinity,
+        color: Colors.black.withValues(alpha: 0.65), // Overlay gelap untuk kontras teks putih
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 24 : 80,
+          vertical: isMobile ? 80 : 120,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "PROGRAM BEASISWA KARIR",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isMobile ? 36 : 52,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhasesSection(
+    BuildContext context,
+    bool isMobile,
+    Map<String, dynamic> programData,
+  ) {
     final phaseData = (programData['fase_program'] as List?) ?? [];
     final fasilitasData = (programData['fasilitas'] as List?) ?? [];
 
@@ -98,7 +180,7 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
       padding: EdgeInsets.only(
         left: isMobile ? 24 : 80,
         right: isMobile ? 24 : 80,
-        top: 100,
+        top: 60,
         bottom: 80,
       ),
       child: Center(
@@ -106,35 +188,6 @@ class _ProgramDetailScreenState extends State<ProgramDetailScreen> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
-              // HEADER TEKS
-              const Text(
-                "PROGRAM KARIR",
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isMobile ? 32 : 48,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: isMobile ? 16 : 18,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 60),
 
               // FASE DENGAN ANIMASI DYNAMIC HOVER
               if (isMobile)

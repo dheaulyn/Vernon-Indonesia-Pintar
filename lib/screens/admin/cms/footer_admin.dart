@@ -210,8 +210,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                     : () async {
                         setModalState(() => isSaving = true);
 
-                        final footerId =
-                            _footerData['id'] ?? 1;
+                        final footerId = _footerData['id'] ?? 1;
 
                         final updateData = {
                           'deskripsi_yayasan': descCtrl.text.trim(),
@@ -219,8 +218,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                           'whatsapp': waCtrl.text.trim(),
                           'instagram': igCtrl.text.trim(),
                           'email': emailCtrl.text.trim(),
-                          'updated_at': DateTime.now()
-                              .toIso8601String(),
+                          'updated_at': DateTime.now().toIso8601String(),
                         };
 
                         try {
@@ -354,7 +352,7 @@ class _FooterAdminState extends State<FooterAdmin> {
                                 const Divider(),
                                 _buildInfoTile(
                                   Icons.location_city,
-                                  "Alamat Tampil",
+                                  "Alamat",
                                   _footerData['alamat'] ?? '-',
                                 ),
                                 const Divider(),

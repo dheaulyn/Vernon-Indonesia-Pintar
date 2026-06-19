@@ -60,6 +60,103 @@ class _ProgramListAdminState extends State<ProgramListAdmin> {
     }
   }
 
+  String _generateSlug(String text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '')
+        .replaceAll(RegExp(r'[\s-]+'), '-');
+  }
+
+  Future<void> _duplikasiProgram(int id, String namaProgram) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text(
+          "Duplikasi Program",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Seluruh data program "$namaProgram" akan disalin menjadi program baru. Lanjutkan?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              "Batal",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              "Duplikasi",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final response = await _supabase
+            .from('programs')
+            .select()
+            .eq('id', id)
+            .maybeSingle();
+
+        if (response == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Program tidak ditemukan."),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+
+        final countRes = await _supabase.from('programs').select('id');
+
+        final duplicatedData = Map<String, dynamic>.from(response);
+        duplicatedData.remove('id');
+        duplicatedData.remove('updated_at');
+        final newNama = 'Salinan - ${duplicatedData['nama_program'] ?? ''}';
+        duplicatedData['nama_program'] = newNama;
+        duplicatedData['slug'] = _generateSlug(newNama);
+        duplicatedData['sort_order'] = countRes.length;
+
+        await _supabase.from('programs').insert(duplicatedData);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Program berhasil diduplikasi!"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Gagal menduplikasi: $e"),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,15 +274,29 @@ class _ProgramListAdminState extends State<ProgramListAdmin> {
 
                         return ListTile(
                           // 👇 UBAH ICON DI SINI 👇
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.article_rounded, // Menggunakan icon dokumen
-                              color: AppColors.primary,
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              color: Colors.grey.shade100,
+                              child: Image.network(
+                                (prog['thumbnail_url'] != null &&
+                                        prog['thumbnail_url']
+                                            .toString()
+                                            .isNotEmpty)
+                                    ? prog['thumbnail_url'].toString()
+                                    : 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=1000&auto=format&fit=crop',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        color: Colors.grey,
+                                        size: 20,
+                                      ),
+                                    ),
+                              ),
                             ),
                           ),
                           title: Text(
@@ -203,13 +314,24 @@ class _ProgramListAdminState extends State<ProgramListAdmin> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
+                                tooltip: "Duplikasi",
+                                icon: const Icon(
+                                  Icons.copy_rounded,
+                                  color: Colors.blueGrey,
+                                ),
+                                onPressed: () =>
+                                    _duplikasiProgram(id, namaProgram),
+                              ),
+                               IconButton(
                                 tooltip: "Edit Program",
                                 icon: const Icon(
                                   Icons.edit_document,
                                   color: Colors.blue,
                                 ),
                                 onPressed: () {
-                                  context.go('/cms-program/edit/$id');
+                                  final slug =
+                                      prog['slug']?.toString() ?? id.toString();
+                                  context.go('/cms-program/edit/$slug');
                                 },
                               ),
                               IconButton(

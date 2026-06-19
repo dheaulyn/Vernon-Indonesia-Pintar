@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_picker/file_picker.dart';
+import 'supabase_notification_service.dart';
 
 class SupabaseAuthService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -65,6 +66,17 @@ class SupabaseAuthService {
           'catatan_revisi': '',
           'admin_status': 'Menunggu Review',
         });
+
+        // Buat notifikasi ke admin (global)
+        if (role == 'siswa') {
+          await SupabaseNotificationService.createNotification(
+            userId: null,
+            title: 'Akun Baru Terdaftar',
+            message: 'Siswa baru ${name.toUpperCase()} ($email) telah mendaftar akun.',
+            type: 'registrasi_baru',
+          );
+        }
+
         return null; // null = sukses
       }
       return 'Registrasi gagal. Coba lagi.';
