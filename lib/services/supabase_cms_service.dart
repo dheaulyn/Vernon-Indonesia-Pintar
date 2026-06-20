@@ -11,6 +11,10 @@ class SupabaseCmsService {
   static final ValueNotifier<Map<String, dynamic>> aboutUs = ValueNotifier({});
   static final ValueNotifier<Map<String, dynamic>> foundationProfile =
       ValueNotifier({});
+  static final ValueNotifier<Map<String, dynamic>> impactSection =
+      ValueNotifier({});
+  static final ValueNotifier<Map<String, dynamic>> sectionHeaders =
+      ValueNotifier({});
 
   static bool _isInitialized = false;
 
@@ -43,5 +47,24 @@ class SupabaseCmsService {
         }
       },
     );
+
+    // 4. Dengarkan perubahan tabel Impact Section secara live.
+    _supabase.from('cms_impact_section').stream(primaryKey: ['id']).listen(
+      (data) {
+        if (data.isNotEmpty) {
+          impactSection.value = data.first;
+        }
+      },
+    );
+
+    // 5. Dengarkan perubahan tabel Section Headers secara live.
+    _supabase.from('cms_section_headers').stream(primaryKey: ['id']).listen(
+      (data) {
+        if (data.isNotEmpty) {
+          sectionHeaders.value = data.first;
+        }
+      },
+    );
   }
 }
+

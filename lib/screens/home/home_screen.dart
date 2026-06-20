@@ -318,120 +318,135 @@ class _HomeScreenState extends State<HomeScreen> {
   // IMPACT SECTION (Real-time Total Donasi)
   // ==========================================
   Widget _buildImpactSection(bool isMobile) {
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFFFBFBFB),
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 24 : 80,
-        vertical: 80,
-      ),
-      child: Column(
-        children: [
-          const Text(
-            "DAMPAK NYATA VIP",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
+    return ValueListenableBuilder<Map<String, dynamic>>(
+      valueListenable: SupabaseCmsService.impactSection,
+      builder: (context, impactData, _) {
+        final String tagline = impactData['tagline'] ?? 'DAMPAK NYATA VIP';
+        final String title = impactData['title'] ?? 'Jejak Langkah & Transparansi Kami';
+        final String subtitle = impactData['subtitle'] ?? 'Setiap dukungan Anda telah membantu kami menciptakan perubahan nyata. Berikut adalah capaian kami hingga hari ini.';
+        final int batchAktif = impactData['stat_batch_aktif'] ?? 0;
+        final int alumniBekerja = impactData['stat_alumni_bekerja'] ?? 0;
+        final String labelDonasi = impactData['label_donasi'] ?? 'Total Donasi Terkumpul';
+        final String labelPenerima = impactData['label_penerima'] ?? 'Penerima Beasiswa';
+        final String labelBatch = impactData['label_batch'] ?? 'Batch Aktif';
+        final String labelAlumni = impactData['label_alumni'] ?? 'Alumni Bekerja';
+
+        return Container(
+          width: double.infinity,
+          color: const Color(0xFFFBFBFB),
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 24 : 80,
+            vertical: 80,
           ),
-          const SizedBox(height: 15),
-          Text(
-            "Jejak Langkah & Transparansi Kami",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: isMobile ? 28 : 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: 600,
-            child: Text(
-              "Setiap dukungan Anda telah membantu kami menciptakan perubahan nyata. Berikut adalah capaian kami hingga hari ini.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-                height: 1.5,
+          child: Column(
+            children: [
+              Text(
+                tagline,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
+              const SizedBox(height: 15),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: isMobile ? 28 : 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 15),
+              SizedBox(
+                width: 600,
+                child: Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 50),
+              if (isMobile)
+                Column(
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
+                      builder: (context, total, _) {
+                        final formatRp = NumberFormat.currency(
+                          locale: 'id_ID',
+                          symbol: 'Rp ',
+                          decimalDigits: 0,
+                        );
+                        return _buildStatCard(
+                          formatRp.format(total),
+                          labelDonasi,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    ValueListenableBuilder<int>(
+                      valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
+                      builder: (context, count, _) {
+                        return _buildStatCard(
+                          count.toString(),
+                          labelPenerima,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildStatCard(batchAktif.toString(), labelBatch),
+                    const SizedBox(height: 20),
+                    _buildStatCard(alumniBekerja.toString(), labelAlumni),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: ValueListenableBuilder<int>(
+                        valueListenable:
+                            SupabaseDonationService.totalDonasiTerkumpul,
+                        builder: (context, total, _) {
+                          final formatRp = NumberFormat.currency(
+                            locale: 'id_ID',
+                            symbol: 'Rp ',
+                            decimalDigits: 0,
+                          );
+                          return _buildStatCard(
+                            formatRp.format(total),
+                            labelDonasi,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 25),
+                    Expanded(
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
+                        builder: (context, count, _) {
+                          return _buildStatCard(
+                            count.toString(),
+                            labelPenerima,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 25),
+                    Expanded(child: _buildStatCard(batchAktif.toString(), labelBatch)),
+                    const SizedBox(width: 25),
+                    Expanded(child: _buildStatCard(alumniBekerja.toString(), labelAlumni)),
+                  ],
+                ),
+            ],
           ),
-          const SizedBox(height: 50),
-          if (isMobile)
-            Column(
-              children: [
-                ValueListenableBuilder<int>(
-                  valueListenable: SupabaseDonationService.totalDonasiTerkumpul,
-                  builder: (context, total, _) {
-                    final formatRp = NumberFormat.currency(
-                      locale: 'id_ID',
-                      symbol: 'Rp ',
-                      decimalDigits: 0,
-                    );
-                    return _buildStatCard(
-                      formatRp.format(total),
-                      "Total Donasi Terkumpul",
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                ValueListenableBuilder<int>(
-                  valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
-                  builder: (context, count, _) {
-                    return _buildStatCard(
-                      count.toString(),
-                      "Penerima Beasiswa",
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                _buildStatCard("0", "Batch Aktif"),
-                const SizedBox(height: 20),
-                _buildStatCard("0", "Alumni Bekerja"),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: ValueListenableBuilder<int>(
-                    valueListenable:
-                        SupabaseDonationService.totalDonasiTerkumpul,
-                    builder: (context, total, _) {
-                      final formatRp = NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      );
-                      return _buildStatCard(
-                        formatRp.format(total),
-                        "Total Donasi Terkumpul",
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 25),
-                Expanded(
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: SupabasePendaftaranService.totalPenerimaBeasiswa,
-                    builder: (context, count, _) {
-                      return _buildStatCard(
-                        count.toString(),
-                        "Penerima Beasiswa",
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 25),
-                Expanded(child: _buildStatCard("0", "Batch Aktif")),
-                const SizedBox(width: 25),
-                Expanded(child: _buildStatCard("0", "Alumni Bekerja")),
-              ],
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -518,44 +533,53 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // HEADER SECTION
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 80),
-                child: Column(
-                  children: [
-                    const Text(
-                      "PROGRAM UNGGULAN",
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      "Program Beasiswa & Pelatihan VIP",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: isMobile ? 28 : 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    SizedBox(
-                      width: 600,
-                      child: Text(
-                        "Akses program bantuan pendidikan kami yang dirancang khusus untuk meningkatkan keterampilan dan menunjang masa depan Anda.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey.shade600,
-                          height: 1.5,
+              ValueListenableBuilder<Map<String, dynamic>>(
+                valueListenable: SupabaseCmsService.sectionHeaders,
+                builder: (context, headers, _) {
+                  final tagline = headers['program_tagline'] ?? "PROGRAM UNGGULAN";
+                  final title = headers['program_title'] ?? "Program Beasiswa & Pelatihan VIP";
+                  final subtitle = headers['program_subtitle'] ?? "Akses program bantuan pendidikan kami yang dirancang khusus untuk meningkatkan keterampilan dan menunjang masa depan Anda.";
+
+                  return Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 80),
+                    child: Column(
+                      children: [
+                        Text(
+                          tagline,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 15),
+                        Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isMobile ? 28 : 36,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        SizedBox(
+                          width: 600,
+                          child: Text(
+                            subtitle,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey.shade600,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 40),
 
@@ -867,22 +891,35 @@ class _HomeScreenState extends State<HomeScreen> {
       color: const Color(0xFF1A1A1A),
       child: Column(
         children: [
-          const Text(
-            "CERITA PERUBAHAN",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            "Bukti Nyata Dampak VIP",
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
+          ValueListenableBuilder<Map<String, dynamic>>(
+            valueListenable: SupabaseCmsService.sectionHeaders,
+            builder: (context, headers, _) {
+              final tagline = headers['testimonial_tagline'] ?? "CERITA PERUBAHAN";
+              final title = headers['testimonial_title'] ?? "Bukti Nyata Dampak VIP";
+
+              return Column(
+                children: [
+                  Text(
+                    tagline,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder<bool>(
@@ -1014,24 +1051,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            "MITRA & PARTNER",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Didukung oleh Institusi & Perusahaan Terpercaya",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.w900,
-              color: Colors.black87,
-            ),
+          ValueListenableBuilder<Map<String, dynamic>>(
+            valueListenable: SupabaseCmsService.sectionHeaders,
+            builder: (context, headers, _) {
+              final tagline = headers['partner_tagline'] ?? "MITRA & PARTNER";
+              final title = headers['partner_title'] ?? "Didukung oleh Institusi & Perusahaan Terpercaya";
+
+              return Column(
+                children: [
+                  Text(
+                    tagline,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: isMobile ? 24 : 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 50),
           StreamBuilder<List<Map<String, dynamic>>>(
@@ -1093,63 +1142,76 @@ class _HomeScreenState extends State<HomeScreen> {
         final faqs = snapshot.data ?? [];
         final previewFaqs = faqs.take(4).toList();
 
-        Widget faqContent = Column(
-          crossAxisAlignment: isMobile
-              ? CrossAxisAlignment.center
-              : CrossAxisAlignment.start,
-          children: [
-            RichText(
-              textAlign: isMobile ? TextAlign.center : TextAlign.left,
-              text: TextSpan(
-                style: TextStyle(
-                  fontSize: isMobile ? 28 : 38,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'sans-serif',
-                  height: 1.2,
-                ),
-                children: [
-                  TextSpan(
-                    text: "Pertanyaan seputar\n",
-                    style: TextStyle(color: AppColors.primary),
+        Widget faqContent = ValueListenableBuilder<Map<String, dynamic>>(
+          valueListenable: SupabaseCmsService.sectionHeaders,
+          builder: (context, headers, _) {
+            final title = (headers['faq_title'] ?? "Pertanyaan seputar\nBeasiswa VIP")
+                .replaceAll('\\n', '\n');
+            final subtitle = headers['faq_subtitle'] ?? "Hal umum yang sering ditanyakan oleh pendaftar.";
+
+            final parts = title.split('\n');
+            final part1 = parts.isNotEmpty ? parts[0] : title;
+            final part2 = parts.length > 1 ? parts[1] : '';
+
+            return Column(
+              crossAxisAlignment: isMobile
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  textAlign: isMobile ? TextAlign.center : TextAlign.left,
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: isMobile ? 28 : 38,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'sans-serif',
+                      height: 1.2,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "$part1\n",
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                      TextSpan(
+                        text: part2,
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ],
                   ),
-                  const TextSpan(
-                    text: "Beasiswa VIP",
-                    style: TextStyle(color: Colors.black87),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  subtitle,
+                  textAlign: isMobile ? TextAlign.center : TextAlign.left,
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                ),
+                SizedBox(height: isMobile ? 30 : 40),
+                FAQAccordion(faqs: previewFaqs),
+                SizedBox(height: isMobile ? 20 : 30),
+                ElevatedButton(
+                  onPressed: () => context.go('/pusat-bantuan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 20,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              "Hal umum yang sering ditanyakan oleh pendaftar.",
-              textAlign: isMobile ? TextAlign.center : TextAlign.left,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-            ),
-            SizedBox(height: isMobile ? 30 : 40),
-            FAQAccordion(faqs: previewFaqs),
-            SizedBox(height: isMobile ? 20 : 30),
-            ElevatedButton(
-              onPressed: () => context.go('/pusat-bantuan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 20,
+                  child: const Text(
+                    "Lihat Lebih Banyak",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                "Lihat Lebih Banyak",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         );
 
         Widget illustration = ConstrainedBox(

@@ -20,10 +20,83 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
   bool _isLoading = true;
   final _supabase = Supabase.instance.client;
 
+  final _headerFormKey = GlobalKey<FormState>();
+  final _headerTitleController = TextEditingController();
+  final _headerSubtitleController = TextEditingController();
+  bool _isLoadingHeader = true;
+  bool _isSavingHeader = false;
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadHeaderData();
+  }
+
+  @override
+  void dispose() {
+    _tanyaController.dispose();
+    _jawabController.dispose();
+    _headerTitleController.dispose();
+    _headerSubtitleController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadHeaderData() async {
+    try {
+      final response = await _supabase
+          .from('cms_section_headers')
+          .select()
+          .eq('id', 1)
+          .maybeSingle();
+
+      if (response != null) {
+        _headerTitleController.text = response['faq_title'] ?? '';
+        _headerSubtitleController.text = response['faq_subtitle'] ?? '';
+      }
+    } catch (e) {
+      debugPrint("Gagal load header data: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingHeader = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveHeaderData() async {
+    if (!_headerFormKey.currentState!.validate()) return;
+
+    setState(() => _isSavingHeader = true);
+    try {
+      await _supabase.from('cms_section_headers').update({
+        'faq_title': _headerTitleController.text.trim(),
+        'faq_subtitle': _headerSubtitleController.text.trim(),
+      }).eq('id', 1);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Judul section FAQ berhasil diperbarui!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal menyimpan judul section: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingHeader = false);
+      }
+    }
   }
 
   // Fungsi untuk menarik data dari database Supabase.
@@ -279,6 +352,122 @@ class _KelolaFAQPageState extends State<KelolaFAQPage> {
             ],
           ),
           const SizedBox(height: 30),
+
+          // ==========================================
+          // HEADER SETTINGS (CMS)
+          // ==========================================
+          _isLoadingHeader
+              ? const Center(child: LinearProgressIndicator())
+              : Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ExpansionTile(
+                    title: const Text(
+                      "Pengaturan Judul Section (Beranda)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Kelola judul dan deskripsi section FAQ di landing page",
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    leading: const Icon(Icons.settings_applications_rounded, color: AppColors.primary),
+                    childrenPadding: const EdgeInsets.all(20),
+                    backgroundColor: Colors.white,
+                    collapsedBackgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    children: [
+                      Form(
+                        key: _headerFormKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Judul Utama (Title) - Gunakan \\n untuk Baris Baru",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _headerTitleController,
+                              maxLines: 2,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: "Contoh: Pertanyaan seputar\nBeasiswa VIP",
+                              ),
+                              validator: (v) =>
+                                  v == null || v.trim().isEmpty
+                                      ? 'Judul tidak boleh kosong'
+                                      : null,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              "Sub-judul / Deskripsi (Subtitle)",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _headerSubtitleController,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: "Contoh: Hal umum yang sering ditanyakan oleh pendaftar.",
+                              ),
+                              validator: (v) =>
+                                  v == null || v.trim().isEmpty
+                                      ? 'Deskripsi/subtitle tidak boleh kosong'
+                                      : null,
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _isSavingHeader ? null : _saveHeaderData,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: _isSavingHeader
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "SIMPAN JUDUL SECTION",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
           Expanded(
             child: _isLoading

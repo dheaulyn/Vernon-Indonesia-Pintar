@@ -43,6 +43,7 @@ import 'screens/admin/cms/media_admin.dart';
 import 'screens/admin/cms/testimoni_admin.dart';
 import 'screens/admin/cms/faq_admin.dart';
 import 'screens/admin/cms/footer_admin.dart';
+import 'screens/admin/cms/impact_section_admin.dart';
 import 'screens/admin/cms/partners_admin.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -259,6 +260,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/cms-about',
           builder: (context, state) => const AboutSectionAdmin(),
+        ),
+        GoRoute(
+          path: '/cms-impact',
+          builder: (context, state) => const ImpactSectionAdmin(),
         ),
         GoRoute(
           path: '/cms-profil',

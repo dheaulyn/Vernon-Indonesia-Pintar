@@ -76,6 +76,11 @@ class LayoutDashboard extends StatelessWidget {
         routePath: "/cms-about",
       ),
       MenuModel(
+        icon: Icons.show_chart_rounded,
+        title: "Kelola Impact Section",
+        routePath: "/cms-impact",
+      ),
+      MenuModel(
         icon: Icons.account_balance_rounded,
         title: "Kelola Profil Yayasan",
         routePath: "/cms-profil",
