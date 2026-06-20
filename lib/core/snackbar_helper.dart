@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Helper global untuk menampilkan SnackBar yang konsisten di seluruh aplikasi.
-/// Semua SnackBar menggunakan tampilan floating dengan sudut rounded.
-
 void showSuccessSnackBar(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(

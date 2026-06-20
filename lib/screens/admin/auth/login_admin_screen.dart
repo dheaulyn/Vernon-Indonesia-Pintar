@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-// import '/core/app_colors.dart';
+import '/core/app_colors.dart';
 import '/services/supabase_auth_service.dart';
 
 class LoginAdminScreen extends StatefulWidget {
@@ -35,7 +35,10 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
       return;
     }
 
-    final String? userRole = await SupabaseAuthService.loginRole(email, password);
+    final String? userRole = await SupabaseAuthService.loginRole(
+      email,
+      password,
+    );
 
     setState(() {
       _isLoading = false;
@@ -50,10 +53,10 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
         context.go('/cms-hero-banner'); // Admin biasa ke CMS
       }
     } else if (userRole != null) {
-      // Jika siswa/donatur nyasar ke sini, tendang keluar
       await SupabaseAuthService.logout();
       setState(() {
-        _errorMessage = 'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
+        _errorMessage =
+            'Akses ditolak. Akun ini tidak memiliki izin Administrator.';
       });
     } else {
       setState(() {
@@ -72,9 +75,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF0F2F5,
-      ), // Background abu-abu kebiruan khas halaman admin
+      backgroundColor: const Color(0xFFF0F2F5),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -84,7 +85,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Container(
-                    width: 400, // Sedikit lebih ramping
+                    width: 400,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
                       vertical: 40,
@@ -102,8 +103,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.center, // Rata tengah agar formal
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset('assets/logo.png', height: 45),
@@ -148,7 +148,6 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                             ),
                           ),
 
-                        // Form Email
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -177,7 +176,7 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                                   borderSide: const BorderSide(
                                     color: Colors.black87,
                                     width: 1.5,
-                                  ), // Fokus warna hitam elegan
+                                  ),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -189,7 +188,6 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // Form Password
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -243,16 +241,13 @@ class _LoginAdminScreenState extends State<LoginAdminScreen> {
                           ],
                         ),
                         const SizedBox(height: 30),
-
-                        // Tombol Masuk
                         SizedBox(
                           width: double.infinity,
                           height: 50,
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleAdminLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors
-                                  .black87, // Tombol hitam mencirikan halaman backend
+                              backgroundColor: Colors.black87,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),

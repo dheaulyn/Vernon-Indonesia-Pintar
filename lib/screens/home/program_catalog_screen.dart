@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../program_detail_screen.dart'; // Import halaman detail
+import '../program_detail_screen.dart'; 
 import '../shared/custom_navbar.dart';
 import '../shared/custom_footer.dart';
 import '../../core/app_colors.dart';
